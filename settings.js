@@ -27,8 +27,8 @@ const icon = (name) => `<svg viewBox="0 0 24 24">${ICONS[name] || ''}</svg>`;
 const STR = {
   ko: { search: '설정 검색', searchTitle: '검색 결과', noResults: '일치하는 설정이 없어요', ver: '버전', reset: '기본값으로', copied: '완료',
         removed: (n) => `가사 캐시 ${n}개를 지웠어요`, sent: '테스트 알림을 보냈어요', armed: '정말 초기화할까요?', resetDone: '모든 설정을 초기화했어요',
-        restarting: '다시 시작합니다…', centered: '가운데로 옮겼어요', failed: '실패했어요', on: '사용 가능', off: '사용 불가',
-        eqTitle: '이퀄라이저', eqDesc: '이어버드의 소리 성향을 골라요. 이어버드에 직접 적용되는 설정이라 삼성 Galaxy Buds 앱과 같아요.', eqNormal: '일반', eqBass: '베이스 부스트', eqSoft: '소프트', eqDynamic: '다이내믹', eqClear: '클리어', eqTreble: '트레블 부스트', eqApplied: '적용했어요', eqFailed: '적용하지 못했어요', eqInUse: '다른 앱이 이어버드를 쓰고 있어요 (Galaxy Buds 앱을 닫아 주세요)', eqNoDevice: '이어버드가 연결돼 있지 않거나 제어를 쓸 수 없어요',
+        restarting: '다시 시작합니다…', failed: '실패했어요', on: '사용 가능', off: '사용 불가',
+        eqTitle: '이퀄라이저', eqDesc: '이어버드의 소리 성향을 골라요. 이어버드에 직접 적용되는 설정이라 삼성 Galaxy Buds 앱과 같아요.', eqNormal: '일반', eqBass: '베이스 부스트', eqSoft: '소프트', eqDynamic: '다이내믹', eqClear: '클리어', eqTreble: '트레블 부스트', eqFailed: '적용하지 못했어요', eqInUse: '다른 앱이 이어버드를 쓰고 있어요 (Galaxy Buds 앱을 닫아 주세요)', eqNoDevice: '이어버드가 연결돼 있지 않거나 제어를 쓸 수 없어요',
         eqCustom: '사용자 설정', eqCustomHint: '9개 대역의 소리를 직접 조절해요. 슬라이더를 놓으면 이어버드에 바로 적용돼요.', eqReset: '모두 0으로', eqLow: '저음', eqHigh: '고음', eqBand: '대역', advTitle: '고급', advGame: '게이밍 모드', advGameDesc: '소리가 늦게 들리는 지연을 줄여요. 켜고 끌 때 연결이 잠깐 바뀌어 소리가 순간 끊길 수 있어요.', advOne: '한쪽만 끼고도 소음 제어', advOneDesc: '한쪽 이어버드만 착용해도 노이즈 캔슬링이 자동으로 꺼지지 않게 해요.', advUnknown: '(이 모델에서는 아직 확인하지 못해 바꿀 수 없어요)',
         btNone: '연결된 이어버드가 없어요', btConnected: '연결됨', btControl: '소음 제어', btLeft: '왼쪽', btRight: '오른쪽', btCase: '케이스',
         btTip: '삼성 <b>Galaxy Buds 앱</b>이 켜져 있으면 이어버드 제어 연결을 먼저 잡고 있어서 노이즈 컨트롤 모드 변경이 막힐 수 있어요. 모드가 안 바뀌면 그 앱을 닫아 보세요.',
@@ -49,8 +49,8 @@ const STR = {
         hkOk: '사용 중', hkInvalid: '조합 형식이 올바르지 않아요 (예: Ctrl+Alt+N)', hkConflict: '다른 프로그램이 이미 쓰는 조합이에요', hkOff: '꺼짐' },
   en: { search: 'Search settings', searchTitle: 'Search results', noResults: 'No matching settings', ver: 'Version', reset: 'Reset to default', copied: 'Done',
         removed: (n) => `Cleared ${n} cached lyric file(s)`, sent: 'Sent a test alert', armed: 'Really reset?', resetDone: 'All settings were reset',
-        restarting: 'Restarting…', centered: 'Moved to the center', failed: 'Failed', on: 'Available', off: 'Unavailable',
-        eqTitle: 'Equalizer', eqDesc: 'Pick the sound profile. It is applied to the earbuds themselves, same as in the Samsung Galaxy Buds app.', eqNormal: 'Normal', eqBass: 'Bass boost', eqSoft: 'Soft', eqDynamic: 'Dynamic', eqClear: 'Clear', eqTreble: 'Treble boost', eqApplied: 'Applied', eqFailed: 'Could not apply', eqInUse: 'Another app is using the earbuds (close the Galaxy Buds app)', eqNoDevice: 'Earbuds are not connected or control is unavailable',
+        restarting: 'Restarting…', failed: 'Failed', on: 'Available', off: 'Unavailable',
+        eqTitle: 'Equalizer', eqDesc: 'Pick the sound profile. It is applied to the earbuds themselves, same as in the Samsung Galaxy Buds app.', eqNormal: 'Normal', eqBass: 'Bass boost', eqSoft: 'Soft', eqDynamic: 'Dynamic', eqClear: 'Clear', eqTreble: 'Treble boost', eqFailed: 'Could not apply', eqInUse: 'Another app is using the earbuds (close the Galaxy Buds app)', eqNoDevice: 'Earbuds are not connected or control is unavailable',
         eqCustom: 'Custom', eqCustomHint: 'Shape the sound in nine bands. Letting go of a slider applies it to the earbuds right away.', eqReset: 'Reset to 0', eqLow: 'Low', eqHigh: 'High', eqBand: 'Band', advTitle: 'Advanced', advGame: 'Gaming mode', advGameDesc: 'Reduces the audio delay. Switching it can briefly change the connection, so the sound may cut out for a moment.', advOne: 'Noise controls with one earbud', advOneDesc: 'Keeps noise canceling on when only one earbud is worn.', advUnknown: '(Not verified on this model yet, so it cannot be changed.)',
         btNone: 'No earbuds connected', btConnected: 'Connected', btControl: 'Noise control', btLeft: 'Left', btRight: 'Right', btCase: 'Case',
         btTip: 'If the Samsung <b>Galaxy Buds app</b> is running it can hold the earbuds’ control connection, which blocks noise-control changes. Close it if modes will not change.',
@@ -327,7 +327,6 @@ function runAction(item, btn) {
   switch (item.action) {
     case 'restart': toast(S('restarting')); setTimeout(() => api && api.restart_app && api.restart_app(), 250); break;
     case 'captureMode': if (api) api.capture_toggle().then((r) => done(r && r.off ? S('capOff') : (r && r.active ? S('capOn') : S('capNone')))); break;
-    case 'recenter': if (api) api.recenter_window().then(() => done(S('centered'))); break;
     case 'clearCache': if (api) api.clear_lyrics_cache().then((r) => done(S('removed')(r ? r.removed : 0))); break;
     case 'testNotify': if (api) api.test_notify().then(() => done(S('sent'))); break;
     case 'clipClear': if (api) api.clip_clear().then(() => done(S('cleared'))); break;
@@ -511,7 +510,7 @@ COMPONENTS.budsEq = function () {
     busy = true; cur = v; pickedAt = Date.now(); render();
     let res; try { res = await api.buds_set_eq(v); } catch (e) { res = { status: 'error' }; }
     busy = false;
-    if (res && res.status === 'ok') { say(S('eqApplied'), false); if (v === 7 && !tableLoaded) loadTable(); }
+    if (res && res.status === 'ok') { say('', false); if (v === 7 && !tableLoaded) loadTable(); }
     else { cur = prev; fail(res); }
     render();
   };
@@ -522,7 +521,7 @@ COMPONENTS.budsEq = function () {
     busy = true; pickedAt = Date.now(); cur = 7; render();
     let res; try { res = await api.buds_set_custom_eq(bands.slice()); } catch (e) { res = { status: 'error' }; }
     busy = false;
-    if (res && res.status === 'ok') { BUDS_CACHE.bands = bands.slice(); say(S('eqApplied'), false); } else fail(res);
+    if (res && res.status === 'ok') { BUDS_CACHE.bands = bands.slice(); say('', false); } else fail(res);
     render();
   };
   const scheduleSend = () => { clearTimeout(sendTimer); sendTimer = setTimeout(sendBands, 350); };       // 슬라이더를 움직이는 동안에는 보내지 않고, 멈추면 한 번에 보낸다
@@ -577,7 +576,7 @@ COMPONENTS.budsAdvanced = function () {
     busy = true; snap[k] = !prev; render();
     let res; try { res = await api[fn](!prev); } catch (e) { res = { status: 'error' }; }
     busy = false;
-    if (res && res.status === 'ok') say(S('eqApplied'), false);
+    if (res && res.status === 'ok') say('', false);
     else { snap[k] = prev; say(res && res.code === 'in_use' ? S('eqInUse') : S('eqFailed'), true); }
     render();
   };

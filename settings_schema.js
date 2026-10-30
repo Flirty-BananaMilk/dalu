@@ -41,7 +41,6 @@ const SETTINGS_PAGES = [
       { title: L('앱', 'App'), items: [
         { id: 'restart', type: 'button', action: 'restart', label: L('앱 재시작', 'Restart app'), btn: L('재시작', 'Restart'),
           desc: L('설정이 이상하게 적용될 때 다시 시작해 보세요.', 'Try this if something does not look right.') },
-        { id: 'recenter', type: 'button', action: 'recenter', label: L('노치를 화면 가운데로', 'Re-center the notch'), btn: L('가운데로', 'Center') },
       ] },
     ],
   },
@@ -139,8 +138,8 @@ const SETTINGS_PAGES = [
           desc: L('노치가 접혀 있을 때 새 곡 정보를 잠깐 펼쳐 보여 줍니다.', 'Briefly expands the notch for the new track.') },
       ] },
       { title: L('표시 방식', 'Behavior'), items: [
-        { id: 'peekTime', type: 'slider', path: 'settings', key: 'peekTime', def: 100, min: 50, max: 250, step: 10, fmt: pct, label: L('알림 표시 시간', 'Alert duration'),
-          desc: L('100%가 기본 길이입니다.', '100% is the default length.') },
+        { id: 'peekDur', type: 'slider', path: 'settings', key: 'peekDur', def: 3200, min: 1000, max: 8000, step: 200, fmt: ms, fmtEn: msEn, label: L('알림 표시 시간', 'Alert duration'),
+          desc: L('곡이 바뀔 때처럼 접힌 노치가 잠깐 펼쳐지는 알림이 떠 있는 시간입니다. 다른 알림도 같은 비율로 길어지거나 짧아져요.', 'How long an alert such as a track change stays on screen. Other alerts get longer or shorter by the same amount.') },
         { id: 'testNotify', type: 'button', action: 'testNotify', label: L('테스트 알림', 'Send a test alert'), btn: L('보내기', 'Send') },
       ] },
     ],
@@ -163,7 +162,7 @@ const SETTINGS_PAGES = [
           desc: L('리퀴드 글래스 “전체”에서 노치 둘레를 따라 도는 밝은 선입니다. 끄면 테두리 없이 유리만 보여요.', 'The bright outline running around the notch in Liquid Glass “Full”. Turn it off to show only the glass.'),
           indent: true, enabledIf: (d) => d.settings.glassNotch === 'full' },
         { id: 'captureNotch', type: 'seg', path: 'settings', key: 'captureNotch', def: 'auto', label: L('캡처·영상 녹화에서 노치', 'Notch in screenshots & video'),
-          desc: L('스크린샷·화면 녹화에 노치가 찍히는 방식을 정해요. “가리기”는 노치가 찍히지 않아요(노치 뒤 화면은 실시간으로 비쳐요). “자동”은 평소엔 가리다가, PrintScreen·Win+Shift+S·Win+Alt+R을 누르거나 OBS·반디캠 같은 녹화 프로그램이 켜져 있는 동안만 찍혀요(그동안 노치 뒤 화면은 멈춰요. 아주 빠른 PrintScreen은 놓칠 수 있어요). “표시”는 항상 찍히고, 노치 유리 뒤 화면은 정지 화면이 돼요. NVIDIA(지포스) 녹화는 가려진 창을 “보호된 콘텐츠”로 보고 바탕화면 녹화를 거부하기도 해서, 엔비디아로 영상을 찍을 때는 “표시”로 바꿔야 해요.', 'Chooses how the notch shows up in screenshots and screen recordings. “Hidden” keeps it out of them (the screen behind the notch shows through live). “Auto” keeps it out normally and shows it only while you press PrintScreen, Win+Shift+S or Win+Alt+R, or while a recorder such as OBS or Bandicam is running (the screen behind the notch freezes meanwhile; a very quick PrintScreen can be missed). “Shown” always puts it in, and the screen behind the notch glass becomes a still picture. NVIDIA recording may refuse to capture the desktop when a window is hidden from capture (“protected content”), so switch to “Shown” when you record with NVIDIA.'),
+          desc: L('스크린샷·화면 녹화에 노치가 찍히는 방식이에요. “가리기”는 안 찍히고, “자동”은 캡처·녹화 중일 때만 찍히고, “표시”는 항상 찍혀요. 엔비디아(지포스)로 영상을 찍을 때는 “표시”로 바꿔야 해요.', 'How the notch shows up in screenshots and screen recordings. “Hidden” is never captured, “Auto” only while a capture or recording is running, “Shown” always. To record with NVIDIA (GeForce), choose “Shown”.'),
           options: [{ v: 'hide', label: L('가리기', 'Hidden') }, { v: 'auto', label: L('자동', 'Auto') }, { v: 'show', label: L('표시', 'Shown') }],
           indent: true, enabledIf: (d) => d.settings.glassNotch === 'full' },
         { id: 'monitor', type: 'seg', path: 'settings', key: 'monitor', def: 0, optionsFrom: 'monitors', label: L('노치를 띄울 모니터', 'Show the notch on'),
@@ -173,12 +172,12 @@ const SETTINGS_PAGES = [
           desc: L('노치와 그 안의 글자·버튼·가사까지 함께 커지고 작아져요. 화면이 커서 노치가 작게 보이거나 멀리서 볼 때 키우세요.', 'Scales the notch and everything in it — text, buttons, lyrics. Raise it on a big screen or when you sit far away.') },
         { id: 'compact', type: 'toggle', path: 'settings', key: 'compact', def: false, label: L('작은 노치', 'Compact notch'),
           desc: L('접혀 있을 때 더 작게 보입니다.', 'A smaller collapsed notch.') },
-        { id: 'satellite', type: 'seg', path: 'settings', key: 'satellite', def: 'full', label: L('보조 노치', 'Satellite pill'),
-          options: [{ v: 'off', label: L('끔', 'Off') }, { v: 'timer', label: L('타이머만', 'Timer only') }, { v: 'full', label: L('타이머+시계', 'Timer + clock') }],
-          desc: L('음악이 나올 때 큰 노치 옆에 작은 노치가 두 개 붙고, 하나에 정보를 둘까지 담아 진행 중인 포모도로·타이머·스톱워치와 현재 시간을 보여 줘요(최대 네 개, 둘을 담으면 폭이 넓어져요). 오른쪽이 먼저, 그 뒤에 왼쪽이 나와요. 누르면 그 항목의 페이지가 열려요.', 'While music plays, two small pills sit beside the notch, each holding up to two items (up to four): your running Pomodoro, timer, stopwatch and the time. A pill holding two items gets wider. The right one appears first, then the left. Click an item to open its page.') },
         { id: 'compactClock', type: 'toggle', path: 'settings', key: 'compactClock', def: true, label: L('작은 노치에서 시계 표시', 'Clock in the compact notch'),
           desc: L('작은 노치로 음악이 나올 때 가운데에 현재 시간을 보여 줍니다.', 'Shows the time in the middle while music plays in the compact notch.'), indent: true,
           enabledIf: (d) => d.settings.compact },
+        { id: 'satellite', type: 'seg', path: 'settings', key: 'satellite', def: 'full', label: L('보조 노치', 'Satellite pill'),
+          options: [{ v: 'off', label: L('끔', 'Off') }, { v: 'timer', label: L('타이머만', 'Timer only') }, { v: 'full', label: L('타이머+시계', 'Timer + clock') }],
+          desc: L('음악이 나올 때 큰 노치 옆에 작은 노치가 두 개 붙고, 하나에 정보를 둘까지 담아 진행 중인 포모도로·타이머·스톱워치와 현재 시간을 보여 줘요(최대 네 개, 둘을 담으면 폭이 넓어져요). 오른쪽이 먼저, 그 뒤에 왼쪽이 나와요. 누르면 그 항목의 페이지가 열려요.', 'While music plays, two small pills sit beside the notch, each holding up to two items (up to four): your running Pomodoro, timer, stopwatch and the time. A pill holding two items gets wider. The right one appears first, then the left. Click an item to open its page.') },
       ] },
       { title: L('탭 구성', 'Tabs'), items: [
         { id: 'tabOrder', type: 'hidden', path: 'settings', key: 'tabOrder', def: 'music,pomo,timer,water,shelf,todo,clip,agenda,launcher,plugins,buds' },
@@ -235,7 +234,8 @@ const SETTINGS_PAGES = [
         { id: 'entrance', type: 'toggle', path: 'settings', key: 'entrance', def: true, label: L('항목이 차례로 나타나는 연출', 'Staggered entrance'),
           desc: L('페이지가 열릴 때 글자·버튼이 하나씩 떠오릅니다.', 'Items rise in one after another when a page opens.'), enabledIf: (d) => !d.settings.animOff },
         { id: 'pageAnim', type: 'seg', path: 'settings', key: 'pageAnim', def: 'slide', label: L('페이지 전환', 'Page transition'),
-          options: [{ v: 'slide', label: L('밀면서 전환', 'Slide') }, { v: 'fade', label: L('페이드', 'Fade') }], enabledIf: (d) => !d.settings.animOff },
+          options: [{ v: 'slide', label: L('밀면서 전환', 'Slide') }, { v: 'fade', label: L('페이드', 'Fade') }],
+          desc: L('페이지를 넘길 때의 효과예요. “밀면서 전환”은 새 페이지가 옆에서 살짝 밀려 들어오고, “페이드”는 제자리에서 서서히 바뀌어요.', 'The effect when you switch pages. “Slide” moves the new page in a little from the side; “Fade” changes it in place, gradually.'), enabledIf: (d) => !d.settings.animOff },
         { id: 'animOff', type: 'hidden', path: 'settings', key: 'animOff', def: false },      // 프리셋 “끔”이 바꾸는 값(화면에는 따로 항목을 두지 않는다)
       ] },
       { title: L('설정 창', 'Settings window'), items: [

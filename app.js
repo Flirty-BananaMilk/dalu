@@ -183,7 +183,7 @@ const DEFAULT_STORE = {
     smtcOn: true, mediaPriority: 'auto', extLyrics: true, extApple: true, extNetease: true, extLrclib: true,
     visualizer: true, vizGain: 100, artGlow: true, glowStrength: 100,
     notify: { volume: true, brightness: true, caps: true, num: true, scroll: true, lang: true, power: true, battery_low: true, net: true, audio_device: true, buds: true, buds_low: true, buds_alert: true, track: true, capture_mode: true },
-    peekTime: 100, budsLowPct: 20,
+    peekDur: 3200, budsLowPct: 20,
     theme: 'black', monitor: 0, hoverDelay: 0, collapseDelay: 850, idleMin: 2, pet: true, petAfter: 45, fullscreenMode: 'yield',
     animOff: false, animSpeed: 100, bounce: 100, entrance: true, pageAnim: 'slide',
     tabOrder: DEFAULT_TAB_ORDER, tabHidden: '', pluginsEnabled: '',
@@ -598,7 +598,8 @@ function startPeekTimer(ms) {
 }
 
 // 설정 '알림 표시 시간'(100% = 기본)을 모든 접힌 상태 알림(곡이 바뀔 때, 문구, 시스템 알림)에 같게 적용한다
-const peekMs = (ms) => ms * (clampN(store.settings.peekTime, 30, 400, 100) / 100);
+const peekScale = () => clampN(store.settings.peekDur, 1000, 8000, 3200) / 3200;      // 알림 표시 시간 설정(기본 3.2초 = 곡이 바뀔 때 알림)을 다른 알림에도 같은 비율로
+const peekMs = (ms) => ms * peekScale();
 
 function showTrackPeek() {
   if (store.settings.notify && store.settings.notify.track === false) return;
@@ -627,7 +628,7 @@ function showToast(msg) {
 // opts: { icon, tone, title, sub, meter(0~1), ms, key }
 // key(예: 'volume')가 같은 알림이 이미 떠 있으면 등장 연출을 다시 하지 않고 값만 갱신한다 (볼륨을 계속 조절할 때 연출이 반복되지 않게).
 function notify(opts) {
-  opts = Object.assign({}, opts, { ms: (opts.ms || 2600) * (clampN(store.settings.peekTime, 30, 400, 100) / 100) });   // 표시 시간 설정
+  opts = Object.assign({}, opts, { ms: (opts.ms || 2600) * peekScale() });   // 표시 시간 설정
   if (isExpanded) {
     showToast(opts.sub ? `${opts.title} · ${opts.sub}` : opts.title);
     return;
