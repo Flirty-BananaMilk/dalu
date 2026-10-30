@@ -472,7 +472,7 @@ function setDock(on) {
   if (on === dockOn) return;
   dockOn = on;
   island.dataset.dock = on ? '1' : '0';
-  scheduleRegion(true);
+  scheduleRegion();      // 열릴 땐 바로 영역을 넓히고, 닫힐 땐 노치가 다 줄어든 뒤에 줄인다(강제로 줄이면 줄어드는 도중에 아래가 잘려 보인다)
 }
 
 const PAGE_VIEWS = ['music', 'lyrics', 'pomo', 'timer', 'water', 'shelf', 'todo', 'clip', 'agenda', 'launcher', 'plugins', 'buds'];

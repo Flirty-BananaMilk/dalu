@@ -31,7 +31,7 @@ function applyPrefs() {
   if (typeof applyNotchGlass === 'function') { if (gmode !== notchGlassMode) applyNotchGlass(gmode); else refreshNotchGlassStrength(); }
   root.style.setProperty('--dkh', dockH() + 'px');
   root.style.setProperty('--dkc', (dockMargin() - 7) + 'px');
-  if (typeof dockOn !== 'undefined' && dockOn) scheduleRegion(true);
+  if (typeof dockOn !== 'undefined' && dockOn) scheduleRegion();
   root.style.setProperty('--lyric-scale', String(clampN(s.lyricSize, 70, 140, 100) / 100));
   root.style.setProperty('--glow-str', String(s.artGlow ? clampN(s.glowStrength, 30, 160, 100) / 100 : 0));
 
