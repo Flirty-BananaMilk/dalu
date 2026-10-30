@@ -1584,8 +1584,8 @@ html[data-rim="off"] .rimring, html[data-rim="off"] .rimbody, html[data-rim="off
 
 /* 탭 아이콘 독: 점 위에 마우스를 올리면 점들이 큰 아이콘 버튼으로 바뀌고 노치 아래가 조금 늘어난다 */
 .dots i .uic { width: 0; height: 0; opacity: 0; transition: width 0.3s var(--spring), height 0.3s var(--spring), opacity 0.2s ease; }
-.island[data-dock="1"] { --dk: var(--dkh, 24px); }
-.island[data-dock="1"][data-s] .dots { top: calc(var(--h) + 7px); gap: 6px; }
+.island[data-dock="1"] { --dk: var(--dkh, 23px); }
+.island[data-dock="1"][data-s] .dots { top: calc(var(--h) + var(--dkc, 3px)); gap: 6px; }
 .island[data-dock="1"] .dots i { width: 20px; height: 20px; border-width: 0; margin: 0; border-radius: 7px; background-color: rgba(255, 255, 255, 0.1); }
 .island[data-dock="1"] .dots i:hover { background-color: rgba(255, 255, 255, 0.2); }
 .island[data-dock="1"] .dots i.on { width: 20px; background-color: rgba(255, 255, 255, 0.3); }
