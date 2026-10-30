@@ -90,6 +90,8 @@ function afterPrefsChanged(before, patch) {
   updateLyricsButtons();
   updateSoundMenu();
   if (typeof refreshPageDots === 'function') refreshPageDots();
+  if (typeof updateDockTitles === 'function') updateDockTitles();
+  if (store.settings.tabDock === false && typeof setDock === 'function') setDock(false);
   if (typeof agendaPrefsChanged === 'function') agendaPrefsChanged();
   if (typeof syncFocusDnd === 'function') syncFocusDnd();       // 집중 중에 방해 금지 설정을 껐다 켰다 한 경우
   if (patch && (patch.pomo || patch.water)) {

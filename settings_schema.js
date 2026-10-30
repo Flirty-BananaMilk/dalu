@@ -186,6 +186,8 @@ const SETTINGS_PAGES = [
         { id: 'tabsConfig', type: 'custom', component: 'tabs' },
       ] },
       { title: L('펼침/접힘', 'Expand & collapse'), items: [
+        { id: 'tabDock', type: 'toggle', path: 'settings', key: 'tabDock', def: true, label: L('페이지 점에 마우스를 올리면 아이콘으로', 'Icons when hovering the page dots'),
+          desc: L('노치 아래의 작은 점 위에 마우스를 올리면 점이 탭 아이콘으로 바뀌어 누르기 쉬워요. 이때 노치 아래가 잠깐 조금 늘어나요.', 'Hover the small dots under the notch and they turn into tab icons that are easy to click. The notch grows a little at the bottom meanwhile.') },
         { id: 'hoverDelay', type: 'slider', path: 'settings', key: 'hoverDelay', def: 0, min: 0, max: 800, step: 50, fmt: ms, fmtEn: msEn,
           label: L('마우스를 올린 뒤 펼침 지연', 'Delay before expanding on hover'), desc: L('실수로 스칠 때 펼쳐지는 것을 막습니다.', 'Avoids expanding when the cursor just passes by.') },
         { id: 'collapseDelay', type: 'slider', path: 'settings', key: 'collapseDelay', def: 850, min: 200, max: 2500, step: 50, fmt: ms, fmtEn: msEn,

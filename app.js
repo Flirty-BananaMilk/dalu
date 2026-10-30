@@ -105,7 +105,7 @@ const I18N = {
     clipTitle: '클립보드', clipClear: '모두 지우기', clipEmpty: '복사한 글이 여기에 쌓여요', clipOff: '클립보드 기록이 꺼져 있어요', openSettings: '설정 열기', clipCopied: '다시 복사했어요',
     delete: '삭제', failed: '실패했어요', agoNow: '방금', agoMin: '{n}분 전', agoHour: '{n}시간 전',
     agendaTitle: '일정', agendaNoTitle: '(제목 없음)', agendaEmpty: '앞으로 7일 동안 일정이 없어요', agendaNoSource: '설정에서 캘린더 주소를 넣어 주세요', agendaError: '캘린더를 불러오지 못했어요',
-    agendaAllDay: '종일', agendaNow: '진행 중', agendaInMin: '{n}분 후', agendaTomorrow: '내일', agendaRefreshing: '다시 불러오는 중…', agendaRefreshTitle: '새로고침', agendaStartsIn: '{n}분 후 시작', agendaViewList: '목록', agendaViewWeek: '주', agendaViewMonth: '월', agendaToday: '오늘', agendaDayEmpty: '이 날은 일정이 없어요', agendaCont: '이어짐', agendaPrev: '이전', agendaNext: '다음',
+    agendaAllDay: '종일', agendaNow: '진행 중', agendaInMin: '{n}분 후', agendaTomorrow: '내일', agendaRefreshing: '다시 불러오는 중…', agendaRefreshTitle: '새로고침', agendaStartsIn: '{n}분 후 시작', tab_music: '음악', tab_pomo: '집중', tab_timer: '타이머', tab_water: '물', tab_shelf: '선반', tab_todo: '할 일', tab_clip: '클립보드', tab_agenda: '일정', tab_launcher: '바로가기', tab_plugins: '플러그인', tab_buds: '이어버드', agendaViewList: '목록', agendaViewWeek: '주', agendaViewMonth: '월', agendaToday: '오늘', agendaDayEmpty: '이 날은 일정이 없어요', agendaCont: '이어짐', agendaPrev: '이전', agendaNext: '다음',
     sourceSwitch: '재생 소스 전환', sourceSwitched: '재생 소스를 바꿨어요', volumeTitle: '볼륨', muteTitle: '음소거', menuSettings: '설정…', testAlert: '테스트 알림', testAlertSub: '이렇게 표시돼요', done: '완료', cancel: '취소', add: '추가', reset: '초기화', undo: '되돌리기',
     // pomodoro
     pomoFocus: '집중 시간', pomoBreak: '짧은 휴식', start: '시작', pause: '일시정지', resume: '계속',
@@ -144,7 +144,7 @@ const I18N = {
     clipTitle: 'Clipboard', clipClear: 'Clear all', clipEmpty: 'Things you copy will pile up here', clipOff: 'Clipboard history is off', openSettings: 'Open settings', clipCopied: 'Copied again',
     delete: 'Delete', failed: 'Failed', agoNow: 'just now', agoMin: '{n} min ago', agoHour: '{n} h ago',
     agendaTitle: 'Agenda', agendaNoTitle: '(No title)', agendaEmpty: 'Nothing on your calendar for the next 7 days', agendaNoSource: 'Add a calendar address in Settings', agendaError: 'Could not load the calendar',
-    agendaAllDay: 'All day', agendaNow: 'Now', agendaInMin: 'in {n} min', agendaTomorrow: 'Tomorrow', agendaRefreshing: 'Refreshing…', agendaRefreshTitle: 'Refresh', agendaStartsIn: 'starts in {n} min', agendaViewList: 'List', agendaViewWeek: 'Week', agendaViewMonth: 'Month', agendaToday: 'Today', agendaDayEmpty: 'Nothing on this day', agendaCont: 'Continues', agendaPrev: 'Previous', agendaNext: 'Next',
+    agendaAllDay: 'All day', agendaNow: 'Now', agendaInMin: 'in {n} min', agendaTomorrow: 'Tomorrow', agendaRefreshing: 'Refreshing…', agendaRefreshTitle: 'Refresh', agendaStartsIn: 'starts in {n} min', tab_music: 'Music', tab_pomo: 'Focus', tab_timer: 'Timer', tab_water: 'Water', tab_shelf: 'Shelf', tab_todo: 'To-do', tab_clip: 'Clipboard', tab_agenda: 'Agenda', tab_launcher: 'Shortcuts', tab_plugins: 'Plugins', tab_buds: 'Earbuds', agendaViewList: 'List', agendaViewWeek: 'Week', agendaViewMonth: 'Month', agendaToday: 'Today', agendaDayEmpty: 'Nothing on this day', agendaCont: 'Continues', agendaPrev: 'Previous', agendaNext: 'Next',
     sourceSwitch: 'Switch playback source', sourceSwitched: 'Playback source changed', volumeTitle: 'Volume', muteTitle: 'Mute', menuSettings: 'Settings…', testAlert: 'Test alert', testAlertSub: 'This is how alerts look', done: 'Done', cancel: 'Cancel', add: 'Add', reset: 'Reset', undo: 'Undo',
     pomoFocus: 'Focus time', pomoBreak: 'Short break', start: 'Start', pause: 'Pause', resume: 'Resume',
     toBreak: 'Take a break', toFocus: 'Back to focus', minutesN: '{n} min', pomoToday: '{n} done today',
@@ -188,7 +188,7 @@ const DEFAULT_STORE = {
     animOff: false, animSpeed: 100, bounce: 100, entrance: true, pageAnim: 'slide',
     tabOrder: DEFAULT_TAB_ORDER, tabHidden: '', pluginsEnabled: '',
     focusDnd: true,
-    clipboardOn: false, calendarUrl: '', calendarRemindMin: 10, hotkeysOn: true, hkToggle: 'Ctrl+Alt+N', hkSettings: 'Ctrl+Alt+S', hkMixer: 'Ctrl+Alt+V', hkLyrics: 'Ctrl+Alt+L', hkCapture: 'Ctrl+Alt+P', captureSeconds: 15, captureNotch: 'auto',
+    clipboardOn: false, calendarUrl: '', calendarRemindMin: 10, hotkeysOn: true, tabDock: true, hkToggle: 'Ctrl+Alt+N', hkSettings: 'Ctrl+Alt+S', hkMixer: 'Ctrl+Alt+V', hkLyrics: 'Ctrl+Alt+L', hkCapture: 'Ctrl+Alt+P', captureSeconds: 15, captureNotch: 'auto',
     todoRemind: true, todoLeadMin: 0, snoozeMin: 10, weekStart: 'sun', agendaView: 'list', mediaKeys: true, upNext: true, upNextSec: 12, appFilterMode: 'off', appFilterList: ''
   },
   pomo: { focusMin: 25, breakMin: 5, doneToday: 0, doneDate: '' },
@@ -388,6 +388,7 @@ function applyLang() {
   setTextAll(titleEls, state.title || t('noTrack'));
   buildList(hasLyricLines() ? state.lyrics.lines : null);   // 리스트의 안내 문구 갱신
   miniIdx = -1;
+  if (typeof updateDockTitles === 'function') updateDockTitles();      // 탭 아이콘 독의 이름표
   for (const fn of langHooks) fn();
 }
 
@@ -456,7 +457,19 @@ function geometryFor(v) {
     return g;
   }
   if (v === 'peek') return STATES['peek_' + peek.kind] || STATES.peek_track;
-  return STATES[v] || STATES.mini;
+  const base = STATES[v] || STATES.mini;
+  return dockOn && isPageView(v) ? { w: base.w, h: base.h + DOCK_H, e: base.e } : base;      // 탭 아이콘 독이 열리면 노치 아래가 조금 늘어난다
+}
+
+// 페이지 점에 마우스를 올리면 큰 아이콘 독으로 바뀐다 (노치 아래가 DOCK_H 만큼 늘어난다. CSS 의 --dk 와 같은 값)
+const DOCK_H = 18;
+let dockOn = false;
+function setDock(on) {
+  on = !!on && store.settings.tabDock !== false;
+  if (on === dockOn) return;
+  dockOn = on;
+  island.dataset.dock = on ? '1' : '0';
+  scheduleRegion(true);
 }
 
 const PAGE_VIEWS = ['music', 'lyrics', 'pomo', 'timer', 'water', 'shelf', 'todo', 'clip', 'agenda', 'launcher', 'plugins', 'buds'];
@@ -530,6 +543,7 @@ function updateView() {
   view = next;
   if (next === 'music' || next === 'lyrics') setPlayerMode(next, !(prev === 'music' || prev === 'lyrics'));
   island.dataset.s = next;
+  if (!isPageView(next)) setDock(false);
   syncLayerVisibility(layerOf(next));
   // 뷰가 바뀌면 mini 는 줄을 다시 그리고, 세로 리스트는 다음 배치를 애니메이션 없이 즉시 맞춘다.
   // (리스트의 활성 줄 상태는 DOM 과 함께 유지해야 하므로 listIdx 는 건드리지 않는다)

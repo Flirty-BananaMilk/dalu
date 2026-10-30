@@ -18,6 +18,27 @@ function pageAvailable(p) {
 
 // 설정(tabOrder/tabHidden)에 맞춰 도트를 순서대로 놓고, 숨기거나 쓸 수 없는 탭의 도트는 감춘다
 let tabSig = '';
+// 탭 아이콘 독: 점마다 아이콘을 넣어 두고(평소엔 점이라 보이지 않는다), 점 위에 마우스를 올리면 점들이 큰 아이콘으로 바뀐다
+const DOCK_ICON = { music: 'music', pomo: 'target', timer: 'timer', water: 'drop', shelf: 'folder', todo: 'checklist', clip: 'clipboard', agenda: 'calendar', launcher: 'launch', plugins: 'plug', buds: 'headphones' };
+let dockTimer = null;
+function initDock() {
+  const dots = $('pageDots');
+  for (const d of $$('#pageDots i')) d.innerHTML = uiIconHtml(DOCK_ICON[d.dataset.p] || 'puzzle', d.dataset.p);
+  updateDockTitles();
+  const near = (e, pad) => { const r = dots.getBoundingClientRect(); return e.clientX >= r.left - pad && e.clientX <= r.right + pad && e.clientY >= r.top - pad && e.clientY <= r.bottom + pad; };
+  island.addEventListener('mousemove', (e) => {
+    if (!isExpanded || !isPageView(view || '')) return;
+    const hit = near(e, dockOn ? 12 : 4);
+    clearTimeout(dockTimer);
+    if (hit && !dockOn) dockTimer = setTimeout(() => setDock(true), 130);          // 스치기만 해서는 열리지 않는다
+    else if (!hit && dockOn) dockTimer = setTimeout(() => setDock(false), 260);
+  });
+  island.addEventListener('mouseleave', () => { clearTimeout(dockTimer); setDock(false); });
+}
+function updateDockTitles() {
+  for (const d of $$('#pageDots i')) d.title = t('tab_' + d.dataset.p);
+}
+
 function refreshPageDots() {
   const order = parseTabOrder(store.settings.tabOrder);
   const sig = order.join(',');
@@ -782,6 +803,7 @@ function agendaAlert(e) {
 }
 
 function initFeatures2() {
+  initDock();
   initTimer();
   initClip();
   initAgenda();
