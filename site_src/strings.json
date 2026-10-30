@@ -99,7 +99,13 @@
   "st_h": "내 방식대로.",
   "st_p": "설정 100개 넘게, 4개 언어, 플러그인은 JSON 파일 하나로.",
   "gt_h": "Dalu, 무료예요.",
-  "gt_p": "Windows 10(2004 이상) 또는 11. 계정도 추적도 없어요."
+  "gt_p": "Windows 10(2004 이상) 또는 11. 계정도 추적도 없어요.",
+  "cp_h": "그냥 검정, 아니면 리퀴드 글래스.",
+  "cp_p": "스크롤하면 두 모습이 오가요.",
+  "cp_off": "글래스 끔",
+  "cp_on": "글래스 켬",
+  "cp_alt_off": "배경화면 위의 검은 노치, 뒤가 비치지 않는다",
+  "cp_alt_on": "같은 노치를 리퀴드 글래스로 켠 모습, 뒤쪽 풍경을 굴절시킨다"
  },
  "en": {
   "name": "English",
@@ -201,7 +207,13 @@
   "st_h": "Make it yours.",
   "st_p": "Over a hundred settings, four languages, and plugins written in plain JSON.",
   "gt_h": "Get Dalu. It's free.",
-  "gt_p": "Windows 10 (2004 or later) or 11. No account, no tracking."
+  "gt_p": "Windows 10 (2004 or later) or 11. No account, no tracking.",
+  "cp_h": "Plain black. Or liquid glass.",
+  "cp_p": "Scroll to slide between the two.",
+  "cp_off": "Glass off",
+  "cp_on": "Glass on",
+  "cp_alt_off": "The notch as a plain black pill over the wallpaper, nothing showing through",
+  "cp_alt_on": "The same notch as liquid glass, bending the landscape behind it"
  },
  "zh": {
   "name": "简体中文",
@@ -303,7 +315,13 @@
   "st_h": "按你的方式来。",
   "st_p": "上百项设置，四种语言，插件只需一个 JSON 文件。",
   "gt_h": "获取 Dalu，|免费。",
-  "gt_p": "Windows 10（2004 及以上）或 11。没有账号，没有追踪。"
+  "gt_p": "Windows 10（2004 及以上）或 11。没有账号，没有追踪。",
+  "cp_h": "纯黑，|或液态玻璃。",
+  "cp_p": "滚动页面，在两种外观之间切换。",
+  "cp_off": "关闭玻璃",
+  "cp_on": "开启玻璃",
+  "cp_alt_off": "壁纸上的纯黑刘海，看不到背后的画面",
+  "cp_alt_on": "同一个刘海开启液态玻璃后，折射出背后的风景"
  },
  "ja": {
   "name": "日本語",
@@ -405,6 +423,12 @@
   "st_h": "あなた流に。",
   "st_p": "100 以上の設定、4 つの言語、プラグインは JSON ファイル 1 つで。",
   "gt_h": "Dalu は無料です。",
-  "gt_p": "Windows 10（2004 以降）または 11。アカウントも追跡もありません。"
+  "gt_p": "Windows 10（2004 以降）または 11。アカウントも追跡もありません。",
+  "cp_h": "ただの黒か、|リキッドグラスか。",
+  "cp_p": "スクロールすると、2つの見た目を行き来します。",
+  "cp_off": "ガラスなし",
+  "cp_on": "ガラスあり",
+  "cp_alt_off": "壁紙の上の真っ黒なノッチ。背後は見えない",
+  "cp_alt_on": "同じノッチをリキッドグラスにした姿。背後の景色を屈折させる"
  }
 }

@@ -26,7 +26,7 @@ S = json.loads((SRC / "strings.json").read_text(encoding="utf-8"))
 SCENES = ["music", "pomo", "shelf", "agenda", "buds"]
 LYRICS = ["Streetlights bloom along the river.", "Every window hums a quiet tune.", "Carry me past the midnight bridges."]
 # 장면별 트랙 높이(svh). 무대는 그 안에서 위에 고정된다.
-T = {"hero": 320, "lyr": 360, "ch": 560, "gl": 330, "dk": 260}
+T = {"hero": 320, "lyr": 360, "ch": 560, "cp": 300, "gl": 330, "dk": 260}
 HERO_FRAMES, DOCK_FRAMES = 44, 34
 
 STAMP = """/* Hallmark · shape: Pinned scenes, each driven by the scroll · genre: atmospheric · theme: custom · job: try · idea: "The page is the desktop: the real notch opens on a real wallpaper as you scroll." · vibe: "slate dusk, amber light, moving glass"
@@ -113,7 +113,7 @@ def scene_css():
     @keyframes fx-in {{ from {{ opacity: 0; transform: translateY(5svh); }} to {{ opacity: 1; transform: none; }} }}
     @keyframes fx-zoom {{ from {{ transform: scale(1); }} to {{ transform: scale(1.1); }} }}
     @keyframes word-on {{ from {{ opacity: 0.16; }} to {{ opacity: 1; }} }}
-    .hero .stage, .lyrics .stage, .chapter .stage, .glass .stage, .dock .stage {{ position: sticky; top: var(--banner-height, 0px); height: 100svh; min-height: 0; }}
+    .hero .stage, .lyrics .stage, .chapter .stage, .compare .stage, .glass .stage, .dock .stage {{ position: sticky; top: var(--banner-height, 0px); height: 100svh; min-height: 0; }}
     {track('hero', '.hero')}
     .hero .bg {{ animation: fx-zoom linear both; animation-timeline: --hero; animation-range: cover 0% cover 100%; }}
     .hero__a {{ animation: fx-out linear both; animation-timeline: --hero; animation-range: {rng('hero', 0.36, 0.56)}; }}
@@ -133,6 +133,18 @@ def scene_css():
     .chapter .pg img {{ height: auto; max-height: 100%; min-height: 0; }}
     {pg_block}
     {rail_block}
+
+    {track('cp', '.compare')}
+    .compare .stage {{ display: grid; grid-template-rows: auto minmax(0, 1fr); gap: var(--space-lg); padding-block: var(--space-lg); }}
+    .compare .wipe {{ position: relative; display: grid; align-self: center; min-height: 0; gap: 0; }}
+    .compare .wipe figure {{ grid-area: 1 / 1; position: relative; }}
+    .compare .wipe figcaption {{ position: absolute; bottom: var(--space-md); margin: 0; padding: var(--space-xs) var(--space-md); border-radius: var(--radius-pill); background: color-mix(in oklab, var(--color-paper) 78%, transparent); color: var(--color-ink); }}
+    .compare .wipe__a figcaption {{ left: var(--space-md); }}
+    .compare .wipe__b figcaption {{ right: var(--space-md); }}
+    @keyframes wipe-clip {{ from {{ clip-path: inset(0 0 0 100%); }} to {{ clip-path: inset(0 0 0 0%); }} }}
+    @keyframes wipe-bar {{ from {{ transform: translateX(100%); }} to {{ transform: none; }} }}
+    .compare .wipe__b {{ animation: wipe-clip linear both; animation-timeline: --cp; animation-range: {rng('cp', 0.14, 0.86)}; }}
+    .compare .wipe__bar {{ display: block; animation: wipe-bar linear both; animation-timeline: --cp; animation-range: {rng('cp', 0.14, 0.86)}; }}
 
     {track('gl', '.glass')}
     .glass .stage {{ grid-template-rows: auto minmax(0, 1fr) auto; padding-block: var(--space-lg); }}
@@ -263,6 +275,17 @@ def page(lang):
       <div class="chapter__head"><h2 id="ch-h">{H(t["ch_h"])}</h2><ul class="rail" aria-hidden="true">{rail}</ul></div>
       <ol class="pages">
 {pages}      </ol>
+    </div>
+  </section>
+
+  <section class="track compare" aria-labelledby="cp-h">
+    <div class="stage container">
+      <div class="compare__head"><h2 id="cp-h">{H(t["cp_h"])}</h2><p class="lead">{escape(t["cp_p"])}</p></div>
+      <div class="wipe">
+        <figure class="shot wipe__a">{img("glassoff", "en", "dusk", t["cp_alt_off"], "(min-width: 60rem) 1312px, 100vw", 1140, 2280, 900)}<figcaption>{escape(t["cp_off"])}</figcaption></figure>
+        <figure class="shot wipe__b">{img("music", "en", "dusk", t["cp_alt_on"], "(min-width: 60rem) 1312px, 100vw", 1140, 2280, 900)}<figcaption>{escape(t["cp_on"])}</figcaption></figure>
+        <span class="wipe__bar" aria-hidden="true"></span>
+      </div>
     </div>
   </section>
 

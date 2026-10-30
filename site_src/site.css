@@ -95,6 +95,14 @@ h3 { font-size: clamp(1.75rem, 2.2vw + 0.75rem, 3rem); line-height: 1.08; max-wi
 .chip:has(input:checked) { background: var(--color-accent); color: var(--color-accent-ink); box-shadow: none; }
 .chip:has(input:focus-visible) { outline: 2px solid var(--color-focus); outline-offset: 3px; }
 
+/* compare: the same notch without and with liquid glass */
+.compare .stage { padding-block: var(--space-2xl); display: grid; gap: var(--space-xl); }
+.compare__head { display: grid; gap: var(--space-md); }
+.wipe { display: grid; gap: var(--space-lg); }
+.wipe img { width: 100%; aspect-ratio: 2280 / 900; object-fit: cover; object-position: 50% 0; border-radius: var(--radius-card); outline: 1px solid color-mix(in oklab, var(--color-ink) 9%, transparent); outline-offset: -1px; }
+.wipe figcaption { margin-top: var(--space-sm); color: var(--color-ink-2); font-size: var(--text-md); }
+.wipe__bar { display: none; position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.wipe__bar::after { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 3px; background: var(--color-accent); }
 /* dock: dots turn into icons */
 .dock .stage { min-height: 86svh; }
 .dock .seq { top: 14svh; width: min(78%, 1180px); }
@@ -144,8 +152,8 @@ h3 { font-size: clamp(1.75rem, 2.2vw + 0.75rem, 3rem); line-height: 1.08; max-wi
   .hero__b, .dock__a { inset: auto 0 var(--space-xl) 0; }
   .dock .seq { width: 130%; }
   .facts div { grid-template-columns: minmax(0, 1fr); gap: var(--space-2xs); }
-  .pg figure, .glass__stack { overflow: clip; border-radius: var(--radius-card); }
-  .pg img, .glass__stack img { width: 142%; max-width: none; margin-left: -21%; aspect-ratio: 2280 / 900; border-radius: 0; outline: 0; }
+  .pg figure, .glass__stack, .wipe figure { overflow: clip; border-radius: var(--radius-card); }
+  .pg img, .glass__stack img, .wipe img { width: 142%; max-width: none; margin-left: -21%; aspect-ratio: 2280 / 900; border-radius: 0; outline: 0; }
 }
 
 /* rising into view: a figure scales up as it enters (only where scroll timelines are supported and motion is welcome) */
