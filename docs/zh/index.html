@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dalu：Windows 屏幕上的刘海</title>
-<meta name="description" content="鼠标一指就展开成歌词、计时器、文件架和耳机控制的 Windows 刘海。免费，无需账号。">
+<title>Dalu：让 Windows 屏幕顶端活起来</title>
+<meta name="description" content="Dalu 是 Windows 的刘海。音乐、同步歌词、计时器、文件和耳机控制，鼠标一指即开。免费，无需账号。">
 <meta name="color-scheme" content="dark">
 <link rel="canonical" href="https://flirty-bananamilk.github.io/dalu/zh/">
 <meta property="og:type" content="website"><meta property="og:site_name" content="Dalu">
-<meta property="og:title" content="Dalu：Windows 屏幕上的刘海"><meta property="og:description" content="鼠标一指就展开成歌词、计时器、文件架和耳机控制的 Windows 刘海。免费，无需账号。">
+<meta property="og:title" content="Dalu：让 Windows 屏幕顶端活起来"><meta property="og:description" content="Dalu 是 Windows 的刘海。音乐、同步歌词、计时器、文件和耳机控制，鼠标一指即开。免费，无需账号。">
 <meta property="og:url" content="https://flirty-bananamilk.github.io/dalu/zh/"><meta property="og:image" content="https://flirty-bananamilk.github.io/dalu/assets/music-dusk-zh-1140.webp">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="alternate" hreflang="ko" href="https://flirty-bananamilk.github.io/dalu/ko/">
@@ -19,66 +19,80 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 14'%3E%3Cpath d='M0 0h22v6a8 8 0 0 1-8 8H8a8 8 0 0 1-8-8z' fill='%23f1e7d4'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Funnel+Display:wght@600&family=Albert+Sans:wght@400;600&family=Noto+Sans+SC:wght@400;600&display=swap">
+<link rel="preload" as="image" href="../assets/wp-dusk.webp" fetchpriority="high">
 <link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/site.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#main">跳到正文</a>
-<header class="hero">
-  <nav class="nav" aria-label="Dalu">
-    <div class="container nav__row">
-      <div class="chip-bar"><a class="wordmark" href="./" aria-label="Dalu"><svg width="22" height="14" viewBox="0 0 22 14" aria-hidden="true" focusable="false"><path d="M0 0h22v6a8 8 0 0 1-8 8H8a8 8 0 0 1-8-8z" fill="currentColor"/></svg><span>Dalu</span></a></div>
-      <div class="chip-bar"><ul class="langs" aria-label="语言"><li><a href="../ko/" hreflang="ko" lang="ko">한국어</a></li><li><a href="../en/" hreflang="en" lang="en">English</a></li><li><a href="../zh/" hreflang="zh-Hans" lang="zh-Hans" aria-current="page">简体中文</a></li><li><a href="../ja/" hreflang="ja" lang="ja">日本語</a></li></ul><a class="btn btn--primary" href="https://flirty-bananamilk.itch.io/dalu">下载 Windows 版</a></div>
-    </div>
+<header class="nav">
+  <nav class="container nav__row" aria-label="Dalu">
+    <div class="chip-bar"><a class="wordmark" href="./" aria-label="Dalu"><svg width="22" height="14" viewBox="0 0 22 14" aria-hidden="true" focusable="false"><path d="M0 0h22v6a8 8 0 0 1-8 8H8a8 8 0 0 1-8-8z" fill="currentColor"/></svg><span>Dalu</span></a></div>
+    <div class="chip-bar"><ul class="langs" aria-label="语言"><li><a href="../ko/" hreflang="ko" lang="ko">한국어</a></li><li><a href="../en/" hreflang="en" lang="en">English</a></li><li><a href="../zh/" hreflang="zh-Hans" lang="zh-Hans" aria-current="page">简体中文</a></li><li><a href="../ja/" hreflang="ja" lang="ja">日本語</a></li></ul><a class="btn btn--primary" href="https://flirty-bananamilk.itch.io/dalu">下载 Windows 版</a></div>
   </nav>
-  <figure class="hero__shot"><img src="../assets/music-dusk-zh-1140.webp" srcset="../assets/music-dusk-zh-1140.webp 1140w, ../assets/music-dusk-zh-2280.webp 2280w" sizes="100vw" width="2280" height="900" alt="音乐页面：专辑封面、播放按钮和逐字同步的歌词" fetchpriority="high"></figure>
-  <div class="container hero__text">
-    <h1>给 Windows 屏幕<wbr>一个刘海。</h1>
-    <div class="hero__side"><p class="lead">歌词、计时器、文件和耳机，鼠标一指就展开。</p>
-    <div class="actions"><a class="btn btn--primary" href="https://flirty-bananamilk.itch.io/dalu">下载 Windows 版</a><a class="btn btn--secondary" href="https://github.com/Flirty-BananaMilk/dalu">查看源码</a></div></div>
-  </div>
 </header>
 <main id="main">
-  <section class="chapter" aria-labelledby="chapter-h">
-    <div class="chapter__track">
-      <div class="chapter__stage container">
-        <div class="chapter__head"><h2 id="chapter-h">一个刘海，<wbr>五个页面。</h2></div>
-        <ol class="pages">
-<li class="pg"><figure class="shot"><img src="../assets/music-dusk-zh-1140.webp" srcset="../assets/music-dusk-zh-1140.webp 1140w, ../assets/music-dusk-zh-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="音乐页面：专辑封面、播放按钮和逐字同步的歌词" loading="lazy" decoding="async"></figure><div class="pg__text"><span class="pg__name">音乐</span><h3>歌词逐字滚动</h3><p>歌曲带有时间信息时，每个字都踩着节拍出现。</p></div></li>
-<li class="pg"><figure class="shot"><img src="../assets/pomo-dusk-zh-1140.webp" srcset="../assets/pomo-dusk-zh-1140.webp 1140w, ../assets/pomo-dusk-zh-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="专注页面：正在运行的番茄钟" loading="lazy" decoding="async"></figure><div class="pg__text"><span class="pg__name">专注</span><h3>安静运行的<wbr>番茄钟</h3><p>番茄钟、计时器、饮水记录和待办事项，集中在一处。</p></div></li>
-<li class="pg"><figure class="shot"><img src="../assets/shelf-dusk-zh-1140.webp" srcset="../assets/shelf-dusk-zh-1140.webp 1140w, ../assets/shelf-dusk-zh-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="文件架页面：放在刘海上的三个文件" loading="lazy" decoding="async"></figure><div class="pg__text"><span class="pg__name">文件架</span><h3>放下文件，<wbr>随身带走</h3><p>拖到刘海上的文件，可以再拖进任何窗口。</p></div></li>
-<li class="pg"><figure class="shot"><img src="../assets/agenda-dusk-zh-1140.webp" srcset="../assets/agenda-dusk-zh-1140.webp 1140w, ../assets/agenda-dusk-zh-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="日程页面：月历和当天的日程" loading="lazy" decoding="async"></figure><div class="pg__text"><span class="pg__name">日程</span><h3>按月<wbr>查看日历</h3><p>粘贴日历链接（.ics），可按列表、周或月查看。</p></div></li>
-<li class="pg"><figure class="shot"><img src="../assets/buds-dusk-zh-1140.webp" srcset="../assets/buds-dusk-zh-1140.webp 1140w, ../assets/buds-dusk-zh-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="耳机页面：电量和降噪模式" loading="lazy" decoding="async"></figure><div class="pg__text"><span class="pg__name">耳机</span><h3>一键<wbr>切换降噪</h3><p>在刘海上切换三星 Galaxy Buds 的模式。</p></div></li>
-        </ol>
-      </div>
+  <section class="track hero" aria-labelledby="hero-h">
+    <div class="stage">
+      <img class="bg" src="../assets/wp-dusk.webp" width="1920" height="1276" alt="" fetchpriority="high">
+      <div class="scrim scrim--bottom"></div><div class="scrim scrim--top"></div>
+      <div class="seq"><img class="seq__still" src="../assets/seq/hero-43.webp" width="1200" height="480" alt="在山景壁纸上展开的 Dalu 刘海，带逐字同步歌词的音乐播放器" fetchpriority="low"><canvas data-seq="hero" data-n="44" data-from="0.03" data-to="0.52" data-src="../assets/seq" width="1200" height="480" hidden aria-hidden="true"></canvas></div>
+      <div class="container hero__a"><h1 id="hero-h">屏幕顶端，<wbr>终于活了。</h1><div class="hero__side"><p class="lead">Dalu 是 Windows 的刘海。鼠标一指，音乐、歌词和计时器就展开。</p><div class="actions"><a class="btn btn--primary" href="https://flirty-bananamilk.itch.io/dalu">下载 Windows 版</a><a class="btn btn--secondary" href="https://github.com/Flirty-BananaMilk/dalu">查看源码</a></div></div></div>
+      <div class="container hero__b" aria-hidden="true"><p class="big">一指，即开。</p></div>
     </div>
   </section>
 
-  <section class="glass" aria-labelledby="glass-h">
-    <div class="container">
-      <div class="glass__grid"><h2 id="glass-h">会折射<wbr>桌面的玻璃</h2><p class="lead">选一张壁纸，刘海会折射它背后的画面。</p></div>
-      <fieldset><legend>壁纸</legend><label class="chip"><input type="radio" name="wp" id="wp-a" value="a" checked>傍晚的湖</label><label class="chip"><input type="radio" name="wp" id="wp-b" value="b">薄雾的湖</label><label class="chip"><input type="radio" name="wp" id="wp-c" value="c">雪山</label></fieldset>
-      <figure class="shot glass__stage"><img src="../assets/music-dusk-zh-1140.webp" srcset="../assets/music-dusk-zh-1140.webp 1140w, ../assets/music-dusk-zh-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="壁纸上的刘海，玻璃折射出背后的风景" loading="lazy" decoding="async" data-wp="a"><img src="../assets/music-mist-zh-1140.webp" srcset="../assets/music-mist-zh-1140.webp 1140w, ../assets/music-mist-zh-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="" loading="lazy" decoding="async" data-wp="b"><img src="../assets/music-peak-zh-1140.webp" srcset="../assets/music-peak-zh-1140.webp 1140w, ../assets/music-peak-zh-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="" loading="lazy" decoding="async" data-wp="c"></figure>
+  <section class="track lyrics" aria-labelledby="lyr-h">
+    <div class="stage">
+      <img class="bg" src="../assets/wp-mist.webp" width="1920" height="1280" alt="" loading="lazy" decoding="async">
+      <div class="scrim scrim--all"></div>
+      <div class="container lyrics__in"><h2 id="lyr-h">歌词，<wbr>跟着声音走。</h2><p class="words" lang="en"><span>Streetlights</span> <span>bloom</span> <span>along</span> <span>the</span> <span>river.</span><br><span>Every</span> <span>window</span> <span>hums</span> <span>a</span> <span>quiet</span> <span>tune.</span><br><span>Carry</span> <span>me</span> <span>past</span> <span>the</span> <span>midnight</span> <span>bridges.</span></p><p class="lyrics__cap">只要歌曲带有时间信息，就能精确到每个字。</p></div>
     </div>
   </section>
 
-  <section class="container split split--dock" aria-labelledby="dock-h">
-    <div class="split__text"><h2 id="dock-h">指一指小圆点，<wbr>选标签页</h2><p class="lead">鼠标移到小圆点上，它们会变成标签图标。</p></div>
-    <figure class="shot"><img src="../assets/dock-dusk-zh-1140.webp" srcset="../assets/dock-dusk-zh-1140.webp 1140w, ../assets/dock-dusk-zh-2280.webp 2280w" sizes="(min-width: 60rem) 760px, 100vw" width="2280" height="900" alt="页面小圆点变成标签图标的刘海" loading="lazy" decoding="async"></figure>
+  <section class="track chapter" aria-labelledby="ch-h">
+    <div class="stage container">
+      <div class="chapter__head"><h2 id="ch-h">五个页面，<wbr>一个刘海。</h2><ul class="rail" aria-hidden="true"><li>音乐</li><li>专注</li><li>文件架</li><li>日程</li><li>耳机</li></ul></div>
+      <ol class="pages">
+<li class="pg"><figure class="shot"><img src="../assets/music-dusk-zh-1140.webp" srcset="../assets/music-dusk-zh-1140.webp 1140w, ../assets/music-dusk-zh-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="音乐页面：专辑封面、播放按钮和逐字同步的歌词" loading="lazy" decoding="async"></figure><div class="pg__text"><h3>字字踩点。</h3><p>歌曲带有时间信息时，每个字随演唱点亮。</p></div></li>
+<li class="pg"><figure class="shot"><img src="../assets/pomo-dusk-zh-1140.webp" srcset="../assets/pomo-dusk-zh-1140.webp 1140w, ../assets/pomo-dusk-zh-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="专注页面：正在运行的番茄钟" loading="lazy" decoding="async"></figure><div class="pg__text"><h3>只做一件事。</h3><p>番茄钟、计时器、饮水和待办，都在刘海里。</p></div></li>
+<li class="pg"><figure class="shot"><img src="../assets/shelf-dusk-zh-1140.webp" srcset="../assets/shelf-dusk-zh-1140.webp 1140w, ../assets/shelf-dusk-zh-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="文件架页面：放在刘海上的三个文件" loading="lazy" decoding="async"></figure><div class="pg__text"><h3>放下，带走。</h3><p>把文件停在刘海上，再拖进任何窗口。</p></div></li>
+<li class="pg"><figure class="shot"><img src="../assets/agenda-dusk-zh-1140.webp" srcset="../assets/agenda-dusk-zh-1140.webp 1140w, ../assets/agenda-dusk-zh-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="日程页面：月历和当天的日程" loading="lazy" decoding="async"></figure><div class="pg__text"><h3>今天，一眼看清。</h3><p>粘贴日历链接（.ics），按列表、周或月查看。</p></div></li>
+<li class="pg"><figure class="shot"><img src="../assets/buds-dusk-zh-1140.webp" srcset="../assets/buds-dusk-zh-1140.webp 1140w, ../assets/buds-dusk-zh-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="耳机页面：电量和降噪模式" loading="lazy" decoding="async"></figure><div class="pg__text"><h3>一点，安静。</h3><p>不用打开任何东西，就能切换 Galaxy Buds 的降噪。</p></div></li>
+      </ol>
+    </div>
   </section>
 
-  <section class="container split split--buds" aria-labelledby="buds-h">
-    <figure class="shot shot--window"><img src="../assets/settings-buds_eq-zh-900.webp" srcset="../assets/settings-buds_eq-zh-900.webp 900w, ../assets/settings-buds_eq-zh-1600.webp 1600w" sizes="(min-width: 60rem) 860px, 100vw" width="1600" height="1092" alt="设置窗口的耳机页面：九段均衡器" loading="lazy" decoding="async"></figure>
-    <div class="split__text"><h2 id="buds-h">九段均衡器</h2><p class="lead">均衡器、游戏模式，以及只戴一只耳机也能降噪。仅在 Buds3 Pro 上验证。</p></div>
+  <section class="track glass" aria-labelledby="gl-h">
+    <div class="stage container">
+      <div class="glass__head"><h2 id="gl-h">折射身后<wbr>世界的玻璃。</h2><p class="lead">选一张壁纸，刘海会折射它背后的画面。</p><fieldset><legend>壁纸</legend><label class="chip"><input type="radio" name="wp" id="wp-a" value="a" checked>傍晚的湖</label><label class="chip"><input type="radio" name="wp" id="wp-b" value="b">薄雾的湖</label><label class="chip"><input type="radio" name="wp" id="wp-c" value="c">雪山</label></fieldset></div>
+      <figure class="shot glass__stack"><img src="../assets/music-dusk-zh-1140.webp" srcset="../assets/music-dusk-zh-1140.webp 1140w, ../assets/music-dusk-zh-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="壁纸上的刘海，玻璃折射出背后的风景" loading="lazy" decoding="async" data-wp="a"><img src="../assets/music-mist-zh-1140.webp" srcset="../assets/music-mist-zh-1140.webp 1140w, ../assets/music-mist-zh-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="" loading="lazy" decoding="async" data-wp="b"><img src="../assets/music-peak-zh-1140.webp" srcset="../assets/music-peak-zh-1140.webp 1140w, ../assets/music-peak-zh-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="" loading="lazy" decoding="async" data-wp="c"></figure>
+      <div class="glass__names" aria-hidden="true"><p>傍晚的湖</p><p>薄雾的湖</p><p>雪山</p></div>
+    </div>
   </section>
 
-  <section class="container settings" aria-labelledby="set-h">
-    <div class="settings__head"><h2 id="set-h">为自己而改</h2><p class="lead">上百项设置，四种语言，插件只需一个 JSON 文件。</p></div>
-    <figure class="shot shot--window"><img src="../assets/settings-look-zh-900.webp" srcset="../assets/settings-look-zh-900.webp 900w, ../assets/settings-look-zh-1600.webp 1600w" sizes="(min-width: 60rem) 1040px, 100vw" width="1600" height="1092" alt="设置窗口的外观与行为页面" loading="lazy" decoding="async"></figure>
+  <section class="track dock" aria-labelledby="dk-h">
+    <div class="stage">
+      <img class="bg" src="../assets/wp-peak.webp" width="1920" height="1353" alt="" loading="lazy" decoding="async">
+      <div class="scrim scrim--bottom"></div>
+      <div class="seq"><img class="seq__still" src="../assets/seq/dock-33.webp" width="1200" height="480" alt="页面小圆点变成标签图标的刘海" fetchpriority="low"><canvas data-seq="dock" data-n="34" data-from="0.06" data-to="0.5" data-src="../assets/seq" width="1200" height="480" hidden aria-hidden="true"></canvas></div>
+      <div class="container dock__a"><h2 id="dk-h">指向圆点，<wbr>标签就出现。</h2><p class="lead">小圆点在你指向它的瞬间变成标签图标。</p></div>
+    </div>
   </section>
 
-  <section class="container get" aria-labelledby="get-h">
-    <div class="get__well">
-      <div><h2 id="get-h">在 itch.io<wbr>免费获取</h2><p class="lead">Windows 10（2004 及以上）或 Windows 11。没有账号，没有追踪。</p><div class="actions" style="margin-top: var(--space-xl)"><a class="btn btn--primary" href="https://flirty-bananamilk.itch.io/dalu">下载 Windows 版</a><a class="btn btn--secondary" href="https://github.com/Flirty-BananaMilk/dalu">查看源码</a></div></div>
+  <section class="container band buds" aria-labelledby="bd-h">
+    <div class="buds__row"><p class="num-big" aria-hidden="true">9</p><div class="buds__text"><h2 id="bd-h">九段，<wbr>只属于你的声音。</h2><p class="lead">调节均衡器，开启游戏模式，或只戴一只耳机也保持降噪。仅在 Buds3 Pro 上验证。</p></div></div>
+    <figure class="shot shot--window rise"><img src="../assets/settings-buds_eq-zh-900.webp" srcset="../assets/settings-buds_eq-zh-900.webp 900w, ../assets/settings-buds_eq-zh-1600.webp 1600w" sizes="(min-width: 60rem) 1120px, 100vw" width="1600" height="1092" alt="设置窗口的耳机页面：九段均衡器" loading="lazy" decoding="async"></figure>
+  </section>
+
+  <section class="container band" aria-labelledby="st-h">
+    <div class="settings__head"><h2 id="st-h">按你的方式来。</h2><p class="lead">上百项设置，四种语言，插件只需一个 JSON 文件。</p></div>
+    <figure class="shot shot--window rise"><img src="../assets/settings-look-zh-900.webp" srcset="../assets/settings-look-zh-900.webp 900w, ../assets/settings-look-zh-1600.webp 1600w" sizes="(min-width: 60rem) 1120px, 100vw" width="1600" height="1092" alt="设置窗口的外观与行为页面" loading="lazy" decoding="async"></figure>
+  </section>
+
+  <section class="container get" aria-labelledby="gt-h">
+    <div class="get__well rise">
+      <div><h2 id="gt-h">获取 Dalu，<wbr>免费。</h2><p class="lead">Windows 10（2004 及以上）或 11。没有账号，没有追踪。</p><div class="actions" style="margin-top: var(--space-xl)"><a class="btn btn--primary" href="https://flirty-bananamilk.itch.io/dalu">下载 Windows 版</a><a class="btn btn--secondary" href="https://github.com/Flirty-BananaMilk/dalu">查看源码</a></div></div>
       <div class="get__side"><dl class="facts"><div><dt>安装</dt><dd>无需管理员权限。</dd></div><div><dt>校验</dt><dd>下载页提供 SHA-256 校验值。</dd></div><div><dt>许可</dt><dd>源码公开，可非商业使用（PolyForm Noncommercial 1.0.0）。</dd></div></dl><p class="note">没有代码签名，首次运行时 Windows SmartScreen 可能会提示。</p></div>
     </div>
   </section>

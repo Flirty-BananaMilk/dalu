@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dalu：Windows の画面に置くノッチ</title>
-<meta name="description" content="マウスを乗せると、歌詞、タイマー、ファイル棚、イヤホン操作に広がる Windows 用ノッチ。無料、アカウント不要。">
+<title>Dalu：Windows の画面の上端が動き出す</title>
+<meta name="description" content="Dalu は Windows のためのノッチ。音楽、同期する歌詞、タイマー、ファイル、イヤホン操作が、マウスを乗せるだけで開きます。無料、アカウント不要。">
 <meta name="color-scheme" content="dark">
 <link rel="canonical" href="https://flirty-bananamilk.github.io/dalu/ja/">
 <meta property="og:type" content="website"><meta property="og:site_name" content="Dalu">
-<meta property="og:title" content="Dalu：Windows の画面に置くノッチ"><meta property="og:description" content="マウスを乗せると、歌詞、タイマー、ファイル棚、イヤホン操作に広がる Windows 用ノッチ。無料、アカウント不要。">
+<meta property="og:title" content="Dalu：Windows の画面の上端が動き出す"><meta property="og:description" content="Dalu は Windows のためのノッチ。音楽、同期する歌詞、タイマー、ファイル、イヤホン操作が、マウスを乗せるだけで開きます。無料、アカウント不要。">
 <meta property="og:url" content="https://flirty-bananamilk.github.io/dalu/ja/"><meta property="og:image" content="https://flirty-bananamilk.github.io/dalu/assets/music-dusk-ja-1140.webp">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="alternate" hreflang="ko" href="https://flirty-bananamilk.github.io/dalu/ko/">
@@ -19,66 +19,80 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 14'%3E%3Cpath d='M0 0h22v6a8 8 0 0 1-8 8H8a8 8 0 0 1-8-8z' fill='%23f1e7d4'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Funnel+Display:wght@600&family=Albert+Sans:wght@400;600&family=Noto+Sans+JP:wght@400;600&display=swap">
+<link rel="preload" as="image" href="../assets/wp-dusk.webp" fetchpriority="high">
 <link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/site.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#main">本文へ移動</a>
-<header class="hero">
-  <nav class="nav" aria-label="Dalu">
-    <div class="container nav__row">
-      <div class="chip-bar"><a class="wordmark" href="./" aria-label="Dalu"><svg width="22" height="14" viewBox="0 0 22 14" aria-hidden="true" focusable="false"><path d="M0 0h22v6a8 8 0 0 1-8 8H8a8 8 0 0 1-8-8z" fill="currentColor"/></svg><span>Dalu</span></a></div>
-      <div class="chip-bar"><ul class="langs" aria-label="言語"><li><a href="../ko/" hreflang="ko" lang="ko">한국어</a></li><li><a href="../en/" hreflang="en" lang="en">English</a></li><li><a href="../zh/" hreflang="zh-Hans" lang="zh-Hans">简体中文</a></li><li><a href="../ja/" hreflang="ja" lang="ja" aria-current="page">日本語</a></li></ul><a class="btn btn--primary" href="https://flirty-bananamilk.itch.io/dalu">Windows 版をダウンロード</a></div>
-    </div>
+<header class="nav">
+  <nav class="container nav__row" aria-label="Dalu">
+    <div class="chip-bar"><a class="wordmark" href="./" aria-label="Dalu"><svg width="22" height="14" viewBox="0 0 22 14" aria-hidden="true" focusable="false"><path d="M0 0h22v6a8 8 0 0 1-8 8H8a8 8 0 0 1-8-8z" fill="currentColor"/></svg><span>Dalu</span></a></div>
+    <div class="chip-bar"><ul class="langs" aria-label="言語"><li><a href="../ko/" hreflang="ko" lang="ko">한국어</a></li><li><a href="../en/" hreflang="en" lang="en">English</a></li><li><a href="../zh/" hreflang="zh-Hans" lang="zh-Hans">简体中文</a></li><li><a href="../ja/" hreflang="ja" lang="ja" aria-current="page">日本語</a></li></ul><a class="btn btn--primary" href="https://flirty-bananamilk.itch.io/dalu">Windows 版をダウンロード</a></div>
   </nav>
-  <figure class="hero__shot"><img src="../assets/music-dusk-ja-1140.webp" srcset="../assets/music-dusk-ja-1140.webp 1140w, ../assets/music-dusk-ja-2280.webp 2280w" sizes="100vw" width="2280" height="900" alt="音楽ページ：アルバムアート、再生ボタン、単語同期の歌詞" fetchpriority="high"></figure>
-  <div class="container hero__text">
-    <h1>Windows の画面に、<wbr>ノッチをひとつ。</h1>
-    <div class="hero__side"><p class="lead">歌詞、タイマー、ファイル、イヤホンが、マウスを乗せると開きます。</p>
-    <div class="actions"><a class="btn btn--primary" href="https://flirty-bananamilk.itch.io/dalu">Windows 版をダウンロード</a><a class="btn btn--secondary" href="https://github.com/Flirty-BananaMilk/dalu">ソースを見る</a></div></div>
-  </div>
 </header>
 <main id="main">
-  <section class="chapter" aria-labelledby="chapter-h">
-    <div class="chapter__track">
-      <div class="chapter__stage container">
-        <div class="chapter__head"><h2 id="chapter-h">ひとつのノッチに、<wbr>五つのページ</h2></div>
-        <ol class="pages">
-<li class="pg"><figure class="shot"><img src="../assets/music-dusk-ja-1140.webp" srcset="../assets/music-dusk-ja-1140.webp 1140w, ../assets/music-dusk-ja-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="音楽ページ：アルバムアート、再生ボタン、単語同期の歌詞" loading="lazy" decoding="async"></figure><div class="pg__text"><span class="pg__name">音楽</span><h3>歌詞が<wbr>単語ごとに流れます</h3><p>曲にタイミング情報があれば、単語ごとに合わせて表示します。</p></div></li>
-<li class="pg"><figure class="shot"><img src="../assets/pomo-dusk-ja-1140.webp" srcset="../assets/pomo-dusk-ja-1140.webp 1140w, ../assets/pomo-dusk-ja-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="集中ページ：動作中のポモドーロ" loading="lazy" decoding="async"></figure><div class="pg__text"><span class="pg__name">集中</span><h3>静かに回る<wbr>ポモドーロ</h3><p>ポモドーロ、タイマー、水分記録、やることをひとまとめに。</p></div></li>
-<li class="pg"><figure class="shot"><img src="../assets/shelf-dusk-ja-1140.webp" srcset="../assets/shelf-dusk-ja-1140.webp 1140w, ../assets/shelf-dusk-ja-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="ファイル棚ページ：ノッチに置いた三つのファイル" loading="lazy" decoding="async"></figure><div class="pg__text"><span class="pg__name">ファイル棚</span><h3>置いて、<wbr>持ち歩く</h3><p>ノッチに置いたファイルは、ほかのウィンドウへドラッグして使えます。</p></div></li>
-<li class="pg"><figure class="shot"><img src="../assets/agenda-dusk-ja-1140.webp" srcset="../assets/agenda-dusk-ja-1140.webp 1140w, ../assets/agenda-dusk-ja-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="予定ページ：月表示のカレンダーと当日の予定" loading="lazy" decoding="async"></figure><div class="pg__text"><span class="pg__name">予定</span><h3>カレンダーを<wbr>月単位で</h3><p>カレンダーのアドレス（.ics）を貼ると、リスト・週・月で見られます。</p></div></li>
-<li class="pg"><figure class="shot"><img src="../assets/buds-dusk-ja-1140.webp" srcset="../assets/buds-dusk-ja-1140.webp 1140w, ../assets/buds-dusk-ja-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="イヤホンページ：電池残量とノイズコントロールのモード" loading="lazy" decoding="async"></figure><div class="pg__text"><span class="pg__name">イヤホン</span><h3>ノイズコントロールを<wbr>すぐ切り替え</h3><p>Samsung Galaxy Buds のモードをノッチから切り替えます。</p></div></li>
-        </ol>
-      </div>
+  <section class="track hero" aria-labelledby="hero-h">
+    <div class="stage">
+      <img class="bg" src="../assets/wp-dusk.webp" width="1920" height="1276" alt="" fetchpriority="high">
+      <div class="scrim scrim--bottom"></div><div class="scrim scrim--top"></div>
+      <div class="seq"><img class="seq__still" src="../assets/seq/hero-43.webp" width="1200" height="480" alt="山の風景の壁紙の上で開く Dalu のノッチ。単語ごとに同期する歌詞つきの音楽プレーヤー" fetchpriority="low"><canvas data-seq="hero" data-n="44" data-from="0.03" data-to="0.52" data-src="../assets/seq" width="1200" height="480" hidden aria-hidden="true"></canvas></div>
+      <div class="container hero__a"><h1 id="hero-h">画面の上端が、<wbr>ようやく動き出す。</h1><div class="hero__side"><p class="lead">Windows のためのノッチ、Dalu。マウスを乗せると、音楽と歌詞、タイマーが開きます。</p><div class="actions"><a class="btn btn--primary" href="https://flirty-bananamilk.itch.io/dalu">Windows 版をダウンロード</a><a class="btn btn--secondary" href="https://github.com/Flirty-BananaMilk/dalu">ソースを見る</a></div></div></div>
+      <div class="container hero__b" aria-hidden="true"><p class="big">乗せるだけで、開く。</p></div>
     </div>
   </section>
 
-  <section class="glass" aria-labelledby="glass-h">
-    <div class="container">
-      <div class="glass__grid"><h2 id="glass-h">背景を<wbr>屈折させるガラス</h2><p class="lead">壁紙を選んでください。ノッチが背後の景色を屈折させます。</p></div>
-      <fieldset><legend>壁紙</legend><label class="chip"><input type="radio" name="wp" id="wp-a" value="a" checked>夕暮れの湖</label><label class="chip"><input type="radio" name="wp" id="wp-b" value="b">霧の湖</label><label class="chip"><input type="radio" name="wp" id="wp-c" value="c">雪山</label></fieldset>
-      <figure class="shot glass__stage"><img src="../assets/music-dusk-ja-1140.webp" srcset="../assets/music-dusk-ja-1140.webp 1140w, ../assets/music-dusk-ja-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="壁紙の上のノッチ。ガラスが背後の景色を屈折させている" loading="lazy" decoding="async" data-wp="a"><img src="../assets/music-mist-ja-1140.webp" srcset="../assets/music-mist-ja-1140.webp 1140w, ../assets/music-mist-ja-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="" loading="lazy" decoding="async" data-wp="b"><img src="../assets/music-peak-ja-1140.webp" srcset="../assets/music-peak-ja-1140.webp 1140w, ../assets/music-peak-ja-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="" loading="lazy" decoding="async" data-wp="c"></figure>
+  <section class="track lyrics" aria-labelledby="lyr-h">
+    <div class="stage">
+      <img class="bg" src="../assets/wp-mist.webp" width="1920" height="1280" alt="" loading="lazy" decoding="async">
+      <div class="scrim scrim--all"></div>
+      <div class="container lyrics__in"><h2 id="lyr-h">声に寄り添う歌詞。</h2><p class="words" lang="en"><span>Streetlights</span> <span>bloom</span> <span>along</span> <span>the</span> <span>river.</span><br><span>Every</span> <span>window</span> <span>hums</span> <span>a</span> <span>quiet</span> <span>tune.</span><br><span>Carry</span> <span>me</span> <span>past</span> <span>the</span> <span>midnight</span> <span>bridges.</span></p><p class="lyrics__cap">タイミング情報のある曲なら、単語のひとつひとつまで。</p></div>
     </div>
   </section>
 
-  <section class="container split split--dock" aria-labelledby="dock-h">
-    <div class="split__text"><h2 id="dock-h">ドットに乗せて、<wbr>タブを選ぶ</h2><p class="lead">小さなドットにマウスを乗せると、タブのアイコンに変わります。</p></div>
-    <figure class="shot"><img src="../assets/dock-dusk-ja-1140.webp" srcset="../assets/dock-dusk-ja-1140.webp 1140w, ../assets/dock-dusk-ja-2280.webp 2280w" sizes="(min-width: 60rem) 760px, 100vw" width="2280" height="900" alt="ページドットがタブのアイコンに変わったノッチ" loading="lazy" decoding="async"></figure>
+  <section class="track chapter" aria-labelledby="ch-h">
+    <div class="stage container">
+      <div class="chapter__head"><h2 id="ch-h">ひとつのノッチ、<wbr>五つのページ。</h2><ul class="rail" aria-hidden="true"><li>音楽</li><li>集中</li><li>ファイル棚</li><li>予定</li><li>イヤホン</li></ul></div>
+      <ol class="pages">
+<li class="pg"><figure class="shot"><img src="../assets/music-dusk-ja-1140.webp" srcset="../assets/music-dusk-ja-1140.webp 1140w, ../assets/music-dusk-ja-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="音楽ページ：アルバムアート、再生ボタン、単語同期の歌詞" loading="lazy" decoding="async"></figure><div class="pg__text"><h3>一語ずつ、ぴったりと。</h3><p>タイミング情報のある曲は、歌うそばから単語が光ります。</p></div></li>
+<li class="pg"><figure class="shot"><img src="../assets/pomo-dusk-ja-1140.webp" srcset="../assets/pomo-dusk-ja-1140.webp 1140w, ../assets/pomo-dusk-ja-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="集中ページ：動作中のポモドーロ" loading="lazy" decoding="async"></figure><div class="pg__text"><h3>ひとつに集中。</h3><p>ポモドーロ、タイマー、水分、やること。すべてノッチの中に。</p></div></li>
+<li class="pg"><figure class="shot"><img src="../assets/shelf-dusk-ja-1140.webp" srcset="../assets/shelf-dusk-ja-1140.webp 1140w, ../assets/shelf-dusk-ja-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="ファイル棚ページ：ノッチに置いた三つのファイル" loading="lazy" decoding="async"></figure><div class="pg__text"><h3>置いて、持ち出す。</h3><p>ノッチにファイルを置いて、好きなウィンドウへドラッグ。</p></div></li>
+<li class="pg"><figure class="shot"><img src="../assets/agenda-dusk-ja-1140.webp" srcset="../assets/agenda-dusk-ja-1140.webp 1140w, ../assets/agenda-dusk-ja-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="予定ページ：月表示のカレンダーと当日の予定" loading="lazy" decoding="async"></figure><div class="pg__text"><h3>今日を、ひと目で。</h3><p>カレンダーのアドレス（.ics）を貼って、リスト・週・月で表示。</p></div></li>
+<li class="pg"><figure class="shot"><img src="../assets/buds-dusk-ja-1140.webp" srcset="../assets/buds-dusk-ja-1140.webp 1140w, ../assets/buds-dusk-ja-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="イヤホンページ：電池残量とノイズコントロールのモード" loading="lazy" decoding="async"></figure><div class="pg__text"><h3>ひとタップで静かに。</h3><p>何も開かずに、Galaxy Buds のノイズコントロールを切り替え。</p></div></li>
+      </ol>
+    </div>
   </section>
 
-  <section class="container split split--buds" aria-labelledby="buds-h">
-    <figure class="shot shot--window"><img src="../assets/settings-buds_eq-ja-900.webp" srcset="../assets/settings-buds_eq-ja-900.webp 900w, ../assets/settings-buds_eq-ja-1600.webp 1600w" sizes="(min-width: 60rem) 860px, 100vw" width="1600" height="1092" alt="設定ウィンドウのイヤホンページ：9 バンドのイコライザー" loading="lazy" decoding="async"></figure>
-    <div class="split__text"><h2 id="buds-h">9 バンドの<wbr>イコライザー</h2><p class="lead">イコライザー、ゲーミングモード、片耳だけでのノイズコントロール。Buds3 Pro でのみ確認しています。</p></div>
+  <section class="track glass" aria-labelledby="gl-h">
+    <div class="stage container">
+      <div class="glass__head"><h2 id="gl-h">背後の世界を<wbr>曲げるガラス。</h2><p class="lead">壁紙を選んでください。ノッチが背後の景色を屈折させます。</p><fieldset><legend>壁紙</legend><label class="chip"><input type="radio" name="wp" id="wp-a" value="a" checked>夕暮れの湖</label><label class="chip"><input type="radio" name="wp" id="wp-b" value="b">霧の湖</label><label class="chip"><input type="radio" name="wp" id="wp-c" value="c">雪山</label></fieldset></div>
+      <figure class="shot glass__stack"><img src="../assets/music-dusk-ja-1140.webp" srcset="../assets/music-dusk-ja-1140.webp 1140w, ../assets/music-dusk-ja-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="壁紙の上のノッチ。ガラスが背後の景色を屈折させている" loading="lazy" decoding="async" data-wp="a"><img src="../assets/music-mist-ja-1140.webp" srcset="../assets/music-mist-ja-1140.webp 1140w, ../assets/music-mist-ja-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="" loading="lazy" decoding="async" data-wp="b"><img src="../assets/music-peak-ja-1140.webp" srcset="../assets/music-peak-ja-1140.webp 1140w, ../assets/music-peak-ja-2280.webp 2280w" sizes="(min-width: 60rem) 1312px, 100vw" width="2280" height="900" alt="" loading="lazy" decoding="async" data-wp="c"></figure>
+      <div class="glass__names" aria-hidden="true"><p>夕暮れの湖</p><p>霧の湖</p><p>雪山</p></div>
+    </div>
   </section>
 
-  <section class="container settings" aria-labelledby="set-h">
-    <div class="settings__head"><h2 id="set-h">自分で<wbr>変えられる</h2><p class="lead">100 以上の設定、4 つの言語、プラグインは JSON ファイル 1 つで。</p></div>
-    <figure class="shot shot--window"><img src="../assets/settings-look-ja-900.webp" srcset="../assets/settings-look-ja-900.webp 900w, ../assets/settings-look-ja-1600.webp 1600w" sizes="(min-width: 60rem) 1040px, 100vw" width="1600" height="1092" alt="設定ウィンドウの外観と動作のページ" loading="lazy" decoding="async"></figure>
+  <section class="track dock" aria-labelledby="dk-h">
+    <div class="stage">
+      <img class="bg" src="../assets/wp-peak.webp" width="1920" height="1353" alt="" loading="lazy" decoding="async">
+      <div class="scrim scrim--bottom"></div>
+      <div class="seq"><img class="seq__still" src="../assets/seq/dock-33.webp" width="1200" height="480" alt="ページドットがタブのアイコンに変わったノッチ" fetchpriority="low"><canvas data-seq="dock" data-n="34" data-from="0.06" data-to="0.5" data-src="../assets/seq" width="1200" height="480" hidden aria-hidden="true"></canvas></div>
+      <div class="container dock__a"><h2 id="dk-h">ドットに乗せると、<wbr>タブが現れる。</h2><p class="lead">小さなドットは、指した瞬間にタブのアイコンへ変わります。</p></div>
+    </div>
   </section>
 
-  <section class="container get" aria-labelledby="get-h">
-    <div class="get__well">
-      <div><h2 id="get-h">itch.io で無料</h2><p class="lead">Windows 10（2004 以降）または 11。アカウントも追跡もありません。</p><div class="actions" style="margin-top: var(--space-xl)"><a class="btn btn--primary" href="https://flirty-bananamilk.itch.io/dalu">Windows 版をダウンロード</a><a class="btn btn--secondary" href="https://github.com/Flirty-BananaMilk/dalu">ソースを見る</a></div></div>
+  <section class="container band buds" aria-labelledby="bd-h">
+    <div class="buds__row"><p class="num-big" aria-hidden="true">9</p><div class="buds__text"><h2 id="bd-h">9 バンド、<wbr>自分だけの音。</h2><p class="lead">イコライザーを整え、ゲーミングモードを入れ、片耳だけでもノイズコントロールを保てます。Buds3 Pro でのみ確認しています。</p></div></div>
+    <figure class="shot shot--window rise"><img src="../assets/settings-buds_eq-ja-900.webp" srcset="../assets/settings-buds_eq-ja-900.webp 900w, ../assets/settings-buds_eq-ja-1600.webp 1600w" sizes="(min-width: 60rem) 1120px, 100vw" width="1600" height="1092" alt="設定ウィンドウのイヤホンページ：9 バンドのイコライザー" loading="lazy" decoding="async"></figure>
+  </section>
+
+  <section class="container band" aria-labelledby="st-h">
+    <div class="settings__head"><h2 id="st-h">あなた流に。</h2><p class="lead">100 以上の設定、4 つの言語、プラグインは JSON ファイル 1 つで。</p></div>
+    <figure class="shot shot--window rise"><img src="../assets/settings-look-ja-900.webp" srcset="../assets/settings-look-ja-900.webp 900w, ../assets/settings-look-ja-1600.webp 1600w" sizes="(min-width: 60rem) 1120px, 100vw" width="1600" height="1092" alt="設定ウィンドウの外観と動作のページ" loading="lazy" decoding="async"></figure>
+  </section>
+
+  <section class="container get" aria-labelledby="gt-h">
+    <div class="get__well rise">
+      <div><h2 id="gt-h">Dalu は無料です。</h2><p class="lead">Windows 10（2004 以降）または 11。アカウントも追跡もありません。</p><div class="actions" style="margin-top: var(--space-xl)"><a class="btn btn--primary" href="https://flirty-bananamilk.itch.io/dalu">Windows 版をダウンロード</a><a class="btn btn--secondary" href="https://github.com/Flirty-BananaMilk/dalu">ソースを見る</a></div></div>
       <div class="get__side"><dl class="facts"><div><dt>インストール</dt><dd>管理者権限は不要です。</dd></div><div><dt>確認</dt><dd>ダウンロードページに SHA-256 を掲載しています。</dd></div><div><dt>ライセンス</dt><dd>ソース公開、非商用で利用可（PolyForm Noncommercial 1.0.0）。</dd></div></dl><p class="note">コード署名がないため、初回は Windows SmartScreen が警告することがあります。</p></div>
     </div>
   </section>

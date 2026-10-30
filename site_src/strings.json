@@ -2,44 +2,44 @@
  "ko": {
   "name": "한국어",
   "htmllang": "ko",
-  "title": "Dalu: Windows 화면 위의 노치",
-  "desc": "가사, 타이머, 파일 선반, 이어버드를 마우스를 올리면 펼쳐 주는 Windows용 노치. 무료, 계정 없음.",
+  "title": "Dalu: 화면 위쪽이 살아나는 Windows 노치",
+  "desc": "음악, 싱크 가사, 타이머, 파일, 이어버드 조작이 마우스 한 번에 펼쳐지는 Windows 노치. 무료, 계정 없음.",
   "skip": "본문으로 건너뛰기",
   "navlang": "언어",
-  "h1": "Windows 화면 위에, 노치 하나.",
-  "lead": "가사, 타이머, 파일, 이어버드가 마우스를 올리면 펼쳐져요.",
+  "h1": "화면 위쪽이, 드디어 살아났어요.",
+  "lead": "Windows를 위한 노치, Dalu. 마우스를 올리면 음악과 가사, 타이머가 펼쳐져요.",
   "dl": "Windows용 다운로드",
   "src": "소스 보기",
   "chapter_h": "노치 하나에 다섯 페이지",
   "pages": [
    {
     "name": "음악",
-    "h": "가사가 단어 단위로 흘러요",
-    "p": "곡에 타이밍 정보가 있으면 단어마다 맞춰서 보여 줘요.",
+    "h": "단어마다, 딱 맞게.",
+    "p": "타이밍 정보가 있는 곡은 부르는 순간 단어가 켜져요.",
     "alt": "음악 페이지: 앨범 그림, 재생 버튼, 단어 단위로 싱크되는 가사"
    },
    {
     "name": "집중",
-    "h": "포모도로가 조용히 돌아가요",
-    "p": "포모도로, 타이머, 물 마시기, 할 일을 한곳에서.",
+    "h": "하나에만 집중.",
+    "p": "포모도로, 타이머, 물 마시기, 할 일을 노치 안에서.",
     "alt": "집중 페이지: 진행 중인 포모도로"
    },
    {
     "name": "선반",
-    "h": "파일을 놓아 두고 들고 다녀요",
-    "p": "노치에 놓은 파일을 다른 창으로 끌어다 쓸 수 있어요.",
+    "h": "올려 두고, 들고 가요.",
+    "p": "노치에 파일을 올려 두고 원하는 창으로 끌어다 놓으세요.",
     "alt": "선반 페이지: 노치에 올려 둔 파일 세 개"
    },
    {
     "name": "일정",
-    "h": "달력을 한 달 단위로",
-    "p": "캘린더 주소(.ics)를 붙여 넣으면 목록, 주, 월로 볼 수 있어요.",
+    "h": "오늘을 한눈에.",
+    "p": "캘린더 주소(.ics)를 붙여 넣고 목록, 주, 월로 보세요.",
     "alt": "일정 페이지: 월 보기 달력과 오늘의 일정"
    },
    {
     "name": "이어버드",
-    "h": "소음 제어를 바로 바꿔요",
-    "p": "삼성 갤럭시 버즈의 모드를 노치에서 전환해요.",
+    "h": "한 번에 조용하게.",
+    "p": "갤럭시 버즈의 소음 제어를 아무것도 열지 않고 바꿔요.",
     "alt": "이어버드 페이지: 배터리와 소음 제어 모드"
    }
   ],
@@ -83,49 +83,65 @@
   "f_privacy": "개인정보",
   "f_trademark": "상표",
   "f_photos": "사진(잘라서 사용)",
-  "f_legal": "Apple, Cider, Spotify, Samsung, Discord, Microsoft와 관련이 없어요."
+  "f_legal": "Apple, Cider, Spotify, Samsung, Discord, Microsoft와 관련이 없어요.",
+  "hero_b": "올리면, 펼쳐져요.",
+  "seq_alt": "산 풍경 배경화면 위에서 펼쳐지는 Dalu 노치, 단어 단위로 싱크되는 가사가 있는 음악 플레이어",
+  "lyr_h": "목소리를 따라오는 가사.",
+  "lyr_cap": "타이밍 정보가 있는 곡이라면, 단어 하나하나까지.",
+  "ch_h": "다섯 페이지, 하나의 노치.",
+  "gl_h": "뒤의 세상을 휘어 보이는 유리.",
+  "gl_p": "배경화면을 골라 보세요. 노치가 뒤 화면을 굴절시켜요.",
+  "dk_h": "점에 올리면, 탭이 보여요.",
+  "dk_p": "작은 점이 가리키는 순간 탭 아이콘으로 바뀌어요.",
+  "bd_num": "9",
+  "bd_h": "아홉 밴드, 나만의 소리.",
+  "bd_p": "이퀄라이저를 맞추고, 게이밍 모드를 켜고, 이어버드 한쪽만 끼고도 소음 제어를 유지해요. Buds3 Pro에서만 확인했어요.",
+  "st_h": "내 방식대로.",
+  "st_p": "설정 100개 넘게, 4개 언어, 플러그인은 JSON 파일 하나로.",
+  "gt_h": "Dalu, 무료예요.",
+  "gt_p": "Windows 10(2004 이상) 또는 11. 계정도 추적도 없어요."
  },
  "en": {
   "name": "English",
   "htmllang": "en",
-  "title": "Dalu: a notch for your Windows screen",
-  "desc": "A notch for Windows that opens into synced lyrics, timers, a file shelf and earbud controls when you hover it. Free, no account.",
+  "title": "Dalu: the top of your Windows screen, alive",
+  "desc": "Dalu is a notch for Windows. Music, synced lyrics, timers, files and earbud controls open with one hover. Free, no account.",
   "skip": "Skip to content",
   "navlang": "Language",
-  "h1": "A notch for your Windows screen.",
-  "lead": "Lyrics, timers, files and earbuds, one hover away.",
+  "h1": "The top of your screen, finally alive.",
+  "lead": "A Windows notch for music, lyrics and timers, one hover away.",
   "dl": "Download for Windows",
   "src": "See the source",
   "chapter_h": "Five pages, one notch.",
   "pages": [
    {
     "name": "Music",
-    "h": "Lyrics, word by word",
-    "p": "When a song has timing data, every word lands on its beat.",
+    "h": "Every word on time.",
+    "p": "When a song has timing data, each word lights up as it is sung.",
     "alt": "Music page: album art, playback buttons and word-synced lyrics"
    },
    {
     "name": "Focus",
-    "h": "A pomodoro that stays quiet",
-    "p": "Pomodoro, timer, water tracker and to-do, in one place.",
+    "h": "Stay on one thing.",
+    "p": "Pomodoro, timer, water and to-do, all inside the notch.",
     "alt": "Focus page: a running pomodoro"
    },
    {
     "name": "Shelf",
-    "h": "Drop a file, carry it along",
-    "p": "Files you drop on the notch can be dragged out into any window.",
+    "h": "Drop it. Carry it.",
+    "p": "Park a file on the notch, then drag it into any window.",
     "alt": "Shelf page: three files resting on the notch"
    },
    {
     "name": "Agenda",
-    "h": "Your calendar, by the month",
-    "p": "Paste a calendar link (.ics) and read it as a list, a week or a month.",
+    "h": "Today at a glance.",
+    "p": "Paste a calendar link (.ics). Read it by list, week or month.",
     "alt": "Agenda page: a month calendar and today's events"
    },
    {
     "name": "Earbuds",
-    "h": "Noise control, one click",
-    "p": "Switch Galaxy Buds modes from the notch.",
+    "h": "Calm, in one tap.",
+    "p": "Switch the noise control on your Galaxy Buds without opening a thing.",
     "alt": "Earbuds page: battery levels and noise control modes"
    }
   ],
@@ -169,49 +185,65 @@
   "f_privacy": "Privacy",
   "f_trademark": "Trademark",
   "f_photos": "Photographs, cropped",
-  "f_legal": "Not affiliated with Apple, Cider, Spotify, Samsung, Discord or Microsoft."
+  "f_legal": "Not affiliated with Apple, Cider, Spotify, Samsung, Discord or Microsoft.",
+  "hero_b": "Hover. It opens.",
+  "seq_alt": "The Dalu notch opening on a mountain wallpaper, a music player with word-synced lyrics",
+  "lyr_h": "Lyrics that follow the voice.",
+  "lyr_cap": "Word by word, whenever the song carries timing data.",
+  "ch_h": "Five pages. One notch.",
+  "gl_h": "Glass that bends the world behind it.",
+  "gl_p": "Choose any wallpaper. The notch refracts what is behind it.",
+  "dk_h": "Hover the dots. Pick a tab.",
+  "dk_p": "Small dots turn into tab icons the moment you point at them.",
+  "bd_num": "9",
+  "bd_h": "Nine bands. Your sound.",
+  "bd_p": "Tune the equalizer, switch on gaming mode, or keep noise control on with one earbud in. Tested on Buds3 Pro only.",
+  "st_h": "Make it yours.",
+  "st_p": "Over a hundred settings, four languages, and plugins written in plain JSON.",
+  "gt_h": "Get Dalu. It's free.",
+  "gt_p": "Windows 10 (2004 or later) or 11. No account, no tracking."
  },
  "zh": {
   "name": "简体中文",
   "htmllang": "zh-Hans",
-  "title": "Dalu：Windows 屏幕上的刘海",
-  "desc": "鼠标一指就展开成歌词、计时器、文件架和耳机控制的 Windows 刘海。免费，无需账号。",
+  "title": "Dalu：让 Windows 屏幕顶端活起来",
+  "desc": "Dalu 是 Windows 的刘海。音乐、同步歌词、计时器、文件和耳机控制，鼠标一指即开。免费，无需账号。",
   "skip": "跳到正文",
   "navlang": "语言",
-  "h1": "给 Windows 屏幕|一个刘海。",
-  "lead": "歌词、计时器、文件和耳机，鼠标一指就展开。",
+  "h1": "屏幕顶端，|终于活了。",
+  "lead": "Dalu 是 Windows 的刘海。鼠标一指，音乐、歌词和计时器就展开。",
   "dl": "下载 Windows 版",
   "src": "查看源码",
   "chapter_h": "一个刘海，|五个页面。",
   "pages": [
    {
     "name": "音乐",
-    "h": "歌词逐字滚动",
-    "p": "歌曲带有时间信息时，每个字都踩着节拍出现。",
+    "h": "字字踩点。",
+    "p": "歌曲带有时间信息时，每个字随演唱点亮。",
     "alt": "音乐页面：专辑封面、播放按钮和逐字同步的歌词"
    },
    {
     "name": "专注",
-    "h": "安静运行的|番茄钟",
-    "p": "番茄钟、计时器、饮水记录和待办事项，集中在一处。",
+    "h": "只做一件事。",
+    "p": "番茄钟、计时器、饮水和待办，都在刘海里。",
     "alt": "专注页面：正在运行的番茄钟"
    },
    {
     "name": "文件架",
-    "h": "放下文件，|随身带走",
-    "p": "拖到刘海上的文件，可以再拖进任何窗口。",
+    "h": "放下，带走。",
+    "p": "把文件停在刘海上，再拖进任何窗口。",
     "alt": "文件架页面：放在刘海上的三个文件"
    },
    {
     "name": "日程",
-    "h": "按月|查看日历",
-    "p": "粘贴日历链接（.ics），可按列表、周或月查看。",
+    "h": "今天，一眼看清。",
+    "p": "粘贴日历链接（.ics），按列表、周或月查看。",
     "alt": "日程页面：月历和当天的日程"
    },
    {
     "name": "耳机",
-    "h": "一键|切换降噪",
-    "p": "在刘海上切换三星 Galaxy Buds 的模式。",
+    "h": "一点，安静。",
+    "p": "不用打开任何东西，就能切换 Galaxy Buds 的降噪。",
     "alt": "耳机页面：电量和降噪模式"
    }
   ],
@@ -255,49 +287,65 @@
   "f_privacy": "隐私",
   "f_trademark": "商标",
   "f_photos": "照片（已裁剪）",
-  "f_legal": "与 Apple、Cider、Spotify、Samsung、Discord、Microsoft 无关。"
+  "f_legal": "与 Apple、Cider、Spotify、Samsung、Discord、Microsoft 无关。",
+  "hero_b": "一指，即开。",
+  "seq_alt": "在山景壁纸上展开的 Dalu 刘海，带逐字同步歌词的音乐播放器",
+  "lyr_h": "歌词，|跟着声音走。",
+  "lyr_cap": "只要歌曲带有时间信息，就能精确到每个字。",
+  "ch_h": "五个页面，|一个刘海。",
+  "gl_h": "折射身后|世界的玻璃。",
+  "gl_p": "选一张壁纸，刘海会折射它背后的画面。",
+  "dk_h": "指向圆点，|标签就出现。",
+  "dk_p": "小圆点在你指向它的瞬间变成标签图标。",
+  "bd_num": "9",
+  "bd_h": "九段，|只属于你的声音。",
+  "bd_p": "调节均衡器，开启游戏模式，或只戴一只耳机也保持降噪。仅在 Buds3 Pro 上验证。",
+  "st_h": "按你的方式来。",
+  "st_p": "上百项设置，四种语言，插件只需一个 JSON 文件。",
+  "gt_h": "获取 Dalu，|免费。",
+  "gt_p": "Windows 10（2004 及以上）或 11。没有账号，没有追踪。"
  },
  "ja": {
   "name": "日本語",
   "htmllang": "ja",
-  "title": "Dalu：Windows の画面に置くノッチ",
-  "desc": "マウスを乗せると、歌詞、タイマー、ファイル棚、イヤホン操作に広がる Windows 用ノッチ。無料、アカウント不要。",
+  "title": "Dalu：Windows の画面の上端が動き出す",
+  "desc": "Dalu は Windows のためのノッチ。音楽、同期する歌詞、タイマー、ファイル、イヤホン操作が、マウスを乗せるだけで開きます。無料、アカウント不要。",
   "skip": "本文へ移動",
   "navlang": "言語",
-  "h1": "Windows の画面に、|ノッチをひとつ。",
-  "lead": "歌詞、タイマー、ファイル、イヤホンが、マウスを乗せると開きます。",
+  "h1": "画面の上端が、|ようやく動き出す。",
+  "lead": "Windows のためのノッチ、Dalu。マウスを乗せると、音楽と歌詞、タイマーが開きます。",
   "dl": "Windows 版をダウンロード",
   "src": "ソースを見る",
   "chapter_h": "ひとつのノッチに、|五つのページ",
   "pages": [
    {
     "name": "音楽",
-    "h": "歌詞が|単語ごとに流れます",
-    "p": "曲にタイミング情報があれば、単語ごとに合わせて表示します。",
+    "h": "一語ずつ、ぴったりと。",
+    "p": "タイミング情報のある曲は、歌うそばから単語が光ります。",
     "alt": "音楽ページ：アルバムアート、再生ボタン、単語同期の歌詞"
    },
    {
     "name": "集中",
-    "h": "静かに回る|ポモドーロ",
-    "p": "ポモドーロ、タイマー、水分記録、やることをひとまとめに。",
+    "h": "ひとつに集中。",
+    "p": "ポモドーロ、タイマー、水分、やること。すべてノッチの中に。",
     "alt": "集中ページ：動作中のポモドーロ"
    },
    {
     "name": "ファイル棚",
-    "h": "置いて、|持ち歩く",
-    "p": "ノッチに置いたファイルは、ほかのウィンドウへドラッグして使えます。",
+    "h": "置いて、持ち出す。",
+    "p": "ノッチにファイルを置いて、好きなウィンドウへドラッグ。",
     "alt": "ファイル棚ページ：ノッチに置いた三つのファイル"
    },
    {
     "name": "予定",
-    "h": "カレンダーを|月単位で",
-    "p": "カレンダーのアドレス（.ics）を貼ると、リスト・週・月で見られます。",
+    "h": "今日を、ひと目で。",
+    "p": "カレンダーのアドレス（.ics）を貼って、リスト・週・月で表示。",
     "alt": "予定ページ：月表示のカレンダーと当日の予定"
    },
    {
     "name": "イヤホン",
-    "h": "ノイズコントロールを|すぐ切り替え",
-    "p": "Samsung Galaxy Buds のモードをノッチから切り替えます。",
+    "h": "ひとタップで静かに。",
+    "p": "何も開かずに、Galaxy Buds のノイズコントロールを切り替え。",
     "alt": "イヤホンページ：電池残量とノイズコントロールのモード"
    }
   ],
@@ -341,6 +389,22 @@
   "f_privacy": "プライバシー",
   "f_trademark": "商標",
   "f_photos": "写真（トリミング）",
-  "f_legal": "Apple、Cider、Spotify、Samsung、Discord、Microsoft とは無関係です。"
+  "f_legal": "Apple、Cider、Spotify、Samsung、Discord、Microsoft とは無関係です。",
+  "hero_b": "乗せるだけで、開く。",
+  "seq_alt": "山の風景の壁紙の上で開く Dalu のノッチ。単語ごとに同期する歌詞つきの音楽プレーヤー",
+  "lyr_h": "声に寄り添う歌詞。",
+  "lyr_cap": "タイミング情報のある曲なら、単語のひとつひとつまで。",
+  "ch_h": "ひとつのノッチ、|五つのページ。",
+  "gl_h": "背後の世界を|曲げるガラス。",
+  "gl_p": "壁紙を選んでください。ノッチが背後の景色を屈折させます。",
+  "dk_h": "ドットに乗せると、|タブが現れる。",
+  "dk_p": "小さなドットは、指した瞬間にタブのアイコンへ変わります。",
+  "bd_num": "9",
+  "bd_h": "9 バンド、|自分だけの音。",
+  "bd_p": "イコライザーを整え、ゲーミングモードを入れ、片耳だけでもノイズコントロールを保てます。Buds3 Pro でのみ確認しています。",
+  "st_h": "あなた流に。",
+  "st_p": "100 以上の設定、4 つの言語、プラグインは JSON ファイル 1 つで。",
+  "gt_h": "Dalu は無料です。",
+  "gt_p": "Windows 10（2004 以降）または 11。アカウントも追跡もありません。"
  }
 }
