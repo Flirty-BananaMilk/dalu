@@ -15,3 +15,6 @@ rename_out.txt
 
 # 디자인 스킬 작업 기록(개인 작업 파일)
 .hallmark/
+
+# 사이트 제작용 원본 사진(출처는 docs 맨 아래에 표기, 필요하면 다시 받는다)
+site_src/wallpapers/

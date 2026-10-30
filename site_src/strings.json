@@ -1,0 +1,346 @@
+{
+ "ko": {
+  "name": "한국어",
+  "htmllang": "ko",
+  "title": "Dalu: Windows 화면 위의 노치",
+  "desc": "가사, 타이머, 파일 선반, 이어버드를 마우스를 올리면 펼쳐 주는 Windows용 노치. 무료, 계정 없음.",
+  "skip": "본문으로 건너뛰기",
+  "navlang": "언어",
+  "h1": "Windows 화면 위에, 노치 하나.",
+  "lead": "가사, 타이머, 파일, 이어버드가 마우스를 올리면 펼쳐져요.",
+  "dl": "Windows용 다운로드",
+  "src": "소스 보기",
+  "chapter_h": "노치 하나에 다섯 페이지",
+  "pages": [
+   {
+    "name": "음악",
+    "h": "가사가 단어 단위로 흘러요",
+    "p": "곡에 타이밍 정보가 있으면 단어마다 맞춰서 보여 줘요.",
+    "alt": "음악 페이지: 앨범 그림, 재생 버튼, 단어 단위로 싱크되는 가사"
+   },
+   {
+    "name": "집중",
+    "h": "포모도로가 조용히 돌아가요",
+    "p": "포모도로, 타이머, 물 마시기, 할 일을 한곳에서.",
+    "alt": "집중 페이지: 진행 중인 포모도로"
+   },
+   {
+    "name": "선반",
+    "h": "파일을 놓아 두고 들고 다녀요",
+    "p": "노치에 놓은 파일을 다른 창으로 끌어다 쓸 수 있어요.",
+    "alt": "선반 페이지: 노치에 올려 둔 파일 세 개"
+   },
+   {
+    "name": "일정",
+    "h": "달력을 한 달 단위로",
+    "p": "캘린더 주소(.ics)를 붙여 넣으면 목록, 주, 월로 볼 수 있어요.",
+    "alt": "일정 페이지: 월 보기 달력과 오늘의 일정"
+   },
+   {
+    "name": "이어버드",
+    "h": "소음 제어를 바로 바꿔요",
+    "p": "삼성 갤럭시 버즈의 모드를 노치에서 전환해요.",
+    "alt": "이어버드 페이지: 배터리와 소음 제어 모드"
+   }
+  ],
+  "glass_h": "뒤 화면을 휘어 보이는 유리",
+  "glass_p": "배경화면을 골라 보세요. 노치가 뒤 화면을 비춰요.",
+  "glass_legend": "배경화면",
+  "wps": [
+   "저녁 호수",
+   "안개 호수",
+   "설산"
+  ],
+  "glass_alt": "배경화면 위의 노치. 유리가 뒤쪽 풍경을 굴절시켜 비춘다",
+  "dock_h": "점에 올리면 아이콘으로",
+  "dock_p": "작은 점에 마우스를 올리면 탭 아이콘이 나타나요.",
+  "dock_alt": "페이지 점이 탭 아이콘으로 바뀐 노치",
+  "buds_h": "9밴드 이퀄라이저",
+  "buds_p": "이어버드 이퀄라이저, 게이밍 모드, 한쪽만 끼고 소음 제어. Buds3 Pro에서만 확인했어요.",
+  "buds_alt": "설정 창의 이어버드 페이지: 9밴드 이퀄라이저",
+  "set_h": "내 손으로 바꾸는 노치",
+  "set_p": "설정 100개 넘게, 4개 언어, 플러그인은 JSON 파일 하나로.",
+  "set_alt": "설정 창의 모양과 동작 페이지",
+  "get_h": "itch.io에서 무료",
+  "get_p": "Windows 10(2004 이상) 또는 11. 계정도 추적도 없어요.",
+  "rows": [
+   [
+    "설치",
+    "관리자 권한 없이 설치해요."
+   ],
+   [
+    "확인",
+    "다운로드 페이지에 SHA-256 값이 있어요."
+   ],
+   [
+    "라이선스",
+    "소스 공개, 비상업적 이용 가능(PolyForm Noncommercial 1.0.0)."
+   ]
+  ],
+  "note": "코드 서명이 없어서 처음에는 Windows SmartScreen이 경고할 수 있어요.",
+  "f_itch": "itch.io 페이지",
+  "f_license": "라이선스",
+  "f_privacy": "개인정보",
+  "f_trademark": "상표",
+  "f_photos": "사진(잘라서 사용)",
+  "f_legal": "Apple, Cider, Spotify, Samsung, Discord, Microsoft와 관련이 없어요."
+ },
+ "en": {
+  "name": "English",
+  "htmllang": "en",
+  "title": "Dalu: a notch for your Windows screen",
+  "desc": "A notch for Windows that opens into synced lyrics, timers, a file shelf and earbud controls when you hover it. Free, no account.",
+  "skip": "Skip to content",
+  "navlang": "Language",
+  "h1": "A notch for your Windows screen.",
+  "lead": "Lyrics, timers, files and earbuds, one hover away.",
+  "dl": "Download for Windows",
+  "src": "See the source",
+  "chapter_h": "Five pages, one notch.",
+  "pages": [
+   {
+    "name": "Music",
+    "h": "Lyrics, word by word",
+    "p": "When a song has timing data, every word lands on its beat.",
+    "alt": "Music page: album art, playback buttons and word-synced lyrics"
+   },
+   {
+    "name": "Focus",
+    "h": "A pomodoro that stays quiet",
+    "p": "Pomodoro, timer, water tracker and to-do, in one place.",
+    "alt": "Focus page: a running pomodoro"
+   },
+   {
+    "name": "Shelf",
+    "h": "Drop a file, carry it along",
+    "p": "Files you drop on the notch can be dragged out into any window.",
+    "alt": "Shelf page: three files resting on the notch"
+   },
+   {
+    "name": "Agenda",
+    "h": "Your calendar, by the month",
+    "p": "Paste a calendar link (.ics) and read it as a list, a week or a month.",
+    "alt": "Agenda page: a month calendar and today's events"
+   },
+   {
+    "name": "Earbuds",
+    "h": "Noise control, one click",
+    "p": "Switch Galaxy Buds modes from the notch.",
+    "alt": "Earbuds page: battery levels and noise control modes"
+   }
+  ],
+  "glass_h": "Glass that bends the desktop.",
+  "glass_p": "Pick a wallpaper. The notch refracts what is behind it.",
+  "glass_legend": "Wallpaper",
+  "wps": [
+   "Evening lake",
+   "Misty lake",
+   "Snow peak"
+  ],
+  "glass_alt": "The notch over a wallpaper, its glass refracting the landscape behind it",
+  "dock_h": "Hover the dots, pick a tab.",
+  "dock_p": "Point at the small dots and they turn into tab icons.",
+  "dock_alt": "The notch with its page dots turned into tab icons",
+  "buds_h": "Nine bands of equalizer.",
+  "buds_p": "Equalizer, gaming mode and noise control with one earbud in. Tested on Buds3 Pro only.",
+  "buds_alt": "The settings window on the earbuds page: a nine-band equalizer",
+  "set_h": "Made to be changed.",
+  "set_p": "Over a hundred settings, four languages, plugins in plain JSON.",
+  "set_alt": "The settings window on the look and behavior page",
+  "get_h": "Free on itch.io.",
+  "get_p": "Windows 10 (2004 or later) or 11. No account, no tracking.",
+  "rows": [
+   [
+    "Install",
+    "No administrator rights needed."
+   ],
+   [
+    "Verify",
+    "SHA-256 checksums sit on the download page."
+   ],
+   [
+    "License",
+    "Source-available, noncommercial use (PolyForm Noncommercial 1.0.0)."
+   ]
+  ],
+  "note": "Not code-signed, so Windows SmartScreen may warn the first time.",
+  "f_itch": "itch.io page",
+  "f_license": "License",
+  "f_privacy": "Privacy",
+  "f_trademark": "Trademark",
+  "f_photos": "Photographs, cropped",
+  "f_legal": "Not affiliated with Apple, Cider, Spotify, Samsung, Discord or Microsoft."
+ },
+ "zh": {
+  "name": "简体中文",
+  "htmllang": "zh-Hans",
+  "title": "Dalu：Windows 屏幕上的刘海",
+  "desc": "鼠标一指就展开成歌词、计时器、文件架和耳机控制的 Windows 刘海。免费，无需账号。",
+  "skip": "跳到正文",
+  "navlang": "语言",
+  "h1": "给 Windows 屏幕|一个刘海。",
+  "lead": "歌词、计时器、文件和耳机，鼠标一指就展开。",
+  "dl": "下载 Windows 版",
+  "src": "查看源码",
+  "chapter_h": "一个刘海，|五个页面。",
+  "pages": [
+   {
+    "name": "音乐",
+    "h": "歌词逐字滚动",
+    "p": "歌曲带有时间信息时，每个字都踩着节拍出现。",
+    "alt": "音乐页面：专辑封面、播放按钮和逐字同步的歌词"
+   },
+   {
+    "name": "专注",
+    "h": "安静运行的|番茄钟",
+    "p": "番茄钟、计时器、饮水记录和待办事项，集中在一处。",
+    "alt": "专注页面：正在运行的番茄钟"
+   },
+   {
+    "name": "文件架",
+    "h": "放下文件，|随身带走",
+    "p": "拖到刘海上的文件，可以再拖进任何窗口。",
+    "alt": "文件架页面：放在刘海上的三个文件"
+   },
+   {
+    "name": "日程",
+    "h": "按月|查看日历",
+    "p": "粘贴日历链接（.ics），可按列表、周或月查看。",
+    "alt": "日程页面：月历和当天的日程"
+   },
+   {
+    "name": "耳机",
+    "h": "一键|切换降噪",
+    "p": "在刘海上切换三星 Galaxy Buds 的模式。",
+    "alt": "耳机页面：电量和降噪模式"
+   }
+  ],
+  "glass_h": "会折射|桌面的玻璃",
+  "glass_p": "选一张壁纸，刘海会折射它背后的画面。",
+  "glass_legend": "壁纸",
+  "wps": [
+   "傍晚的湖",
+   "薄雾的湖",
+   "雪山"
+  ],
+  "glass_alt": "壁纸上的刘海，玻璃折射出背后的风景",
+  "dock_h": "指一指小圆点，|选标签页",
+  "dock_p": "鼠标移到小圆点上，它们会变成标签图标。",
+  "dock_alt": "页面小圆点变成标签图标的刘海",
+  "buds_h": "九段均衡器",
+  "buds_p": "均衡器、游戏模式，以及只戴一只耳机也能降噪。仅在 Buds3 Pro 上验证。",
+  "buds_alt": "设置窗口的耳机页面：九段均衡器",
+  "set_h": "为自己而改",
+  "set_p": "上百项设置，四种语言，插件只需一个 JSON 文件。",
+  "set_alt": "设置窗口的外观与行为页面",
+  "get_h": "在 itch.io|免费获取",
+  "get_p": "Windows 10（2004 及以上）或 Windows 11。没有账号，没有追踪。",
+  "rows": [
+   [
+    "安装",
+    "无需管理员权限。"
+   ],
+   [
+    "校验",
+    "下载页提供 SHA-256 校验值。"
+   ],
+   [
+    "许可",
+    "源码公开，可非商业使用（PolyForm Noncommercial 1.0.0）。"
+   ]
+  ],
+  "note": "没有代码签名，首次运行时 Windows SmartScreen 可能会提示。",
+  "f_itch": "itch.io 页面",
+  "f_license": "许可证",
+  "f_privacy": "隐私",
+  "f_trademark": "商标",
+  "f_photos": "照片（已裁剪）",
+  "f_legal": "与 Apple、Cider、Spotify、Samsung、Discord、Microsoft 无关。"
+ },
+ "ja": {
+  "name": "日本語",
+  "htmllang": "ja",
+  "title": "Dalu：Windows の画面に置くノッチ",
+  "desc": "マウスを乗せると、歌詞、タイマー、ファイル棚、イヤホン操作に広がる Windows 用ノッチ。無料、アカウント不要。",
+  "skip": "本文へ移動",
+  "navlang": "言語",
+  "h1": "Windows の画面に、|ノッチをひとつ。",
+  "lead": "歌詞、タイマー、ファイル、イヤホンが、マウスを乗せると開きます。",
+  "dl": "Windows 版をダウンロード",
+  "src": "ソースを見る",
+  "chapter_h": "ひとつのノッチに、|五つのページ",
+  "pages": [
+   {
+    "name": "音楽",
+    "h": "歌詞が|単語ごとに流れます",
+    "p": "曲にタイミング情報があれば、単語ごとに合わせて表示します。",
+    "alt": "音楽ページ：アルバムアート、再生ボタン、単語同期の歌詞"
+   },
+   {
+    "name": "集中",
+    "h": "静かに回る|ポモドーロ",
+    "p": "ポモドーロ、タイマー、水分記録、やることをひとまとめに。",
+    "alt": "集中ページ：動作中のポモドーロ"
+   },
+   {
+    "name": "ファイル棚",
+    "h": "置いて、|持ち歩く",
+    "p": "ノッチに置いたファイルは、ほかのウィンドウへドラッグして使えます。",
+    "alt": "ファイル棚ページ：ノッチに置いた三つのファイル"
+   },
+   {
+    "name": "予定",
+    "h": "カレンダーを|月単位で",
+    "p": "カレンダーのアドレス（.ics）を貼ると、リスト・週・月で見られます。",
+    "alt": "予定ページ：月表示のカレンダーと当日の予定"
+   },
+   {
+    "name": "イヤホン",
+    "h": "ノイズコントロールを|すぐ切り替え",
+    "p": "Samsung Galaxy Buds のモードをノッチから切り替えます。",
+    "alt": "イヤホンページ：電池残量とノイズコントロールのモード"
+   }
+  ],
+  "glass_h": "背景を|屈折させるガラス",
+  "glass_p": "壁紙を選んでください。ノッチが背後の景色を屈折させます。",
+  "glass_legend": "壁紙",
+  "wps": [
+   "夕暮れの湖",
+   "霧の湖",
+   "雪山"
+  ],
+  "glass_alt": "壁紙の上のノッチ。ガラスが背後の景色を屈折させている",
+  "dock_h": "ドットに乗せて、|タブを選ぶ",
+  "dock_p": "小さなドットにマウスを乗せると、タブのアイコンに変わります。",
+  "dock_alt": "ページドットがタブのアイコンに変わったノッチ",
+  "buds_h": "9 バンドの|イコライザー",
+  "buds_p": "イコライザー、ゲーミングモード、片耳だけでのノイズコントロール。Buds3 Pro でのみ確認しています。",
+  "buds_alt": "設定ウィンドウのイヤホンページ：9 バンドのイコライザー",
+  "set_h": "自分で|変えられる",
+  "set_p": "100 以上の設定、4 つの言語、プラグインは JSON ファイル 1 つで。",
+  "set_alt": "設定ウィンドウの外観と動作のページ",
+  "get_h": "itch.io で無料",
+  "get_p": "Windows 10（2004 以降）または 11。アカウントも追跡もありません。",
+  "rows": [
+   [
+    "インストール",
+    "管理者権限は不要です。"
+   ],
+   [
+    "確認",
+    "ダウンロードページに SHA-256 を掲載しています。"
+   ],
+   [
+    "ライセンス",
+    "ソース公開、非商用で利用可（PolyForm Noncommercial 1.0.0）。"
+   ]
+  ],
+  "note": "コード署名がないため、初回は Windows SmartScreen が警告することがあります。",
+  "f_itch": "itch.io のページ",
+  "f_license": "ライセンス",
+  "f_privacy": "プライバシー",
+  "f_trademark": "商標",
+  "f_photos": "写真（トリミング）",
+  "f_legal": "Apple、Cider、Spotify、Samsung、Discord、Microsoft とは無関係です。"
+ }
+}
