@@ -89,6 +89,61 @@ def make_icon(path):
     appicon.save_ico(str(path))
 
 
+def strip_dev_debug(sp):
+    """개발 PC 의 pywebview 에 진단용으로 남아 있는 디버그 기록 코드(내 PC 경로가 들어 있다)를 배포본에서만 뺀다."""
+    f = sp / "webview" / "platforms" / "winforms.py"
+    if not f.exists():
+        return
+    raw = f.read_bytes().decode("utf-8")
+    crlf = "\r\n" in raw
+    lines = raw.replace("\r\n", "\n").split("\n")
+    out, i, removed = [], 0, False
+    while i < len(lines):
+        # try: / with open(... wf_debug.log ...) / f.write(...) / except ...: / pass  (5줄)
+        if (i + 4 < len(lines) and lines[i].strip() == "try:" and "wf_debug.log" in lines[i + 1]
+                and lines[i + 3].strip().startswith("except") and lines[i + 4].strip() == "pass"):
+            i += 5
+            if i < len(lines) and not lines[i].strip():
+                i += 1
+            removed = True
+            continue
+        out.append(lines[i])
+        i += 1
+    if removed:
+        text = "\n".join(out)
+        f.write_bytes((text.replace("\n", "\r\n") if crlf else text).encode("utf-8"))
+        print("  배포본에서 pywebview 의 개발용 디버그 기록 코드를 뺐습니다")
+
+
+BINARY_EXT = (".dll", ".pyd", ".exe", ".png", ".gif", ".ico", ".jpg", ".zip", ".pak", ".dat", ".lib", ".so", ".mo", ".whl")
+
+
+def assert_no_private(stage):
+    """배포본(app + runtime 전체)에 이 PC 의 사용자 이름·경로, 옛 이름이 섞여 들어갔는지 검사한다. 있으면 빌드를 멈춘다."""
+    import getpass
+    bs = chr(92)
+    home = str(Path.home())
+    user = getpass.getuser()
+    needles = [home, home.replace(bs, "/"), bs + "Users" + bs + user + bs, "/Users/" + user + "/"]
+    needles = [n.lower().encode() for n in needles if len(n) > 8]
+    wb = (bs + "b").encode()
+    old_names = [re.compile(wb + b"nusa" + wb)] + [re.compile(re.escape(x)) for x in (b"cider-dynamic-island", b"cider_dynamic_island", b"dynamic island", b"dynamic_island")]
+    bad = []
+    for q in stage.rglob("*"):
+        if not q.is_file() or q.suffix.lower() in BINARY_EXT or "tzdata" in q.parts:      # tzdata: 인도네시아 지명 "Nusa Tenggara" 가 들어 있다(우리 옛 이름이 아니다)
+            continue
+        try:
+            data = q.read_bytes().lower()
+        except OSError:
+            continue
+        hit = next((n.decode("latin1") for n in needles if n in data), None) or next((r.pattern.decode("latin1") for r in old_names if r.search(data)), None)
+        if hit:
+            bad.append((str(q.relative_to(stage)), hit))
+    if bad:
+        raise RuntimeError("배포본에 개인 경로/옛 이름이 섞여 있습니다:" + chr(10) + chr(10).join("  %s  (%s)" % (a, b) for a, b in bad[:30]))
+    print("  개인 경로·옛 이름 검사: 통과 (app + runtime 전체 텍스트 파일)")
+
+
 def build_stage():
     if STAGE.parent.exists():
         shutil.rmtree(STAGE.parent)
@@ -116,6 +171,7 @@ def build_stage():
             dst = sp / f
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src, dst)
+    strip_dev_debug(sp)
     # --- 앱
     app = STAGE / "app"
     app.mkdir()
@@ -135,6 +191,7 @@ def build_stage():
     shutil.copy2(ROOT / "installer" / "INSTALL.md", STAGE / "INSTALL.md")
     (STAGE / "Run.cmd").write_text('@echo off\r\nstart "" "%~dp0runtime\\pythonw.exe" "%~dp0app\\dalu.py"\r\n', encoding="ascii")
     write_notices(STAGE / "THIRD_PARTY_NOTICES.txt", dists, base)
+    assert_no_private(STAGE)
     return dists
 
 
