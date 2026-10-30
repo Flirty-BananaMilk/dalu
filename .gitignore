@@ -12,3 +12,6 @@ rename_out.txt
 *.pfx
 *.pem
 *.key
+
+# 디자인 스킬 작업 기록(개인 작업 파일)
+.hallmark/
