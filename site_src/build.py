@@ -109,6 +109,8 @@ def scene_css():
 /* ---- scroll scenes: only where scroll timelines exist and motion is welcome; everywhere else every scene is an ordinary block in its final state ---- */
 @supports (animation-timeline: view()) {{
   @media (prefers-reduced-motion: no-preference) {{
+    .seq__still {{ display: none; }}
+    .seq__first {{ display: block; }}
     @keyframes fx-out {{ from {{ opacity: 1; transform: none; visibility: visible; }} to {{ opacity: 0; transform: translateY(-5svh); visibility: hidden; }} }}
     @keyframes fx-in {{ from {{ opacity: 0; transform: translateY(5svh); }} to {{ opacity: 1; transform: none; }} }}
     @keyframes fx-zoom {{ from {{ transform: scale(1); }} to {{ transform: scale(1.1); }} }}
@@ -190,9 +192,11 @@ def wp_credits():
 
 
 def seq(name, n, frm, to, alt):
-    last = f"../assets/seq/{name}-{n - 1:02d}.webp"
-    return (f'<div class="seq"><img class="seq__still" src="{last}" width="1200" height="480" alt="{escape(alt)}" fetchpriority="low">'
-            f'<canvas data-seq="{name}" data-n="{n}" data-from="{frm}" data-to="{to}" data-src="../assets/seq" width="1200" height="480" hidden aria-hidden="true"></canvas></div>')
+    """프레임 묶음 자리. 스크립트가 없으면 마지막 프레임(펼친 모습)을, 스크롤 연출이 켜지면 첫 프레임부터 보여 준다."""
+    d = "../assets/seq"
+    return (f'<div class="seq"><img class="seq__still" src="{d}/{name}-{n - 1:02d}.webp" width="1200" height="480" alt="{escape(alt)}" fetchpriority="low">'
+            f'<img class="seq__first" src="{d}/{name}-00.webp" width="1200" height="480" alt="{escape(alt)}">'
+            f'<canvas data-seq="{name}" data-n="{n}" data-from="{frm}" data-to="{to}" data-src="{d}" width="1200" height="480" role="img" aria-label="{escape(alt)}" hidden></canvas></div>')
 
 
 def page(lang):

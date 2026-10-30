@@ -11,7 +11,7 @@
     const n = +cv.dataset.n, from = +cv.dataset.from, to = +cv.dataset.to;
     const frames = new Array(n);
     const ctx = cv.getContext('2d');
-    const still = cv.parentElement.querySelector('.seq__still');
+    const stills = cv.parentElement.querySelectorAll('.seq__still, .seq__first');
     let drawn = -1, started = false;
     const pad = (i) => String(i).padStart(2, '0');
     const get = (i) => frames[i] || (frames[i] = Object.assign(new Image(), { src: `${cv.dataset.src}/${cv.dataset.seq}-${pad(i)}.webp`, decoding: 'async' }));
@@ -23,7 +23,7 @@
     const start = () => {
       if (started) return; started = true;
       for (let i = 0; i < n; i++) get(i);
-      const first = get(0); const show = () => { cv.hidden = false; if (still) still.hidden = true; update(); };
+      const first = get(0); const show = () => { cv.hidden = false; stills.forEach((s) => { s.hidden = true; }); update(); };
       if (first.complete && first.naturalWidth) show(); else first.addEventListener('load', show, { once: true });
     };
     const update = () => {
