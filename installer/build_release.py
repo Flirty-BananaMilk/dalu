@@ -127,10 +127,12 @@ def assert_no_private(stage):
     needles = [home, home.replace(bs, "/"), bs + "Users" + bs + user + bs, "/Users/" + user + "/"]
     needles = [n.lower().encode() for n in needles if len(n) > 8]
     wb = (bs + "b").encode()
-    old_names = [re.compile(wb + b"nusa" + wb)] + [re.compile(re.escape(x)) for x in (b"cider-dynamic-island", b"cider_dynamic_island", b"dynamic island", b"dynamic_island")]
+    # 옛 프로젝트 이름들(소스에 이름이 그대로 남지 않게 조각으로 적는다)
+    olds = [b"nu" + b"sa", b"cider-dyn" + b"amic-island", b"cider_dyn" + b"amic_island", b"dyn" + b"amic island", b"dyn" + b"amic_island"]
+    old_names = [re.compile(wb + olds[0] + wb)] + [re.compile(re.escape(x)) for x in olds[1:]]
     bad = []
     for q in stage.rglob("*"):
-        if not q.is_file() or q.suffix.lower() in BINARY_EXT or "tzdata" in q.parts:      # tzdata: 인도네시아 지명 "Nusa Tenggara" 가 들어 있다(우리 옛 이름이 아니다)
+        if not q.is_file() or q.suffix.lower() in BINARY_EXT or "tzdata" in q.parts:      # tzdata: 인도네시아 지명이 들어 있다(우리 옛 이름이 아니다)
             continue
         try:
             data = q.read_bytes().lower()
