@@ -1,0 +1,14 @@
+# 빌드 결과물 / 개인 데이터는 저장소에 올리지 않는다
+dist/
+itch/
+__pycache__/
+*.pyc
+*.log
+*.ico
+data.json
+winnotif_apps.json
+rename_out.txt
+.env
+*.pfx
+*.pem
+*.key

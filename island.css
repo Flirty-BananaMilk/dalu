@@ -1,0 +1,1581 @@
+/* SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
+   Copyright (c) 2026 Flirty_BananaMilk — 상업적 이용 금지, 자세한 내용은 LICENSE */
+/* 앨범 아트에서 뽑은 색. 등록된 <color> 속성이라 곡이 바뀔 때 색이 부드럽게 전환된다. */
+@property --art-a { syntax: '<color>'; inherits: true; initial-value: #2c64b8; }
+@property --art-b { syntax: '<color>'; inherits: true; initial-value: #5a3ad0; }
+/* 포모도로 링 진행률(0~100). 등록해 두면 값이 바뀔 때 CSS 전환으로 부드럽게 이어진다. */
+@property --p { syntax: '<number>'; inherits: true; initial-value: 100; }
+
+:root {
+  --ui: 'Segoe UI Variable Text', 'Segoe UI', 'Pretendard', 'Malgun Gothic', system-ui, sans-serif;
+  --spring: cubic-bezier(0.34, 1.32, 0.5, 1);
+  --spring-hard: cubic-bezier(0.34, 1.56, 0.64, 1);      /* --spring / --spring-hard 는 설정의 '탄성'에 맞춰 prefs.js 가 바꾼다 */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dim: rgba(255, 255, 255, 0.5);
+  --inactive: rgba(255, 255, 255, 0.34);
+  --art-a: #2c64b8;
+  --art-b: #5a3ad0;
+  --red: #ff5a6e;
+  --green: #33e07a;
+  --blue: #2d8cff;
+}
+
+* {
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  background: transparent !important;
+  overflow: hidden;
+  font-family: var(--ui);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  height: 100vh;
+  pointer-events: none;
+}
+/* body 는 html(flex) 안의 flex 항목이라 폭이 내용(노치)에 맞게 줄어든다. overflow: hidden 이라 그 상자가 곧 '자르는 경계'가 되어서,
+   노치가 좌우로 당겨지거나 흔들릴 때 상자 밖으로 나간 끝부분이 직각 경계에 잘렸다. 창 전체 폭으로 넓혀서 노치가 움직일 자리를 둔다. */
+html, body { width: 100%; }
+
+input { font-family: inherit; user-select: text; -webkit-user-select: text; }
+
+/* ========================================================
+   NOTCH — 순수 검정, 화면 윗면과 이어지는 오목한 '귀', 스프링 전환
+   크기는 JS 의 STATES 와 같아야 한다.
+   ======================================================== */
+.island {
+  --w: 300px; --h: 32px; --r: 15px; --e: 10px;
+  position: relative;
+  width: var(--w);
+  height: var(--h);
+  background: #000;
+  border-radius: 0 0 var(--r) var(--r);
+  /* 창은 노치 주변(아래로 약 10px)만 남기고 잘리므로, 그림자도 그 안에서 끝나야 경계가 안 보인다 */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 8px -3px rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 13px;
+  line-height: 1;
+  pointer-events: auto;
+  transition: width 0.62s var(--spring), height 0.62s var(--spring), --r 0.45s ease, --e 0.62s var(--spring);
+  isolation: isolate;      /* 귀(::before/::after)를 z-index:-1 로 내용 아래에 두기 위한 쌓임 맥락 */
+}
+
+/* 안쪽 내용을 노치 모양으로 자르는 틀. 좌우로 귀 크기(--e)만큼 넓혀 두고(투명 테두리라 안쪽 좌표는 그대로 노치 상자 기준) 모양은 mask 로 자른다:
+   노치 본체(아래 모서리 --r) + 양옆 귀의 오목한 곡선. 그래서 앨범색 빛·유리 바탕 같은 노치의 내용이 귀 자리까지 그대로 이어진다(귀가 따로 칠해져 갈라져 보이지 않는다). */
+/* 옆면·아래 모서리·귀 곡선은 테두리 선(.rimbody/.rimear)보다 1px 바깥까지 넓게 자른다: 조각 가장자리는 노치가 움직이는 동안 최대 1px 흔들리는데, 선보다 안쪽으로 들어오면 선의 바깥 한 칸이 잘려 얇아진다.
+   바깥으로 나온 1px 는 선 바깥의 그림자 속에 묻힌다. */
+.clip {
+  position: absolute; inset: 0 calc(-1 * var(--e)); border: solid transparent; border-width: 0 var(--e);
+  border-radius: 0 0 var(--r) var(--r);
+  -webkit-mask-image:
+    linear-gradient(#000 0 0),
+    linear-gradient(#000 0 0),
+    linear-gradient(#000 0 0),
+    linear-gradient(#000 0 0),
+    radial-gradient(circle at 100% 0, #000 calc(calc(var(--r) + 1px) - 0.5px), transparent calc(calc(var(--r) + 1px) + 0.5px)),
+    radial-gradient(circle at 0 0, #000 calc(calc(var(--r) + 1px) - 0.5px), transparent calc(calc(var(--r) + 1px) + 0.5px)),
+    radial-gradient(circle at 0 100%, transparent calc(var(--e) - 1.5px), #000 calc(var(--e) - 0.5px)),
+    radial-gradient(circle at 100% 100%, transparent calc(var(--e) - 1.5px), #000 calc(var(--e) - 0.5px));
+  mask-image:
+    linear-gradient(#000 0 0),
+    linear-gradient(#000 0 0),
+    linear-gradient(#000 0 0),
+    linear-gradient(#000 0 0),
+    radial-gradient(circle at 100% 0, #000 calc(calc(var(--r) + 1px) - 0.5px), transparent calc(calc(var(--r) + 1px) + 0.5px)),
+    radial-gradient(circle at 0 0, #000 calc(calc(var(--r) + 1px) - 0.5px), transparent calc(calc(var(--r) + 1px) + 0.5px)),
+    radial-gradient(circle at 0 100%, transparent calc(var(--e) - 1.5px), #000 calc(var(--e) - 0.5px)),
+    radial-gradient(circle at 100% 100%, transparent calc(var(--e) - 1.5px), #000 calc(var(--e) - 0.5px));
+  -webkit-mask-size:
+    calc(50% + 1px + 1px) calc(100% - var(--r) + 1px),
+    calc(50% + 1px + 1px) calc(100% - var(--r) + 1px),
+    calc(50% - var(--r) + 2px) calc(100% + 1px),
+    calc(50% - var(--r) + 2px) calc(100% + 1px),
+    calc(var(--r) + 1px) calc(var(--r) + 1px),
+    calc(var(--r) + 1px) calc(var(--r) + 1px),
+    calc(var(--e) + 1px) var(--e),
+    calc(var(--e) + 1px) var(--e);
+  mask-size:
+    calc(50% + 1px + 1px) calc(100% - var(--r) + 1px),
+    calc(50% + 1px + 1px) calc(100% - var(--r) + 1px),
+    calc(50% - var(--r) + 2px) calc(100% + 1px),
+    calc(50% - var(--r) + 2px) calc(100% + 1px),
+    calc(var(--r) + 1px) calc(var(--r) + 1px),
+    calc(var(--r) + 1px) calc(var(--r) + 1px),
+    calc(var(--e) + 1px) var(--e),
+    calc(var(--e) + 1px) var(--e);
+  -webkit-mask-position:
+    left -1px top 0,
+    right -1px top 0,
+    left calc(var(--r) - 1px) top 0,
+    right calc(var(--r) - 1px) top 0,
+    left -1px bottom -1px,
+    right -1px bottom -1px,
+    left calc(-1 * var(--e)) top 0,
+    right calc(-1 * var(--e)) top 0;
+  mask-position:
+    left -1px top 0,
+    right -1px top 0,
+    left calc(var(--r) - 1px) top 0,
+    right calc(var(--r) - 1px) top 0,
+    left -1px bottom -1px,
+    right -1px bottom -1px,
+    left calc(-1 * var(--e)) top 0,
+    right calc(-1 * var(--e)) top 0;
+  -webkit-mask-origin: padding-box; mask-origin: padding-box;      /* 조각 위치의 기준은 노치 본체 상자(귀 쪽 투명 테두리 안쪽): 귀 크기가 소수일 때도 같은 기준 */
+  -webkit-mask-clip: border-box; mask-clip: border-box;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+}
+/* 배경 빛(.ambient/.glow)과 레이어는 전환 중에 섬보다 잠깐 크거나 어긋나는데, 레이어 각각의 overflow/border-radius 로는 둥근 모서리가
+   깔끔히 잘리지 않았다(전환 첫 프레임들에서 아래 모서리 바깥으로 빛이 네모로 번짐). 섬 안쪽 전체를 이 틀 하나로 자른다. */
+
+/* 귀: 노치 윗면 양옆을 화면 가장자리와 부드럽게 이어 붙이는 오목한 모서리 */
+.island::before, .island::after {
+  content: "";
+  position: absolute;
+  z-index: -1;      /* 내용(.clip) 아래: 내용이 귀 자리까지 이어져 그려진다 */
+  top: 0;
+  width: var(--e);
+  height: var(--e);
+}
+.island::before {
+  right: 100%;
+  background: radial-gradient(circle at 0 100%, transparent calc(var(--e) - 0.5px), var(--ear, #000) calc(var(--e) + 0.5px));
+}
+.island::after {
+  left: 100%;
+  background: radial-gradient(circle at 100% 100%, transparent calc(var(--e) - 0.5px), var(--ear, #000) calc(var(--e) + 0.5px));
+}
+
+.island[data-s="idle"], .island[data-s="pet"] { --w: 150px; --h: 30px; --r: 14px; --e: 10px; }
+.island[data-s="mini"]   { --w: 300px; --h: 32px;  --r: 15px; --e: 10px; }
+.island[data-s="mini"][data-chip="1"] { --w: 360px; }
+.island.compact[data-s="mini"] { --w: 190px; --h: 30px; --r: 14px; }
+/* 백그라운드 보컬(소괄호 에코)이 나오는 동안만 작은 노치가 아래로 조금 늘어나 그 줄을 보여 준다 */
+.island[data-s="mini"][data-bg="1"] { --h: 56px; --r: 20px; }
+.island.compact[data-s="mini"][data-chip="1"] { --w: 250px; }
+.island[data-s="peek"][data-pk="track"] { --w: 340px; --h: 62px; --r: 20px; --e: 13px; }
+.island[data-s="peek"][data-pk="info"]  { --w: 310px; --h: 60px; --r: 19px; --e: 13px; }
+.island[data-s="peek"][data-pk="msg"]   { --w: 240px; --h: 40px; --r: 18px; --e: 12px; }
+.island[data-s="music"], .island[data-s="pomo"], .island[data-s="water"],
+.island[data-s="todo"], .island[data-s="buds"], .island[data-s="timer"], .island[data-s="clip"], .island[data-s="agenda"], .island[data-s="launcher"], .island[data-s="plugins"] { --w: 420px; --h: 140px; --r: 32px; --e: 22px; }
+/* 선반은 파일이 여러 개 놓이므로 더 크게 (노치도 확장되면 꽤 커진다) */
+.island[data-s="shelf"] { --w: 560px; --h: 172px; --r: 34px; --e: 24px; }
+.island[data-s="lyrics"] { --w: 520px; --h: 140px; --r: 32px; --e: 22px; }
+
+/* 레이어: 상태(data-s)에 맞는 레이어만 나타난다. 나갈 땐 빠르게, 들어올 땐 노치가 자리 잡은 뒤 서서히. */
+.ly {
+  position: absolute;
+  inset: 0;
+  overflow: visible;      /* 자르는 건 바깥 .clip(노치 모양 + 귀)이 한다: 앨범색 빛(.ambient)·페이지 빛(.glow)이 귀 자리까지 이어져 그려지도록 */
+  border-radius: inherit;
+  opacity: 0;
+  transform: scale(0.97);
+  transform-origin: 50% 0;
+  pointer-events: none;
+  /* 전체 레이어에 blur 필터를 걸면 매 프레임 GPU 오프스크린 패스가 늘어 다른 앱이 GPU 를 쓸 때 프레임이 끊긴다(실측).
+     배경이 순수 검정이라 시각 효과는 거의 없으므로 opacity + scale 만 쓴다. */
+  /* 레이어를 visibility 로 숨기면(상속 속성) 빠르게 연달아 전환할 때 크롬이 자손 요소의 상속값을 갱신하지 못하고
+     'hidden' 으로 남겨 링 안의 시간·제목·배터리 링 같은 요소가 안 보이는 일이 생겼다(실측 30~100%).
+     그래서 나간 레이어는 페이드가 끝난 뒤 JS 가 .off(display:none)를 붙여 치우고, 들어올 땐 즉시 뗀다 —
+     display 가 바뀌면 자손 스타일이 처음부터 다시 계산되어 이 문제가 없고, 숨은 레이어가 레이아웃에서 빠지는 덤도 있다. */
+  transition: opacity 0.16s ease, transform 0.2s ease;
+}
+.ly.off { display: none; }
+.island[data-s="idle"]   .l-idle,
+.island[data-s="pet"]    .l-pet,
+.island[data-s="mini"]   .l-mini,
+.island[data-s="peek"]   .l-peek,
+.island[data-s="music"]  .l-player,
+.island[data-s="lyrics"] .l-player,
+.island[data-s="pomo"]   .l-pomo,
+.island[data-s="water"]  .l-water,
+.island[data-s="shelf"]  .l-shelf,
+.island[data-s="buds"]   .l-buds,
+.island[data-s="todo"]   .l-todo,
+.island[data-s="timer"]  .l-timer,
+.island[data-s="clip"]   .l-clip,
+.island[data-s="agenda"] .l-agenda,
+.island[data-s="launcher"] .l-launcher,
+.island[data-s="plugins"] .l-plugins {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+  transition: opacity 0.34s ease 0.16s, transform 0.6s var(--spring) 0.12s;
+}
+
+.a { position: absolute; }
+.dim { color: var(--dim); }
+.hidden { display: none !important; }
+
+/* ---------- 앨범 아트 ---------- */
+.art-box {
+  position: relative;
+  overflow: hidden;
+  background: #1c1d22;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.art-box img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
+.art-box.has img { display: block; }
+.art-box.has .note { display: none; }
+.art-box .note { color: var(--dim); font-size: 14px; }
+
+/* 공유 앨범 아트: 상태에 따라 위치·크기가 변하며 이동한다.
+   위치/크기를 left/top/width/height 로 움직이면 매 프레임 레이아웃과 이미지 재래스터가 필요해서, 주사율이 높은 화면
+   (이 노트북은 240Hz)에서 프레임 예산을 넘어 끊겼다(실측: 이 전환만 끄면 손실 프레임 24% -> 4.5%).
+   그래서 요소는 가장 큰 크기(76px)로 고정해 두고 translate + scale(transform)로만 움직인다 — 컴포지터가 처리한다. */
+.art-main {
+  position: absolute; left: 0; top: 0; width: 76px; height: 76px; border-radius: 18px;
+  transform-origin: 0 0; transform: translate(12px, 5px) scale(0.28947);          /* mini: 22px */
+  opacity: 0; z-index: 2; pointer-events: none; overflow: visible; background: transparent;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.45);
+  transition: transform 0.62s var(--spring), opacity 0.3s ease, box-shadow 0.4s ease;
+}
+/* 안쪽: 이미지/배경을 담고, 일시정지·숨김 때의 크기 변화(scale)를 맡는다 (가운데 기준) */
+.art-in {
+  position: absolute; inset: 0; border-radius: inherit; overflow: hidden; background: #1c1d22;
+  display: grid; place-items: center; scale: 0.6;
+  transition: scale 0.5s var(--spring-hard);
+}
+.island[data-s="mini"] .art-main,
+.island[data-s="peek"][data-pk="track"] .art-main,
+.island[data-s="music"] .art-main,
+.island[data-s="lyrics"] .art-main { opacity: 1; }
+.island[data-s="mini"] .art-in,
+.island[data-s="peek"][data-pk="track"] .art-in,
+.island[data-s="music"] .art-in,
+.island[data-s="lyrics"] .art-in { scale: 1; }
+/* 일시정지 중엔 살짝 작아졌다가, 재생하면 탄성 있게 돌아온다 */
+.island:not(.playing)[data-s="mini"] .art-in,
+.island:not(.playing)[data-s="peek"][data-pk="track"] .art-in,
+.island:not(.playing)[data-s="music"] .art-in,
+.island:not(.playing)[data-s="lyrics"] .art-in { scale: 0.9; }
+.island.compact[data-s="mini"] .art-main { transform: translate(12px, 4px) scale(0.28947); }
+.island[data-s="peek"][data-pk="track"] .art-main { transform: translate(14px, 9px) scale(0.52632); }        /* 40px */
+.island[data-s="music"] .art-main { transform: translate(22px, 16px) scale(1); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); }
+.island[data-s="lyrics"] .art-main { transform: translate(22px, 16px) scale(0.63158); box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4); }   /* 48px */
+.art-slot { width: 22px; height: 22px; flex-shrink: 0; }
+
+/* ---------- IDLE: 시계 / 타이머 ---------- */
+.clock {
+  position: absolute;
+  inset: 0;
+  display: flex;            /* grid 로 두면 텍스트/콜론이 각각 별도 칸이 되어 세로로 쌓인다 */
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  font-variant-numeric: tabular-nums;
+}
+.clock i { font-style: normal; margin: 0 1px; animation: colon 2s ease-in-out infinite; }
+.clock small { font-size: 9px; margin-left: 3px; opacity: 0.6; letter-spacing: 0.3px; }
+@keyframes colon { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+.island[data-timer="1"] .clock { display: none; }
+.idle-timer { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; gap: 7px; }
+.island[data-timer="1"] .idle-timer { display: flex; }
+
+/* 타이머 칩 (링 + 남은 시간) */
+.tchip { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.tring {
+  width: 14px; height: 14px; border-radius: 50%;
+  --c: var(--red);
+  background: conic-gradient(var(--c) calc(var(--p) * 1%), rgba(255, 255, 255, 0.18) 0);
+  -webkit-mask: radial-gradient(circle, transparent 4px, #000 4.5px);
+  mask: radial-gradient(circle, transparent 4px, #000 4.5px);
+  transition: --p 1s linear;
+}
+.island[data-pm="break"] .tring, .island[data-pm="break"] .pring { --c: var(--green); }
+
+/* ---------- PET: 캐릭터(눈) ---------- */
+.l-pet { display: grid; place-items: center; }
+.eyes { display: flex; gap: 9px; align-items: center; }
+.eye {
+  position: relative;
+  width: 9px; height: 13px;
+  border-radius: 6px;
+  background: #fff;
+  overflow: hidden;
+  animation: blink 5.5s infinite;
+  transition: height 0.3s ease, border-radius 0.3s ease, transform 0.3s ease;
+}
+.eye b {
+  position: absolute; left: 50%; top: 50%;
+  width: 4.5px; height: 6.5px; border-radius: 3px; background: #0a0a0a;
+  transform: translate(calc(-50% + var(--lx, 0px)), calc(-50% + var(--ly, 0px)));
+  transition: transform 0.35s var(--spring-hard);
+}
+.eye:nth-child(2) { animation-delay: 0.04s; }
+@keyframes blink { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(0.08); } }
+/* 졸음: 눈이 감긴다 */
+.l-pet[data-mode="doze"] .eye { height: 3px; border-radius: 3px; animation: none; transform: translateY(2px); }
+.l-pet[data-mode="doze"] .eye b { display: none; }
+/* 인사: 눈이 웃는 모양(^ ^)이 된다 */
+.l-pet[data-mode="wave"] .eye { height: 7px; background: transparent; border-top: 3px solid #fff; border-radius: 8px 8px 0 0; animation: none; }
+.l-pet[data-mode="wave"] .eye b { display: none; }
+.zzz { position: absolute; right: 34px; top: 4px; font-size: 10px; font-weight: 700; color: var(--dim); opacity: 0; }
+.l-pet[data-mode="doze"] .zzz { animation: zzz 2.6s ease-in-out infinite; }
+@keyframes zzz { 0% { opacity: 0; transform: translate(0, 6px) scale(0.7); } 40% { opacity: 1; } 100% { opacity: 0; transform: translate(6px, -4px) scale(1.1); } }
+.wave svg { width: 15px; height: 15px; display: block; }
+.wave { color: rgba(255, 255, 255, 0.85); position: absolute; right: 26px; top: 50%; font-size: 13px; transform: translateY(-50%); opacity: 0; transform-origin: 70% 80%; }
+.l-pet[data-mode="wave"] .wave { opacity: 1; animation: wave 0.7s ease-in-out infinite alternate; }
+@keyframes wave { from { transform: translateY(-50%) rotate(-14deg); } to { transform: translateY(-50%) rotate(18deg); } }
+
+/* ---------- MINI: 접힌 상태 (아트 + 실시간 가사 + 타이머 칩 + 이퀄라이저) ---------- */
+.l-mini { display: flex; align-items: center; justify-content: space-between; padding: 0 12px; gap: 0; bottom: auto; height: 32px; }   /* 첫 줄은 항상 위 32px 에 고정: 노치가 늘어나도 아트/가사/막대가 내려가지 않는다 */
+.island.compact .l-mini { height: 30px; }
+.l-mini { overflow: visible; }      /* 늘어난 노치에 나오는 백그라운드 줄이 잘리지 않게 (바깥 .clip 이 노치 모양으로 자른다) */
+.l-mini .tchip { display: none; margin-right: 8px; }
+.island[data-chip="1"] .l-mini .tchip { display: flex; }
+
+.mini-lyric-box {
+  flex-grow: 1;
+  min-width: 0;
+  margin-left: 14px;
+  margin-right: 10px;
+  height: 24px;
+  /* 글로우가 위아래에서 잘리지 않도록 여유를 두고 음수 마진으로 레이아웃은 유지 */
+  padding: 5px 0;
+  margin-top: -5px;
+  margin-bottom: -5px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  box-sizing: content-box;
+}
+.island.compact .mini-lyric-box { display: none; }
+/* 작은 노치: 가사 칸이 없어서 비는 가운데에 시계를 보인다 (설정 '작은 노치에서 시계' 로 끌 수 있다) */
+.mini-clock { display: none; }
+.island.compact.cclock .mini-clock { display: flex; flex: 1; min-width: 0; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; letter-spacing: 0.3px; font-variant-numeric: tabular-nums; color: rgba(255, 255, 255, 0.92); white-space: nowrap; }
+.mini-clock i { font-style: normal; margin: 0 1px; animation: colon 2s ease-in-out infinite; }
+.mini-clock small { font-size: 8.5px; margin-left: 3px; opacity: 0.6; }
+
+/* 비네트: 스크롤될 때만, 글자가 실제로 가려지는 쪽에서만 가장자리가 흐려진다.
+   --fl / --fr (px) 은 JS 가 스크롤 위치에 따라 갱신한다. */
+.mini-lyric-box.scrolling {
+  mask-image: linear-gradient(90deg, transparent 0px, black var(--fl, 0px), black calc(100% - var(--fr, 0px)), transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0px, black var(--fl, 0px), black calc(100% - var(--fr, 0px)), transparent 100%);
+}
+
+.mini-lyric-line {
+  font-size: calc(12.5px * var(--lyric-scale, 1));
+  font-weight: 600;
+  white-space: nowrap;
+  letter-spacing: -0.15px;
+  color: var(--inactive);
+  display: inline-block;
+  will-change: transform;
+}
+/* 가사가 없거나 꺼져 있을 때: 곡 정보를 가운데에 한 줄로(길면 말줄임) */
+.mini-lyric-line.static {
+  display: block;
+  width: 100%;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: rgba(255, 255, 255, 0.78);
+}
+/* 단어 하이라이트: 기본(흐린) 글자 위에 같은 글자(::after, 흰색)를 얹고 clip-path 로 진행한 만큼만 보이게 한다.
+   예전에는 background-clip:text + 투명 글자 + drop-shadow 를 썼는데, 그 상태에서 '완료'(일반 글자)로 바뀌는 순간
+   글자 래스터와 글로우가 달라져 가사 모양이 살짝 바뀌어 보였다. 진행 중 -> 완료로 바뀌는 순간에 글자와 글로우가 같아서
+   픽셀이 변하지 않고, 글로우는 그 뒤에 서서히 꺼진다. (굵기도 바꾸지 않는다: 폭이 바뀌면 줄 전체가 밀린다) */
+.mini-word, .w { display: inline-block; position: relative; --glow: 0 0 5px rgba(255, 255, 255, 0.26); }
+.mini-word { color: var(--inactive); }
+.mini-word::after, .w::after {
+  content: attr(data-t); position: absolute; left: 0; top: 0; white-space: pre; pointer-events: none;
+  color: #fff; text-shadow: var(--glow);
+  clip-path: inset(-10px 100% -10px -10px);      /* 위/아래/왼쪽은 글로우가 잘리지 않게 여유를 둔다 */
+}
+.mini-word.active::after, .w.active::after { clip-path: inset(-10px calc(100% - var(--wp, 0%)) -10px -10px); }
+.mini-word.completed, .w.completed { color: #fff; animation: glow-off 0.8s ease-out; }   /* 진행 중의 글로우가 완료되면서 서서히 꺼진다 */
+.mini-word.completed.instant, .w.completed.instant { animation: none; }                /* 건너뛰어 완료된 단어(되감기/줄 중간 진입)는 글로우 없이 바로 */
+.mini-word.completed::after, .w.completed::after { display: none; }
+@keyframes glow-off { from { text-shadow: var(--glow); } to { text-shadow: 0 0 0 rgba(255, 255, 255, 0); } }
+.mini-lyric-line.line-sync {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
+
+/* 비주얼라이저: 막대 높이(scaleY)는 JS 가 실제 오디오 레벨로 구동한다 (고정 주기 애니메이션은 기계적으로 보인다) */
+.bars { display: flex; gap: 2px; align-items: center; height: 14px; flex-shrink: 0; }
+.bars i { width: 2.2px; height: 100%; border-radius: 2px; background: #fff; transform: scaleY(0.16); transform-origin: center; will-change: transform; }
+
+/* ---------- 간주 3-dot ---------- */
+.cider-dots { display: none; align-items: center; justify-content: center; height: 100%; width: 100%; gap: 7px; }
+.cider-dots.active {
+  display: flex;
+  animation: dotsIn 0.38s cubic-bezier(0.16, 1, 0.3, 1), dotsBreathe 2.6s ease-in-out 0.38s infinite;
+}
+@keyframes dotsIn { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }
+@keyframes dotsBreathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.09); } }
+.dot-item {
+  position: relative; width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25); overflow: hidden;
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+.dot-fill { position: absolute; top: 0; left: 0; height: 100%; width: 0%; background: #fff; border-radius: 50%; }
+.dot-item.filled { background: #fff; box-shadow: 0 0 6px rgba(255, 255, 255, 0.9); transform: scale(1.2); }
+#miniDots .dot-item { width: 5.5px; height: 5.5px; }
+
+/* ---------- PEEK: 곡이 바뀔 때 / 알림 ---------- */
+.l-peek { display: flex; align-items: center; padding: 0 16px 4px 14px; gap: 12px; }
+.l-peek .art-slot { width: 40px; height: 40px; }
+.pk-text { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 5px; }
+.pk-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.25; }
+.pk-artist { font-size: 12px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.25; }
+.pk-track { display: contents; }
+.pk-info { display: none; align-items: center; gap: 12px; width: 100%; min-width: 0; }
+.pk-msg { display: none; width: 100%; text-align: center; font-size: 12.5px; font-weight: 600; }
+.island[data-pk="info"] .pk-track, .island[data-pk="msg"] .pk-track { display: none; }
+.island[data-pk="info"] .pk-info { display: flex; }
+.island[data-pk="msg"] .pk-msg { display: block; }
+.island[data-pk="msg"] .l-peek { justify-content: center; padding: 0 14px; }
+.pk-ico {
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  display: grid; place-items: center;
+  background: rgba(255, 255, 255, 0.14);
+  --ic: #fff;
+}
+.pk-ico svg { width: 18px; height: 18px; fill: var(--ic); }
+.pk-ico[data-tone="green"] { background: rgba(51, 224, 122, 0.2); --ic: var(--green); }
+.pk-ico[data-tone="red"] { background: rgba(255, 90, 110, 0.22); --ic: var(--red); }
+.pk-ico[data-tone="blue"] { background: rgba(45, 140, 255, 0.22); --ic: #5fb0ff; }
+.pk-meter { width: 74px; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.2); overflow: hidden; flex-shrink: 0; display: none; }
+.pk-meter i { display: block; height: 100%; width: 0%; background: #fff; border-radius: 3px; transition: width 0.2s ease-out; }
+.pk-meter.on { display: block; }
+
+/* ========================================================
+   MUSIC / LYRICS 및 기능 페이지 공통
+   ======================================================== */
+/* 앨범색 앰비언트: 천천히 떠다니는 두 겹의 색 번짐 */
+/* 섬 크기(inset:0)를 따라가면 너비 전환 동안 큰 그라데이션을 매 프레임 다시 그린다 -> 고정 크기(가장 넓은 520 + 여유)로 가운데에 둔다 */
+.ambient { position: absolute; left: 50%; top: 0; width: 740px; height: 200px; margin-left: -370px; overflow: hidden; pointer-events: none; }
+/* 배경 빛은 섬 크기를 따라가지 않고(따라가면 너비가 변하는 동안 큰 그라데이션을 매 프레임 다시 그려 끊긴다) 고정 크기로 둔다.
+   그 상자는 섬이 갈 수 있는 가장 큰 크기(창 740x200, 스프링 오버슈트 포함)를 항상 덮어야 한다 — 예전엔 560x140 이라 전환 중에 섬이
+   상자 밖으로 최대 100px 넘어가 가장자리에 빛이 안 닿는 띠가 생겼다. 그라데이션 위치는 섬 가운데 기준 px 로 정해 상자가 커져도 같은 자리에 온다. */
+.ambient::before {
+  content: ""; position: absolute; left: -60px; right: -60px; top: -30px; bottom: -30px;
+  background:
+    radial-gradient(336px 98px at calc(50% + 129px) 47px, var(--art-a) 0%, transparent 70%),
+    radial-gradient(308px 105px at calc(50% - 179px) 170px, var(--art-b) 0%, transparent 72%);
+  opacity: 0.9;
+  animation: drift 16s ease-in-out infinite alternate;
+  animation-play-state: paused;
+}
+.island.playing[data-s="music"] .ambient::before,
+.island.playing[data-s="lyrics"] .ambient::before { animation-play-state: running; }
+.l-player .ambient { opacity: min(1, calc(0.5 * var(--glow-str, 1))); transition: opacity 0.8s ease; }
+.l-player[data-mode="lyrics"] .ambient { opacity: min(1, calc(0.9 * var(--glow-str, 1))); }
+@keyframes drift {
+  from { transform: translate3d(-3%, 2%, 0) scale(1.05); }
+  to   { transform: translate3d(3%, -3%, 0) scale(1.18); }
+}
+/* 기능별 은은한 배경 빛 */
+.glow { position: absolute; left: 50%; top: 0; width: 740px; height: 200px; margin-left: -370px; pointer-events: none; }   /* 고정 크기(.ambient 설명 참고): 섬이 어떤 크기여도 덮고, 그라데이션은 가운데 기준 px 위치 */
+.glow-pomo { background: radial-gradient(202px 133px at calc(50% - 126px) 77px, rgba(255, 60, 60, 0.26), transparent 70%); }
+.island[data-pm="break"] .glow-pomo { background: radial-gradient(202px 133px at calc(50% - 126px) 77px, rgba(51, 224, 122, 0.22), transparent 70%); }
+.glow-water { background: radial-gradient(252px 126px at calc(50% - 160px) 98px, rgba(45, 140, 255, 0.24), transparent 72%); }
+.glow-buds { background: radial-gradient(252px 140px at calc(50% + 147px) 70px, rgba(95, 176, 255, 0.2), transparent 72%); }
+.glow-todo { background: radial-gradient(252px 126px at calc(50% + 160px) 56px, rgba(51, 224, 122, 0.14), transparent 72%); }
+.glow-shelf { background: radial-gradient(448px 189px at 50% 172px, rgba(255, 255, 255, 0.07), transparent 70%); transition: background 0.4s ease; }
+body.dragging-files .glow-shelf { background: linear-gradient(90deg, rgba(45, 140, 255, 0.35), rgba(123, 75, 255, 0.35)) center / 560px 100% no-repeat; }   /* 선반 크기(560px) 만큼만 */
+
+.ttl { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
+.sub { color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
+
+.controls { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.btn-ctrl {
+  width: 34px; height: 34px; border: none; border-radius: 50%;
+  background: transparent; display: grid; place-items: center; cursor: pointer;
+  transition: background 0.15s ease, transform 0.12s ease, width 0.5s var(--ease-out), height 0.5s var(--ease-out);
+}
+.btn-ctrl:hover { background: rgba(255, 255, 255, 0.14); }
+.btn-ctrl:active { transform: scale(0.88); }
+.btn-ctrl svg { width: 18px; height: 18px; fill: #fff; }
+.btn-ctrl.big { width: 42px; height: 42px; }
+.btn-ctrl.big svg { width: 24px; height: 24px; }
+/* 켜고 끄는 버튼(가사 표시 / 셔플 / 반복): 켜져 있으면 아이콘이 또렷해지고 옅은 원 배경이 생긴다 */
+.btn-ctrl.lyr-toggle svg, .btn-ctrl.mode svg { width: 17px; height: 15px; opacity: 0.55; transition: opacity 0.2s; }
+.btn-ctrl.mode svg { width: 16px; height: 16px; }
+.btn-ctrl.lyr-toggle.on, .btn-ctrl.mode.on { background: rgba(255, 255, 255, 0.2); }
+.btn-ctrl.lyr-toggle.on svg, .btn-ctrl.mode.on svg { fill: #fff; opacity: 1; }
+.btn-ctrl.lyr-toggle.on:hover, .btn-ctrl.mode.on:hover { background: rgba(255, 255, 255, 0.3); }
+
+.prog-hit { position: absolute; height: 16px; cursor: pointer; display: flex; align-items: center; }
+.prog { width: 100%; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.22); overflow: hidden; transition: height 0.15s ease; }
+.prog-hit:hover .prog, .prog-hit.scrubbing .prog { height: 6px; }
+.prog-hit { touch-action: none; user-select: none; }
+.prog-hit.scrubbing { cursor: grabbing; }
+.prog i { display: block; height: 100%; width: 0%; background: #fff; border-radius: 2px; }
+.times { position: absolute; display: flex; justify-content: space-between; font-size: 10.5px; color: var(--dim); font-variant-numeric: tabular-nums; }
+
+/* 페이지 도트 */
+.dots {
+  position: absolute; left: 50%; top: 133px; transform: translate(-50%, -50%);
+  display: flex; gap: 4.5px; align-items: center;
+  opacity: 0; pointer-events: none; z-index: 3;
+  transition: opacity 0.2s ease;
+}
+.island[data-s="music"] .dots, .island[data-s="lyrics"] .dots, .island[data-s="pomo"] .dots,
+.island[data-s="water"] .dots, .island[data-s="shelf"] .dots, .island[data-s="todo"] .dots, .island[data-s="buds"] .dots,
+.island[data-s="timer"] .dots, .island[data-s="clip"] .dots, .island[data-s="agenda"] .dots, .island[data-s="launcher"] .dots, .island[data-s="plugins"] .dots {
+  opacity: 1; pointer-events: auto; transition: opacity 0.32s ease 0.2s;
+}
+.dots i {
+  width: 3.6px; height: 3.6px; border-radius: 2px;
+  background: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  transition: width 0.4s var(--spring), background 0.3s;
+  /* 작은 점이라 클릭 영역을 투명 패딩으로 넓힌다 */
+  box-sizing: content-box; border: 6px solid transparent; background-clip: padding-box; margin: -6px;
+}
+.dots i.on { width: 15px; background-color: #fff; }
+
+/* 고정(핀) 버튼 */
+.btn-pin {
+  position: absolute; top: 11px; right: 18px; width: 24px; height: 24px;
+  border: none; border-radius: 8px; background: transparent;
+  display: grid; place-items: center; cursor: pointer;
+  opacity: 0; pointer-events: none; z-index: 3;
+  transition: background 0.15s ease, opacity 0.2s ease;
+}
+.island[data-s="music"] .btn-pin, .island[data-s="lyrics"] .btn-pin, .island[data-s="pomo"] .btn-pin,
+.island[data-s="water"] .btn-pin, .island[data-s="shelf"] .btn-pin, .island[data-s="todo"] .btn-pin, .island[data-s="buds"] .btn-pin,
+.island[data-s="timer"] .btn-pin, .island[data-s="clip"] .btn-pin, .island[data-s="agenda"] .btn-pin, .island[data-s="launcher"] .btn-pin, .island[data-s="plugins"] .btn-pin {
+  opacity: 1; pointer-events: auto; transition: background 0.15s ease, opacity 0.32s ease 0.2s;
+}
+.btn-pin:hover { background: rgba(255, 255, 255, 0.14); }
+.btn-pin svg { width: 13px; height: 13px; fill: var(--dim); rotate: 40deg; transition: fill 0.2s ease, rotate 0.4s var(--spring-hard); }
+.btn-pin.active svg { fill: #fff; rotate: 0deg; }
+
+/* 공통 작은 부품: 알약 버튼, 스테퍼, 아이콘 */
+.pill {
+  height: 28px; border: none; border-radius: 14px; padding: 0 12px;
+  background: rgba(255, 255, 255, 0.12); color: #fff; font: inherit; font-size: 12px; font-weight: 500;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; white-space: nowrap;
+  transition: background 0.15s ease, transform 0.12s ease;
+}
+.pill:hover { background: rgba(255, 255, 255, 0.2); }
+.pill:active { transform: scale(0.94); }
+.pill.primary { background: #fff; color: #000; font-weight: 600; }
+.pill.primary:hover { background: rgba(255, 255, 255, 0.85); }
+.pill svg { width: 13px; height: 13px; fill: currentColor; }
+.pill.icon { padding: 0; width: 28px; }
+.stepper { display: inline-flex; align-items: center; gap: 6px; }
+.stepper button {
+  width: 22px; height: 22px; border: none; border-radius: 50%; background: rgba(255, 255, 255, 0.14);
+  color: #fff; cursor: pointer; display: grid; place-items: center; transition: background 0.15s, transform 0.12s;
+}
+.stepper button:hover { background: rgba(255, 255, 255, 0.24); }
+.stepper button:active { transform: scale(0.88); }
+.stepper button svg { width: 12px; height: 12px; fill: #fff; }
+.stepper .val { min-width: 46px; text-align: center; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ---------- PLAYER: music(420) <-> lyrics(520) ----------
+   같은 요소가 두 배치 사이를 이동한다. 기본값이 music 배치이고 data-mode="lyrics" 에서 왼쪽 패널로 접힌다.
+   .snap 은 다른 페이지에서 막 들어올 때 이동 없이 제자리에 놓기 위한 임시 클래스. */
+.l-player .ttl, .l-player .sub, .l-player .controls, .l-player .prog-hit, .l-player .times {
+  transition: left 0.62s var(--ease-out), top 0.62s var(--ease-out), width 0.62s var(--ease-out), font-size 0.45s ease;
+}
+.l-player.snap > :not(.lyr), .l-player.snap .controls .btn-ctrl { transition: none !important; }
+
+.l-player .ttl { left: 114px; top: 18px; width: 268px; font-size: 16px; }
+.l-player .sub { left: 114px; top: 40px; width: 268px; font-size: 13px; }
+.l-player .controls { left: 114px; top: 56px; width: 284px; height: 36px; gap: 2px; }
+.l-player .btn-ctrl { width: 32px; height: 32px; }
+.l-player .btn-ctrl.big { width: 42px; height: 42px; }
+.l-player .prog-hit { left: 22px; top: 98px; width: 376px; }
+.l-player .times { left: 22px; top: 113px; width: 376px; }
+
+.l-player[data-mode="lyrics"] .ttl { left: 82px; top: 16px; width: 170px; font-size: 14px; }
+.l-player[data-mode="lyrics"] .sub { left: 82px; top: 35px; width: 170px; font-size: 12px; }
+.l-player[data-mode="lyrics"] .controls { left: 22px; top: 66px; width: 230px; height: 30px; gap: 0; justify-content: space-between; }
+.l-player[data-mode="lyrics"] .btn-ctrl { width: 29px; height: 29px; }
+.l-player[data-mode="lyrics"] .btn-ctrl.big { width: 36px; height: 36px; }
+.l-player[data-mode="lyrics"] .prog-hit { width: 230px; }
+.l-player[data-mode="lyrics"] .times { width: 230px; }
+
+/* 세로 가사 리스트: 활성 줄은 흰색/원래 크기, 나머지는 흐리고 살짝 작게. 위아래는 비네트로 페이드. */
+.lyr {
+  position: absolute; left: 268px; width: 230px; top: 12px; height: 112px; padding-left: 2px; overflow: hidden;
+  opacity: 0; translate: 30px 0; pointer-events: none;
+  /* 숨길 때: 빠르게 오른쪽으로 옅어지며 사라진다 (visibility 는 전환하지 않는다: 위 .ly 설명 참고) */
+  transition: opacity 0.18s ease-in, translate 0.28s ease-in;
+  -webkit-mask: linear-gradient(transparent 0, rgba(0,0,0,.16) 7%, rgba(0,0,0,.5) 16%, rgba(0,0,0,.85) 26%, #000 36%, #000 62%, rgba(0,0,0,.8) 74%, rgba(0,0,0,.4) 86%, rgba(0,0,0,.1) 95%, transparent 100%);
+  mask: linear-gradient(transparent 0, rgba(0,0,0,.16) 7%, rgba(0,0,0,.5) 16%, rgba(0,0,0,.85) 26%, #000 36%, #000 62%, rgba(0,0,0,.8) 74%, rgba(0,0,0,.4) 86%, rgba(0,0,0,.1) 95%, transparent 100%);
+}
+.l-player[data-mode="lyrics"] .lyr {
+  opacity: 1; translate: 0 0; pointer-events: auto;
+  /* 보일 때: 패널이 왼쪽으로 자리를 잡는 동안 조금 늦게 오른쪽에서 스며든다 */
+  transition: opacity 0.5s ease 0.2s, translate 0.8s var(--spring) 0.12s;
+}
+.lyr ol { position: relative; list-style: none; transition: transform 0.7s var(--spring); }
+/* 시간 정보가 없는 가사: 전부 또렷하게 보이고, 휠로 직접 스크롤한다 */
+.lyr.static { overflow-y: auto; scrollbar-width: none; }
+.lyr.static::-webkit-scrollbar { display: none; }
+.lyr.static li { color: rgba(255, 255, 255, 0.78); transform: none; cursor: default; }
+.lyr.static li:hover { color: rgba(255, 255, 255, 0.78); }
+.lyr li {
+  font-weight: 700; font-size: calc(16px * var(--lyric-scale, 1)); line-height: 1.25; padding: 4.5px 6px 4.5px 0;
+  color: rgba(255, 255, 255, 0.3); transform: scale(0.93); transform-origin: left center;
+  transition: color 0.5s, transform 0.5s; cursor: pointer;
+}
+.lyr li:hover { color: rgba(255, 255, 255, 0.55); }
+.lyr li.on { color: #fff; transform: scale(1); }
+.lyr li.ph { cursor: default; color: rgba(255, 255, 255, 0.45); transform: none; font-size: 14px; }
+.lyr li.gap { cursor: default; display: flex; gap: 7px; align-items: center; height: 30px; transform: none; padding-left: 2px; }
+.w { color: rgba(255, 255, 255, 0.38); }      /* 나머지(::after, active, completed)는 위의 '단어 하이라이트' 규칙과 공통 */
+
+/* ---------- POMODORO ---------- */
+.pring-wrap { left: 46px; top: 30px; width: 76px; height: 76px; }
+.pring {
+  position: absolute; inset: 0; border-radius: 50%;
+  --c: var(--red);
+  background: conic-gradient(var(--c) calc(var(--p) * 1%), rgba(255, 255, 255, 0.12) 0);
+  -webkit-mask: radial-gradient(circle, transparent 31px, #000 31.5px);
+  mask: radial-gradient(circle, transparent 31px, #000 31.5px);
+  transition: --p 1s linear;
+}
+.island[data-pm="focus"] .pring { box-shadow: 0 0 18px rgba(255, 70, 70, 0.3); }
+.ptime { position: absolute; inset: 0; display: grid; place-items: center; font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 0.2px; }
+.l-pomo .ttl { left: 150px; top: 20px; width: 190px; font-size: 16px; }
+.l-pomo .sub { left: 150px; top: 42px; width: 190px; font-size: 12px; }
+.l-pomo .pstep { left: 150px; top: 65px; }
+.l-pomo .pbtns { left: 150px; top: 94px; display: flex; gap: 8px; }
+.l-pomo .pstep .val { min-width: 54px; }
+
+/* ---------- WATER ---------- */
+.l-water .wlabel { left: 24px; top: 16px; font-size: 11px; color: var(--dim); }
+.l-water .wamount { left: 24px; top: 29px; font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.l-water .wamount small { font-size: 13px; font-weight: 600; color: var(--dim); margin-left: 4px; }
+.wbar { left: 24px; top: 68px; width: 176px; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.14); overflow: hidden; }
+.wbar i { display: block; height: 100%; width: 0%; border-radius: 3px; background: linear-gradient(90deg, #66dbff, #2d6bff); transition: width 1s cubic-bezier(0.3, 1.2, 0.5, 1); }
+.l-water .wstatus { left: 24px; top: 80px; font-size: 11px; color: var(--dim); white-space: nowrap; }
+.l-water .wbtns { left: 24px; top: 96px; display: flex; gap: 6px; }
+.chart { left: 224px; top: 24px; width: 176px; height: 70px; }
+.cbar { position: absolute; bottom: 0; width: 8px; border-radius: 4px; background: linear-gradient(180deg, #66dbff, #2d6bff); height: 2px; opacity: 0.85; transition: height 0.8s cubic-bezier(0.34, 1.5, 0.5, 1); }
+.cbar.empty { background: rgba(255, 255, 255, 0.14); opacity: 1; }
+.cbar.now { box-shadow: 0 0 8px rgba(102, 219, 255, 0.55); }
+.caxis { position: absolute; left: 224px; top: 98px; width: 176px; height: 12px; font-size: 9.5px; color: var(--dim); }
+.caxis span { position: absolute; transform: translateX(-50%); }
+.l-water .wmain, .l-water .wsettings { position: absolute; inset: 0; }
+.l-water .wsettings { display: none; }
+.l-water.settings .wmain { display: none; }
+.l-water.settings .wsettings { display: block; }
+.srow { position: absolute; display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.srow label { width: 64px; color: var(--dim); font-size: 11.5px; }
+.sw { position: relative; width: 34px; height: 20px; border-radius: 10px; background: rgba(255, 255, 255, 0.22); border: none; cursor: pointer; transition: background 0.2s; }
+.sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35); transition: transform 0.25s var(--spring); }
+.sw.on { background: #2699ff; }
+.sw.on::after { transform: translateX(14px); }
+
+/* ---------- SHELF (560 x 172) ---------- */
+.island[data-s="shelf"] .dots { top: 164px; }
+.szone {
+  left: 28px; top: 38px; width: 504px; height: 112px; border-radius: 20px;
+  border: 1.4px dashed rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.03);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px;
+  transition: border-color 0.25s, background 0.25s;
+}
+body.dragging-files .szone { border-color: rgba(255, 255, 255, 0.85); background: rgba(255, 255, 255, 0.09); }
+.szone .hint { font-size: 12.5px; color: var(--dim); text-align: center; line-height: 1.45; }
+.szone.has { align-items: stretch; justify-content: flex-start; padding: 7px 9px; border-style: solid; border-color: rgba(255, 255, 255, 0.12); }
+.szone.has .hint { display: none; }
+/* 카드는 호버 때 위로 떠오르고(-2px) 삭제(×) 버튼이 카드 모서리 밖(-4px)으로 나오는데, 가로 스크롤 영역이 그 부분을 잘랐다. 영역을 사방으로 넓히고 같은 만큼 안쪽 여백을 줘서(카드 자리는 그대로) 잘리지 않게 한다 */
+.shcards { display: none; gap: 9px; overflow-x: auto; overflow-y: hidden; height: calc(100% + 16px); margin: -8px -6px; padding: 8px 6px; box-sizing: border-box; align-items: center; scrollbar-width: none; }
+.shcards::-webkit-scrollbar { display: none; }
+.szone.has .shcards { display: flex; }
+/* 카드는 고정 폭: 파일명이 길어도 카드가 늘어나지 않는다 (min-width:auto 때문에 nowrap 텍스트 폭만큼 커지던 문제) */
+.shcard {
+  position: relative; flex: 0 0 104px; width: 104px; min-width: 0; height: 98px; border-radius: 14px; background: rgba(255, 255, 255, 0.08);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 7px 5px;
+  cursor: grab; transition: background 0.15s, transform 0.2s var(--spring);
+}
+.shcard:hover { background: rgba(255, 255, 255, 0.16); transform: translateY(-2px); }
+.shcard .thumb { width: 64px; height: 48px; border-radius: 10px; overflow: hidden; display: grid; place-items: center; font-size: 27px; background: rgba(255, 255, 255, 0.06); flex: none; }
+.shcard .thumb img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; -webkit-user-drag: none; }
+/* 이름은 두 줄까지(가운데 정렬, 넘치면 말줄임). 전체 경로는 마우스를 올리면 툴팁으로 보인다. */
+.shcard .nm {
+  width: 100%; min-width: 0; font-size: 10.5px; font-weight: 600; line-height: 1.22; text-align: center;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; word-break: break-all;
+}
+.shcard .sz { font-size: 9.5px; color: var(--dim); line-height: 1; flex: none; }
+.shcard.missing { opacity: 0.45; }
+.shcard .rm {
+  position: absolute; top: -4px; right: -4px; width: 18px; height: 18px; border-radius: 50%; border: none;
+  background: #3a3a3f; color: #fff; display: none; place-items: center; cursor: pointer; padding: 0;
+}
+.shcard:hover .rm { display: grid; }
+.shcard .rm svg { width: 9px; height: 9px; fill: #fff; }
+.shtools { right: 52px; top: 8px; display: flex; gap: 4px; z-index: 2; }
+.shtools .pill { height: 24px; padding: 0 10px; font-size: 11px; }
+.shtools .pill.icon { width: 24px; padding: 0; }
+
+/* ---------- TODO ---------- */
+.l-todo .thead, .l-clip .thead, .l-agenda .thead, .l-launcher .thead { left: 26px; top: 16px; right: 56px; display: flex; align-items: center; gap: 8px; }
+.l-todo .thead .ttl, .l-clip .thead .ttl, .l-agenda .thead .ttl, .l-launcher .thead .ttl { font-size: 14px; }
+.l-todo .thead .cnt, .l-clip .thead .cnt, .l-agenda .thead .cnt, .l-launcher .thead .cnt { font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; }
+.l-todo .thead .pill.icon, .l-agenda .thead .pill.icon, .l-launcher .thead .pill.icon { margin-left: auto; width: 24px; height: 24px; }
+.l-clip .thead .pill { margin-left: auto; height: 24px; padding: 0 10px; font-size: 11px; }
+.tlist { left: 24px; right: 24px; top: 44px; height: 84px; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 4px; }
+.tlist::-webkit-scrollbar { display: none; }
+.trow {
+  flex: 0 0 26px; height: 26px; border-radius: 9px; background: rgba(40, 140, 70, 0.28);
+  display: flex; align-items: center; gap: 8px; padding: 0 6px 0 7px; font-size: 12px; color: rgba(255, 255, 255, 0.9);
+}
+.trow.done { background: rgba(255, 255, 255, 0.07); color: rgba(255, 255, 255, 0.45); }
+.trow.done .tx { text-decoration: line-through; text-decoration-thickness: 1.2px; }
+.trow .chk {
+  width: 16px; height: 16px; flex: none; border-radius: 50%; border: 1.6px solid rgba(255, 255, 255, 0.55);
+  background: transparent; display: grid; place-items: center; cursor: pointer; padding: 0; transition: background 0.2s, border-color 0.2s;
+}
+.trow.done .chk { background: #2fd06b; border-color: #2fd06b; }
+.trow .chk svg { width: 9px; height: 9px; fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; opacity: 0; }
+.trow.done .chk svg { opacity: 1; }
+.trow .tx { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trow .due { font-size: 10px; color: var(--dim); font-variant-numeric: tabular-nums; flex: none; }
+.trow .due.late { color: #ff8a8a; }
+.trow .del { width: 16px; height: 16px; flex: none; border: none; background: transparent; padding: 0; display: none; place-items: center; cursor: pointer; }
+.trow:hover .del { display: grid; }
+.trow .del svg { width: 11px; height: 11px; fill: var(--dim); }
+.tempty { left: 24px; right: 24px; top: 62px; text-align: center; font-size: 12px; color: var(--dim); line-height: 1.5; }
+.tadd { left: 24px; right: 24px; top: 52px; display: none; flex-direction: column; gap: 8px; }
+.l-todo.adding .tadd { display: flex; }
+.l-todo.adding .tlist, .l-todo.adding .tempty { display: none; }
+.tadd .row { display: flex; gap: 8px; }
+.tadd input {
+  height: 30px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(255, 255, 255, 0.08);
+  color: #fff; font-size: 12.5px; padding: 0 10px; outline: none; transition: border-color 0.2s, background 0.2s;
+}
+.tadd input:focus { border-color: rgba(255, 255, 255, 0.5); background: rgba(255, 255, 255, 0.12); }
+.tadd input[type="text"] { flex: 1; min-width: 0; }
+.tadd .timebtn {
+  width: 104px; height: 30px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(255, 255, 255, 0.08);
+  color: var(--dim); font: inherit; font-size: 12.5px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, color 0.2s; flex: none;
+}
+.tadd .timebtn:hover { background: rgba(255, 255, 255, 0.14); color: #fff; }
+.tadd .timebtn.set { color: #fff; border-color: rgba(95, 176, 255, 0.55); background: rgba(45, 140, 255, 0.2); font-variant-numeric: tabular-nums; }
+.tadd .timebtn svg { width: 13px; height: 13px; fill: currentColor; flex: none; }
+.tadd .tpick { display: none; flex-direction: column; gap: 8px; }
+.l-todo.picking .tadd > .row { display: none; }
+.l-todo.picking .tadd .tpick { display: flex; }
+.tpick .mid { justify-content: center; align-items: center; gap: 12px; padding-top: 4px; }
+.tpick .stepper { gap: 8px; }
+.tpick .stepper button { width: 26px; height: 26px; }
+.tpick .stepper .val { font-size: 22px; font-weight: 600; min-width: 36px; }
+.tpick .colon { font-size: 22px; font-weight: 600; opacity: 0.55; margin-top: -3px; }
+.tpick .end { justify-content: flex-end; }
+
+/* ---------- BUDS: 배터리(좌/우/케이스) + 소음 제어 모드 ---------- */
+.l-buds .ttl { left: 24px; top: 16px; width: 170px; font-size: 14px; }
+.l-buds .sub { left: 24px; top: 35px; width: 170px; font-size: 11.5px; }
+.bats { left: 18px; top: 60px; width: 186px; display: flex; gap: 3px; }
+.bat { width: 60px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.bwrap { position: relative; width: 42px; height: 42px; }
+.bring {
+  position: absolute; inset: 0; border-radius: 50%;
+  --c: var(--green);
+  background: conic-gradient(var(--c) calc(var(--p) * 1%), rgba(255, 255, 255, 0.13) 0);
+  -webkit-mask: radial-gradient(circle, transparent 16px, #000 16.5px);
+  mask: radial-gradient(circle, transparent 16px, #000 16.5px);
+  transition: --p 0.9s var(--ease-out), background-color 0.3s;
+}
+.bring[data-lv="mid"] { --c: #ffb340; }
+.bring[data-lv="low"] { --c: var(--red); }
+.bring.na { --p: 0; }
+.bval { position: absolute; inset: 0; display: grid; place-items: center; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.2px; }
+.bval.na { color: var(--dim); font-weight: 600; }
+.blab { font-size: 10.5px; color: var(--dim); white-space: nowrap; }
+/* 충전 중: 링이 초록으로 천천히 숨 쉬고, 오른쪽 위에 번개 표시 */
+.bolt { position: absolute; right: -5px; top: -5px; width: 16px; height: 16px; padding: 2.5px; border-radius: 50%; background: #06280f; fill: var(--green); box-shadow: 0 0 0 1.5px #000; transform: scale(0); transition: transform 0.45s var(--spring-hard); }
+.bat.charging .bolt { transform: scale(1); }
+.bat.charging .bring { --c: var(--green); animation: charge-breathe 2.2s ease-in-out infinite; }
+@keyframes charge-breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.62; } }
+.bat.charging .blab { color: var(--green); }
+
+.modes { left: 218px; top: 36px; width: 184px; height: 90px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 8px; }
+.mode-hl {
+  position: absolute; left: 0; top: 0; width: 88px; height: 41px; border-radius: 13px; z-index: 0;
+  background: rgba(255, 255, 255, 0.2); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  opacity: 0; transform: translate(var(--hx, 0px), var(--hy, 0px));
+  transition: transform 0.5s var(--spring), opacity 0.25s ease;
+}
+.modes.has-mode .mode-hl { opacity: 1; }
+.mbtn {
+  position: relative; z-index: 1; border: none; border-radius: 13px; background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.78); font: inherit; font-size: 10px; font-weight: 600; line-height: 1.15; padding: 0 5px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; text-align: center;
+  transition: background 0.15s ease, color 0.2s ease, transform 0.12s ease, opacity 0.2s ease;
+}
+.mbtn:hover { background: rgba(255, 255, 255, 0.13); }
+.mbtn:active { transform: scale(0.94); }
+.mbtn.on { background: transparent; color: #fff; }
+.mbtn .mic { width: 15px; height: 15px; fill: currentColor; }
+.mbtn.busy .mic { animation: modePulse 0.7s ease-in-out infinite alternate; }
+@keyframes modePulse { from { opacity: 1; transform: scale(1); } to { opacity: 0.4; transform: scale(0.8); } }
+.modes.disabled .mbtn { opacity: 0.4; pointer-events: none; }
+
+/* 알림(확장 상태일 때 노치 안쪽 하단) */
+.toast {
+  position: absolute; left: 50%; bottom: 7px; transform: translateX(-50%) translateY(6px);
+  background: rgba(70, 70, 74, 0.92);
+  border-radius: 12px; padding: 5px 12px; font-size: 11.5px; font-weight: 600; white-space: nowrap;
+  opacity: 0; pointer-events: none; z-index: 4; transition: opacity 0.25s ease, transform 0.35s var(--spring);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.island.toasting .dots { opacity: 0 !important; transition: opacity 0.12s ease !important; }
+
+/* ---------- 컨텍스트 메뉴 ---------- */
+.context-menu {
+  display: none; position: fixed; z-index: 999999;
+  background: rgba(20, 20, 24, 0.97); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 14px; padding: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5); min-width: 200px; pointer-events: auto;
+}
+.menu-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; color: #e5e5e5; font-size: 12px; font-weight: 500; border-radius: 8px; cursor: pointer; transition: background 0.12s ease; }
+.menu-item:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+.menu-item svg { width: 14px; height: 14px; fill: currentColor; opacity: 0.8; flex: none; }
+.menu-item.danger:hover { background: rgba(255, 69, 58, 0.25); color: #ff453a; }
+.menu-divider { height: 1px; background: rgba(255, 255, 255, 0.1); margin: 4px 6px; }
+
+/* 모션 최소화 설정을 켠 사용자는 전환/반복 애니메이션을 사실상 끈다 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+  }
+}
+
+/* 반복/셔플을 지원하지 않는 앱의 곡: 자리는 유지한 채 흐리게 */
+.island[data-nomode="1"] .btn-ctrl.mode { opacity: 0.22; pointer-events: none; }
+
+/* ---------- 설정으로 바뀌는 것들 ---------- */
+/* 가사 글로우 끄기 */
+html[data-glow="0"] .mini-word, html[data-glow="0"] .w { --glow: 0 0 0 transparent; }
+/* 모든 애니메이션 끄기: 크기 변화도 즉시 */
+html[data-anim="off"] *, html[data-anim="off"] *::before, html[data-anim="off"] *::after {
+  transition-duration: 0s !important; transition-delay: 0s !important; animation-duration: 0s !important; animation-delay: 0s !important;
+}
+/* 테마: 위쪽은 항상 검정(귀와 이어지므로) 이고 아래쪽만 달라진다 */
+html[data-theme="glass"] .island {
+  background:
+    radial-gradient(130% 110% at 50% 120%, rgba(150, 175, 255, 0.22), transparent 58%),
+    linear-gradient(180deg, #000 0%, #000 34%, #0b0d14 100%);
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.3), inset 1px 0 0 rgba(255, 255, 255, 0.1), inset -1px 0 0 rgba(255, 255, 255, 0.1),
+              inset 0 -16px 28px -20px rgba(150, 175, 255, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 8px -3px rgba(0, 0, 0, 0.45);
+}
+html[data-theme="tint"] .island {
+  background: linear-gradient(180deg, #000 0%, #000 26%, color-mix(in srgb, var(--art-a) 44%, #000) 135%);
+}
+
+/* ---------- 추가 페이지: 클립보드 / 일정 / 타이머 ---------- */
+.trow.cliprow { background: rgba(255, 255, 255, 0.08); cursor: pointer; transition: background 0.15s; }
+.trow.cliprow:hover { background: rgba(255, 255, 255, 0.16); }
+.trow.agenda { background: rgba(45, 140, 255, 0.2); }
+.trow.agenda.now { background: rgba(51, 224, 122, 0.24); }
+.glow-timer { background: radial-gradient(252px 126px at calc(50% - 150px) 84px, rgba(255, 190, 60, 0.2), transparent 72%); }
+.glow-agenda { background: radial-gradient(252px 126px at calc(50% + 150px) 56px, rgba(45, 140, 255, 0.2), transparent 72%); }
+.l-timer .tmmodes { left: 26px; top: 14px; display: flex; padding: 2px; border-radius: 12px; background: rgba(255, 255, 255, 0.09); }
+.l-timer .tmhl { position: absolute; top: 2px; bottom: 2px; left: 0; width: 0; border-radius: 10px; background: rgba(255, 255, 255, 0.2); transition: transform 0.45s var(--spring), width 0.45s var(--spring); }
+.l-timer .tmmodes button { position: relative; z-index: 1; border: 0; background: none; color: var(--dim); font: inherit; font-size: 11.5px; padding: 5px 12px; border-radius: 10px; cursor: pointer; transition: color 0.2s; }
+.l-timer .tmmodes button.on { color: #fff; font-weight: 600; }
+.l-timer .tmtime { left: 26px; top: 50px; font-size: 40px; font-weight: 700; letter-spacing: 0.5px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.l-timer[data-run="1"] .tmtime { color: #ffd27a; }
+.l-timer .tmadj { left: 236px; top: 50px; display: flex; gap: 6px; }
+.l-timer .tmbtns { left: 236px; top: 90px; display: flex; gap: 8px; }
+
+/* ---------- 노치 안 볼륨 / 재생 소스 ---------- */
+.srcbtn, .volbtn { position: absolute; top: 11px; height: 24px; border: 0; border-radius: 8px; background: transparent; color: var(--dim); cursor: pointer; display: flex; align-items: center; gap: 4px; z-index: 3; font: inherit; font-size: 10.5px; font-weight: 600; opacity: 0; pointer-events: none; transition: background 0.15s, opacity 0.2s, color 0.2s; }
+.volbtn { right: 46px; width: 24px; justify-content: center; }
+.srcbtn { right: 76px; padding: 0 7px; background: rgba(255, 255, 255, 0.1); max-width: 96px; }
+.srcbtn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.srcbtn svg, .volbtn svg { width: 13px; height: 13px; flex: none; }
+.volbtn svg { fill: currentColor; }
+.island[data-s="music"] .volbtn, .island[data-s="lyrics"] .volbtn { opacity: 1; pointer-events: auto; transition: background 0.15s, opacity 0.32s ease 0.2s, color 0.2s; }
+.island[data-s="music"] .srcbtn.on, .island[data-s="lyrics"] .srcbtn.on { opacity: 1; pointer-events: auto; transition: background 0.15s, opacity 0.32s ease 0.2s, color 0.2s; }
+.volbtn:hover, .srcbtn:hover { background: rgba(255, 255, 255, 0.2); color: #fff; }
+.l-player .ttl, .l-player .sub { max-width: 200px; }
+.l-player[data-mode="lyrics"] .ttl, .l-player[data-mode="lyrics"] .sub { max-width: none; }
+.volpop {
+  position: absolute; left: 106px; top: 54px; width: 296px; height: 40px; border-radius: 14px; z-index: 5; display: flex; align-items: center; gap: 10px; padding: 0 12px;
+  background: rgba(24, 25, 30, 0.96); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 8px 24px rgba(0, 0, 0, 0.5);
+  opacity: 0; transform: translateY(6px) scale(0.96); pointer-events: none; transition: opacity 0.2s, transform 0.4s var(--spring-hard);
+}
+.l-player[data-mode="lyrics"] .volpop { left: 14px; width: 244px; }
+.l-player.voling .volpop { opacity: 1; transform: none; pointer-events: auto; }
+.volpop .vmute { width: 24px; height: 24px; border: 0; border-radius: 8px; background: transparent; cursor: pointer; display: grid; place-items: center; flex: none; }
+.volpop .vmute:hover { background: rgba(255, 255, 255, 0.14); }
+.volpop .vmute svg { width: 15px; height: 15px; fill: #fff; }
+.volpop output { width: 34px; text-align: right; font-size: 11.5px; font-variant-numeric: tabular-nums; color: #fff; font-weight: 600; }
+.volpop input[type="range"] { flex: 1; -webkit-appearance: none; appearance: none; height: 22px; background: transparent; cursor: pointer; --fill: 50%; }
+.volpop input[type="range"]::-webkit-slider-runnable-track { height: 5px; border-radius: 3px; background: linear-gradient(90deg, #fff, #fff) 0 0 / var(--fill) 100% no-repeat, rgba(255, 255, 255, 0.22); }
+.volpop input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; margin-top: -4.5px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5); transition: transform 0.2s var(--spring-hard); }
+.volpop input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.25); }
+
+/* ---------- 바로가기 / 플러그인 페이지 ---------- */
+/* 타일이 커지며 나타나는 애니메이션(스프링 오버슈트)과 호버 확대가 스크롤 영역 경계에 잘리지 않게, 영역을 사방 8px 넓히고 같은 만큼 안쪽 여백을 둔다(타일의 자리는 그대로) */
+.lgrid { left: 16px; right: 16px; top: 36px; height: 98px; padding: 8px; scroll-padding: 8px; overflow-y: auto; scrollbar-width: none; display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 36px; gap: 6px; align-content: start; }
+.lgrid::-webkit-scrollbar, .pgrid::-webkit-scrollbar, .pchips::-webkit-scrollbar { display: none; }
+.ltile, .pbtn { border: 0; border-radius: 11px; background: rgba(255, 255, 255, 0.09); color: rgba(255, 255, 255, 0.92); font: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 8px; min-width: 0; transition: background 0.15s, transform 0.3s var(--spring-hard); }
+.ltile:hover, .pbtn:hover { background: rgba(255, 255, 255, 0.18); }
+.ltile:active, .pbtn:active { transform: scale(0.94); }
+.ltile .ic, .pbtn .ic { display: grid; place-items: center; width: 16px; height: 16px; flex: none; }
+.ltile .nm, .pbtn .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ltile.fail, .pbtn.fail { background: rgba(255, 90, 110, 0.35); }
+.pbtn.okflash { background: rgba(51, 224, 122, 0.35); }
+/* ---------- 플러그인 페이지: 왼쪽에 고른 플러그인(색 구슬·이름·실시간 상태), 오른쪽에 동작 타일, 아래에 플러그인 독 ---------- */
+.l-plugins { --pc: #8aa0ff; }
+.glow-plug { background: radial-gradient(190px 120px at 92px 46px, color-mix(in srgb, var(--pc) 34%, transparent), transparent 72%); transition: background 0.5s ease; }
+.l-plugins:not(.has) .glow-plug { opacity: 0; }
+.phero { left: 24px; top: 22px; width: 132px; height: 70px; }
+.l-plugins:not(.has) .phero, .l-plugins:not(.has) .pchips, .l-plugins:not(.has) .pgrid { display: none; }
+.porb { position: absolute; left: 0; top: 0; width: 40px; height: 40px; border-radius: 14px; display: grid; place-items: center; color: #fff; padding: 9px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--pc) 92%, #fff), color-mix(in srgb, var(--pc) 70%, #000));
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.55), 0 4px 16px color-mix(in srgb, var(--pc) 55%, transparent); transition: background 0.4s, box-shadow 0.4s; }
+.porb .uic { width: 100%; height: 100%; }
+.pnm { position: absolute; left: 50px; top: 0; height: 40px; line-height: 40px; width: 82px; width: 132px; font-size: 13.5px; font-weight: 700; letter-spacing: 0.1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 재생 중 문구는 없앴다: 연결 상태는 구슬 모서리의 작은 초록 점으로만 보여 주고, 문구는 마우스를 올리면 툴팁으로 */
+.pst { display: none; }
+/* 연결 표시 점은 연결 상태가 의미 있는 플러그인(.conn)에만 있다. 그 밖의 플러그인에는 점(불빛) 자체가 없다 */
+.porb::after { content: ""; display: none; position: absolute; right: -3px; top: -3px; width: 9px; height: 9px; border-radius: 50%; background: rgba(255, 255, 255, 0.28); box-shadow: 0 0 0 2px #000; transition: background 0.3s, box-shadow 0.3s; }
+.l-plugins.conn .porb::after { display: block; }
+.l-plugins.live .porb::after { background: var(--green); box-shadow: 0 0 0 2px #000, 0 0 8px var(--green); }
+/* 독: 플러그인 전환 (동그란 아이콘, 고른 것은 색 테두리) */
+/* 독 안쪽에 여백을 둔다: 호버로 커지는 아이콘/테두리가 스크롤 영역에 잘리지 않게 */
+.pchips { left: 18px; width: 144px; top: 92px; height: 36px; padding: 6px; display: flex; gap: 6px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.pchip { flex: none; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; background: rgba(255, 255, 255, 0.08); color: var(--dim); cursor: pointer; display: grid; place-items: center;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07); transition: background 0.2s, color 0.2s, box-shadow 0.25s; }
+.pchip .ic { display: grid; place-items: center; width: 14px; height: 14px; transition: transform 0.3s var(--spring-hard); }
+.pchip .nm { display: none; }
+.pchip:hover { color: #fff; background: rgba(255, 255, 255, 0.16); }
+.pchip:hover .ic { transform: scale(1.18); }
+.pchip:active .ic { transform: scale(0.92); }
+.pchip.on { color: #fff; background: color-mix(in srgb, var(--pc) 30%, transparent); box-shadow: inset 0 0 0 1.5px var(--pc); }
+.pchips.more-l { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px); mask-image: linear-gradient(90deg, transparent 0, #000 14px); }
+.pchips.more-r { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 14px), transparent 100%); mask-image: linear-gradient(90deg, #000 calc(100% - 14px), transparent 100%); }
+.pchips.more-l.more-r { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%); }
+.uic { width: 100%; height: 100%; display: block; }
+.uic.badge { display: grid; place-items: center; font-size: 11px; font-weight: 700; border-radius: 5px; background: rgba(255, 255, 255, 0.18); color: inherit; line-height: 1; }
+/* 동작 타일: 아이콘 위, 이름 아래. 3열 x 2행, 더 있으면 세로로 스크롤 */
+.pgrid { left: 164px; right: 44px; top: 8px; height: 126px; padding: 8px; scroll-padding: 8px; overflow-y: auto; scrollbar-width: none; scroll-snap-type: y proximity; display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 52px; gap: 6px; align-content: start; }
+.pgrid .pbtn { flex-direction: column; gap: 4px; padding: 0 3px; font-size: 10px; letter-spacing: -0.2px; border-radius: 13px; scroll-snap-align: start;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--pc) 16%, rgba(255, 255, 255, 0.07)), rgba(255, 255, 255, 0.06)); }
+.pgrid .pbtn:hover { background: linear-gradient(180deg, color-mix(in srgb, var(--pc) 30%, rgba(255, 255, 255, 0.1)), rgba(255, 255, 255, 0.1)); }
+.pgrid .pbtn .ic { width: 20px; height: 20px; color: color-mix(in srgb, var(--pc) 55%, #fff); }
+.pgrid .pbtn .nm { max-width: 100%; }
+.pgrid .pbtn.okflash { background: rgba(51, 224, 122, 0.35); }
+
+/* 파일 선반 카드의 종류 아이콘 (이모지 대신 선 아이콘) */
+.shcard .thumb .uic { width: 28px; height: 28px; color: rgba(255, 255, 255, 0.72); }
+
+
+/* ========================================================
+   리퀴드 글래스 (노치) — 설정 > 노치 리퀴드 글래스
+   굴절은 notchglass.js/glass.js 가 backdrop-filter: url(#...) 로 건다. 여기는 나머지 소재: 테두리 반사광, 마우스를 따르는 하이라이트, 안쪽 빛.
+   ======================================================== */
+:where(.island .lg) { position: relative; }
+.island .lg { --mx: 50%; --my: 0%; }
+.island .lg::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none; z-index: 2; opacity: 0.7; transition: opacity 0.25s;
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.12) 24%, rgba(255, 255, 255, 0) 52%, rgba(255, 255, 255, 0.12) 78%, rgba(255, 255, 255, 0.55));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+}
+.island .lg::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 2; opacity: 0; transition: opacity 0.25s; mix-blend-mode: overlay;
+  background: radial-gradient(70px circle at var(--mx) var(--my), rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0) 70%);
+}
+.island .lg:hover::after, .island .lg:hover::before { opacity: 1; }
+.btn-ctrl.big.lg, .pill.lg:not(.primary), .mbtn.lg, .ltile.lg, .pbtn.lg, .pchip.lg, .srcbtn.lg {
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.42), inset 0 -5px 9px -6px rgba(255, 255, 255, 0.2), 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+/* 스크롤 영역 안의 버튼은 바깥 그림자를 빼고(경계에서 네모로 잘림) 안쪽 빛만 */
+.lgflat { box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4), inset 0 -5px 9px -6px rgba(255, 255, 255, 0.18) !important; }
+.pgrid .pbtn.on.lgflat { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--pc) 75%, transparent), inset 0 1px 1px rgba(255, 255, 255, 0.35) !important; }
+.pchip.on.lgflat { box-shadow: inset 0 0 0 1.5px var(--pc) !important; }
+.pgrid .pbtn.warn.lgflat { box-shadow: inset 0 0 0 1.5px rgba(255, 110, 125, 0.8) !important; }
+.btn-ctrl.big.lg { background: rgba(255, 255, 255, 0.12); }
+.pill.primary.lg { box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.9), 0 4px 14px rgba(255, 255, 255, 0.18); }
+.mbtn.on.lg { background: rgba(255, 255, 255, 0.16); }
+.volpop.lg { background: rgba(24, 25, 30, 0.55); }
+
+/* 전체: 노치 본체가 뒤 화면을 비춘다 (파이썬이 뒤 화면을 찍어 #deskImg 로 넘기고, 오기 전/실패하면 원래의 검정 그대로) */
+.desk, .glassbody { display: none; }
+html[data-glass="full"] .desk {
+  display: block; position: absolute; left: 50%; top: 0; width: 600px; height: 190px; margin-left: -300px; pointer-events: none;
+  filter: blur(1.2px) saturate(1.5) brightness(0.8); opacity: 0; transition: opacity 0.5s ease;
+}
+html[data-glass="full"][data-desk="1"] .desk { opacity: 1; }
+html[data-glass="full"][data-desk="1"] .island { background: transparent; }
+html[data-glass="full"][data-desk="1"] .glassbody {
+  display: block; position: absolute; inset: 0 calc(-1 * var(--e)); border-radius: inherit; pointer-events: none;      /* 귀 자리까지: 렌즈·바탕·테마가 노치와 귀에 한 장의 유리로 걸린다 */
+  /* 윗부분은 검정으로 베젤과 이어지고, 아래로 갈수록 뒤 화면이 비친다 */
+  background: linear-gradient(180deg, rgba(0, 0, 0, var(--gb-a)) 0, rgba(0, 0, 0, var(--gb-a)) var(--gb-b), rgba(5, 7, 12, 0.42) var(--gb-c), rgba(5, 7, 12, 0.36) 100%);
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.3), inset 1px 0 0 rgba(255, 255, 255, 0.12), inset -1px 0 0 rgba(255, 255, 255, 0.12), inset 0 -18px 30px -22px rgba(255, 255, 255, 0.35);
+}
+.pgrid .pbtn.fail { background: rgba(255, 90, 110, 0.4); }
+
+/* 동작 타일의 상태 표시 */
+.pgrid .pbtn { position: relative; }
+.pgrid .pbtn.on { background: linear-gradient(180deg, color-mix(in srgb, var(--pc) 42%, rgba(255, 255, 255, 0.08)), color-mix(in srgb, var(--pc) 20%, rgba(255, 255, 255, 0.05))); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--pc) 75%, transparent); }   /* 바깥으로 번지는 빛은 두지 않는다: 스크롤 영역 경계에서 네모로 잘려 보인다 */
+.pgrid .pbtn.on .ic { color: #fff; }
+.pgrid .pbtn.warn { background: linear-gradient(180deg, rgba(255, 90, 110, 0.4), rgba(255, 90, 110, 0.18)); box-shadow: inset 0 0 0 1.5px rgba(255, 110, 125, 0.8); }
+.pgrid .pbtn.warn .ic { color: #ffb0b8; }
+.pgrid .pbtn .nm { transition: opacity 0.2s; }
+.bdg { display: none; position: absolute; right: 5px; top: 4px; min-width: 14px; height: 14px; padding: 0 3px; border-radius: 7px; background: #fff; color: #000; font-size: 9px; font-weight: 800; line-height: 14px; text-align: center; font-style: normal; }
+.bdg.show { display: block; }
+
+/* 테마 + 리퀴드 글래스 '전체'를 함께 쓸 때: 본체가 투명해져도 테마의 색이 투명 유리 위에 얹힌다 (뒤 화면이 계속 비친다) */
+html[data-glass="full"][data-desk="1"][data-theme="tint"] .glassbody {
+  background: linear-gradient(180deg, rgba(0, 0, 0, var(--gb-a)) 0, rgba(0, 0, 0, var(--gb-a)) var(--gb-b), color-mix(in srgb, var(--art-a) 38%, rgba(5, 7, 12, 0.42)) var(--gb-c), color-mix(in srgb, var(--art-a) 58%, rgba(5, 7, 12, 0.34)) 100%);
+}
+html[data-glass="full"][data-desk="1"][data-theme="glass"] .glassbody {
+  background:
+    radial-gradient(130% 110% at 50% 125%, rgba(150, 175, 255, 0.34), transparent 60%),
+    linear-gradient(180deg, rgba(0, 0, 0, var(--gb-a)) 0, rgba(0, 0, 0, var(--gb-a)) var(--gb-b), rgba(5, 7, 12, 0.4) var(--gb-c), rgba(5, 7, 12, 0.32) 100%);
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.5), inset 1px 0 0 rgba(255, 255, 255, 0.18), inset -1px 0 0 rgba(255, 255, 255, 0.18), inset 0 -18px 30px -20px rgba(150, 175, 255, 0.6);
+}
+
+/* ---------- 백그라운드 보컬 (소괄호로 감싸 내려오는 에코/애드립) ---------- */
+.mini-bg { position: absolute; left: 46px; right: 40px; top: 31px; height: 20px; overflow: hidden; opacity: 0; translate: 0 -6px; pointer-events: none;
+  transition: opacity 0.22s ease, translate 0.4s var(--spring); display: flex; align-items: center; }
+.island[data-bg="1"] .mini-bg { opacity: 1; translate: 0 0; transition-delay: 0.12s, 0.12s; }
+.island.compact .mini-bg { display: none; }
+.mini-bg.scrolling { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%); }
+.mini-bg-line { font-size: calc(11px * var(--lyric-scale, 1)); font-weight: 600; white-space: nowrap; color: var(--inactive); display: inline-block; will-change: transform; letter-spacing: -0.1px; }
+.mini-bg-line .mini-word { --glow: 0 0 4px rgba(255, 255, 255, 0.2); }
+.mini-bg-line .mini-word.completed { color: rgba(255, 255, 255, 0.82); }
+.mini-bg-line .mini-word::after { color: rgba(255, 255, 255, 0.92); }
+/* 세로 가사 리스트: 본 줄 아래에 작게 */
+.lyr li.bgl { font-size: calc(12.5px * var(--lyric-scale, 1)); font-weight: 600; padding: 0 6px 5px 14px; margin-top: -3px; line-height: 1.2; color: rgba(255, 255, 255, 0.24); transform: scale(0.96); cursor: default; }
+.lyr li.bgl:hover { color: rgba(255, 255, 255, 0.24); }
+.lyr li.bgl.on { color: rgba(255, 255, 255, 0.86); transform: scale(1); }
+.lyr li.bgl .w { color: rgba(255, 255, 255, 0.3); }
+.lyr li.bgl .w.completed { color: rgba(255, 255, 255, 0.82); }
+.lyr.static li.bgl { display: none; }
+
+
+/* ========================================================
+   보조 노치 = 물방울 (아이폰 다이나믹 아일랜드의 분리 효과)
+   - .goo: 큰 노치의 실루엣(.goo-body)과 물방울(.goo-drop)을 그리는 레이어. 여기에만 물방울 필터(blur + 문턱값)가 걸려서 둘이 가까울 때 목이 생긴다.
+     큰 노치 자리는 마스크로 비워 둔다(노치가 투명한 유리일 때 뒤가 검게 막히지 않도록) — 노치 밖으로 늘어나는 목과 물방울만 남는다.
+   - .sat: 물방울 안의 내용(링+시간). 필터를 받지 않아 글자가 번지지 않는다. .goo-drop 과 같은 위치/전환을 쓴다.
+   - 나올 때: 큰 노치 안쪽에서 작게 시작해 스프링으로 밀려 나오며(오버슈트로 한 번 더 늘어났다가) 떨어져 나가고, 들어갈 때는 다시 빨려 들어간다.
+   ======================================================== */
+.island { z-index: 1; }
+.goo {
+  position: fixed; left: 0; top: 0; width: 100vw; height: 80px; z-index: 0; pointer-events: none; display: none;
+  filter: url(#goo) drop-shadow(0 3px 4px rgba(0, 0, 0, 0.35));
+}
+/* 큰 노치가 투명한 유리(리퀴드 글래스 '전체')일 때만, 노치 자리를 비워 뒤가 검게 막히지 않게 한다 */
+html[data-glass="full"][data-desk="1"] .goo {
+  -webkit-mask-image: linear-gradient(#000, #000), linear-gradient(#000, #000); mask-image: linear-gradient(#000, #000), linear-gradient(#000, #000);
+  -webkit-mask-size: 100% 100%, var(--island-w, 300px) var(--island-h, 32px); mask-size: 100% 100%, var(--island-w, 300px) var(--island-h, 32px);
+  -webkit-mask-position: 0 0, 50% 0; mask-position: 0 0, 50% 0; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  transition: mask-size 0.62s var(--spring), -webkit-mask-size 0.62s var(--spring);
+}
+.goo.on { display: block; }
+.goo i { position: absolute; display: block; background: #000; }
+.goo-body {
+  left: 50%; top: 0; width: var(--island-w, 300px); height: var(--island-h, 32px); margin-left: calc(var(--island-w, 300px) / -2); border-radius: 0 0 15px 15px;
+  transition: width 0.62s var(--spring), height 0.62s var(--spring), margin-left 0.62s var(--spring);
+}
+.goo-drop, .sat {
+  position: fixed; top: 2px; height: var(--sat-h, 28px); width: 22px; border-radius: 999px;
+  left: calc(50% + var(--island-w, 300px) / 2 - 34px);                       /* 숨어 있을 땐 큰 노치 안쪽 */
+  /* 느리게 출발해(목이 늘어나는 구간을 길게) 끝에서 한 번 튕긴다 */
+  transition: left 0.95s cubic-bezier(0.45, 0, 0.2, 1.7), width 0.85s cubic-bezier(0.4, 0, 0.2, 1.15), height 0.5s var(--spring);
+}
+.goo-drop { z-index: 0; }
+.goo-drop.show, .sat.show { left: calc(50% + var(--island-w, 300px) / 2 + var(--sat-gap, 16px)); width: var(--sat-w, 84px); }
+.sat { z-index: 2; background: transparent; color: #fff; overflow: hidden; pointer-events: none; cursor: pointer; }      /* color: 물방울 배경은 필터 레이어가 그려서, 글자 색을 여기서 따로 정해야 한다(없으면 검정 배경 위 검정 글자) */
+.sat.show { pointer-events: auto; }
+.sat-in { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; font-weight: 700; letter-spacing: 0.2px; font-variant-numeric: tabular-nums; white-space: nowrap; opacity: 0; transition: opacity 0.14s ease; }
+.sat.show .sat-in { opacity: 1; transition: opacity 0.3s ease 0.55s; }      /* 물방울이 자리 잡은 뒤 내용이 스며든다 */
+.sat-ring { width: 14px; height: 14px; flex: none; }
+.sat[data-kind="clock"] .sat-in { font-weight: 600; }
+.sat-t i { font-style: normal; margin: 0 1px; animation: colon 2s ease-in-out infinite; }
+.sat-t small { font-size: 8.5px; margin-left: 3px; opacity: 0.6; }
+.sat:hover .sat-in { filter: brightness(1.25); }
+/* 보조 노치가 켜져 있으면 큰 노치 안의 타이머 칩과 그만큼 넓어지는 동작은 쓰지 않는다 */
+html[data-sat="1"] .island[data-s="mini"][data-chip="1"] { --w: 300px; }
+html[data-sat="1"] .island.compact[data-s="mini"][data-chip="1"] { --w: 190px; }
+html[data-sat="1"] .island[data-chip="1"] .l-mini .tchip { display: none; }
+
+/* ---------- 물방울의 겉모습: 큰 노치와 같은 테마(검정/유리/앨범 색)와 리퀴드 글래스(전체)를 따른다 ----------
+   .goo-drop(검정)은 모양만 맡고(목이 생기는 필터), 색과 유리 질감은 .sat-skin 이 그 위에 입힌다.
+   숨어 있을 땐 투명해서 큰 노치 위에 얼룩이 비치지 않는다. 사라질 때는 노치 안으로 거의 들어간 뒤에 사라진다. */
+.sat-skin, .sat-desk { opacity: 0; transition: opacity 0.15s ease 0.65s, left 0.95s cubic-bezier(0.45, 0, 0.2, 1.7); }
+.sat.show .sat-skin, .sat.show .sat-desk { opacity: 1; transition: opacity 0.2s ease 0s, left 0.95s cubic-bezier(0.45, 0, 0.2, 1.7); }
+.sat-skin { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
+html[data-theme="glass"] .sat-skin {
+  background: radial-gradient(130% 110% at 50% 130%, rgba(150, 175, 255, 0.22), transparent 58%), linear-gradient(180deg, #000 0%, #0b0d14 100%);
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.3), inset 1px 0 0 rgba(255, 255, 255, 0.1), inset -1px 0 0 rgba(255, 255, 255, 0.1), inset 0 -9px 16px -11px rgba(150, 175, 255, 0.5);
+}
+html[data-theme="tint"] .sat-skin { background: linear-gradient(180deg, #000 0%, #000 26%, color-mix(in srgb, var(--art-a) 44%, #000) 135%); }
+/* 리퀴드 글래스 '전체': 큰 노치처럼 뒤 화면이 비친다 (같은 화면 스트림을 물방울 안에도 같은 위치로 깔고, 그 위에 어둡게 테마를 얹는다) */
+.sat-desk { display: none; position: absolute; width: 600px; height: 190px; max-width: none; top: -2px; pointer-events: none; filter: blur(1.2px) saturate(1.5) brightness(0.62);
+  left: calc(-1 * (var(--island-w, 300px) / 2 - 34px + 300px)); }
+.sat.show .sat-desk { left: calc(-1 * (var(--island-w, 300px) / 2 + var(--sat-gap, 16px) + 300px)); }
+html[data-glass="full"][data-desk="1"] .sat-desk { display: block; }
+html[data-glass="full"][data-desk="1"] .sat-skin {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.92) 0, rgba(5, 7, 12, 0.45) 55%, rgba(5, 7, 12, 0.34) 100%);
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.3), inset 1px 0 0 rgba(255, 255, 255, 0.12), inset -1px 0 0 rgba(255, 255, 255, 0.12);
+}
+html[data-glass="full"][data-desk="1"][data-theme="tint"] .sat-skin {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.9) 0, color-mix(in srgb, var(--art-a) 38%, rgba(5, 7, 12, 0.42)) 55%, color-mix(in srgb, var(--art-a) 58%, rgba(5, 7, 12, 0.34)) 100%);
+}
+html[data-glass="full"][data-desk="1"][data-theme="glass"] .sat-skin {
+  background: radial-gradient(130% 110% at 50% 130%, rgba(150, 175, 255, 0.34), transparent 60%), linear-gradient(180deg, rgba(0, 0, 0, 0.9) 0, rgba(5, 7, 12, 0.42) 55%, rgba(5, 7, 12, 0.32) 100%);
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.5), inset 1px 0 0 rgba(255, 255, 255, 0.18), inset -1px 0 0 rgba(255, 255, 255, 0.18), inset 0 -9px 16px -11px rgba(150, 175, 255, 0.6);
+}
+
+/* ---------- 물방울이 큰 노치 '뒤에서' 나오고 '안으로' 들어간다 ----------
+   .sat-wrap: 물방울(겉면·내용)을 담는 레이어. 큰 노치 자리는 마스크로 비워서, 노치 안쪽에 있는 부분은 보이지 않는다.
+   -> 테마/유리 겉면이 큰 노치 위에서 어른거리지 않고, 노치의 옆면에서 나왔다가 같은 옆면으로 들어간다. */
+.sat-wrap {
+  position: fixed; left: 0; top: 0; width: 100vw; height: 80px; z-index: 2; pointer-events: none;
+  -webkit-mask-image: linear-gradient(#000, #000), linear-gradient(#000, #000); mask-image: linear-gradient(#000, #000), linear-gradient(#000, #000);
+  -webkit-mask-size: 100% 100%, var(--island-w, 300px) var(--island-h, 32px); mask-size: 100% 100%, var(--island-w, 300px) var(--island-h, 32px);
+  -webkit-mask-position: 0 0, 50% 0; mask-position: 0 0, 50% 0; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+.sat-wrap .sat { position: absolute; }
+/* 겉면은 움직이는 동안 계속 보이고(안으로 완전히 들어간 뒤에야 꺼진다) */
+.sat-skin, .sat-desk { transition: opacity 0.1s ease 1s, left 0.95s cubic-bezier(0.45, 0, 0.2, 1.7); }
+.sat.show .sat-skin, .sat.show .sat-desk { transition: opacity 0.15s ease 0s, left 0.95s cubic-bezier(0.45, 0, 0.2, 1.7); }
+
+/* 물줄기(목): 큰 노치 옆면에 붙어 있다가, 물방울이 떨어져 나가거나 들어올 때만 노치 쪽에서 물방울 쪽으로 늘어났다 줄어든다(scale 로 그린다).
+   평소(scale 0)에는 없다: 있으면 물방울과 16px 사이로 가까워 늘 이어 붙어 보인다. 필터가 이 모양과 물방울을 이어 붙여 '물줄기'가 된다. */
+.goo-neck { left: calc(50% + var(--island-w, 300px) / 2 - 14px); top: 7px; width: 28px; height: 18px; border-radius: 9px; transform-origin: 0% 50%; scale: 0 1; }
+/* 겉면은 나오는 순간부터 바로 보인다(페이드인하면 검은 물방울이 먼저 나왔다가 색이 입혀져 보인다). 노치 안쪽 부분은 마스크로 가려져 있다. */
+.sat.show .sat-skin, .sat.show .sat-desk { opacity: 1; transition: opacity 0s, left 0.95s cubic-bezier(0.45, 0, 0.2, 1.7); }
+
+/* ========================================================
+   물방울 이동 타이밍 (한 곳에서 정한다)
+   나올 때는 끝에서 한 번 튕기고, 들어갈 때는 튕기지 않고 점점 빨려 들어간다. 폭도 노치 옆면에 닿기 전에 먼저 작은 방울로 줄어든다.
+   겉면·화면 레이어(.sat-skin/.sat-desk/.gimg)의 left 전환은 물방울(.sat)과 정확히 같아야 위치가 어긋나지 않는다.
+   ======================================================== */
+:root {
+  --sat-out-left: left 0.95s cubic-bezier(0.45, 0, 0.2, 1.7);
+  --sat-out-width: width 0.85s cubic-bezier(0.4, 0, 0.2, 1.15);
+  --sat-in-left: left 0.8s cubic-bezier(0.55, 0, 0.85, 0.55);
+  --sat-in-width: width 0.5s cubic-bezier(0.5, 0, 0.9, 0.6);
+}
+.goo-drop, .sat { transition: var(--sat-in-left), var(--sat-in-width), height 0.5s var(--spring); }
+.goo-drop.show, .sat.show { transition: var(--sat-out-left), var(--sat-out-width), height 0.5s var(--spring); }
+.sat-skin, .sat-desk, .goo-drop .gimg { transition: opacity 0.1s ease 0.85s, var(--sat-in-left); }
+.sat.show .sat-skin, .sat.show .sat-desk, .goo-drop.show .gimg { opacity: 1; transition: opacity 0s, var(--sat-out-left); }
+
+/* ---------- 리퀴드 글래스 '전체': 물방울·물줄기의 '모양 레이어'도 유리로 ----------
+   필터 레이어(.goo)의 모양은 원래 검정으로 칠한다. 큰 노치가 투명한 유리일 때는 그 검정이 물줄기와 노치 옆면의 얼룩으로 보여서,
+   모양 조각(물방울/물줄기)을 뒤 화면 + 어두운 유리 색으로 채운다(큰 노치·물방울 겉면과 같은 재료). */
+.goo-drop, .goo-neck { overflow: hidden; }
+.goo-drop .gimg, .goo-neck .gimg { display: none; }
+html[data-glass="full"][data-desk="1"] .goo-drop .gimg, html[data-glass="full"][data-desk="1"] .goo-neck .gimg {
+  display: block; position: absolute; width: 600px; height: 190px; max-width: none; pointer-events: none; filter: blur(1.2px) saturate(1.5) brightness(0.62);
+}
+.goo-drop .gimg { top: -2px; left: calc(-1 * (var(--island-w, 300px) / 2 - 34px + 300px)); }
+.goo-drop.show .gimg { left: calc(-1 * (var(--island-w, 300px) / 2 + var(--sat-gap, 16px) + 300px)); }
+.goo-neck .gimg { top: -7px; left: calc(-1 * (var(--island-w, 300px) / 2 - 14px + 300px)); }
+html[data-glass="full"][data-desk="1"] .goo-drop::after, html[data-glass="full"][data-desk="1"] .goo-neck::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.92) 0, rgba(5, 7, 12, 0.45) 55%, rgba(5, 7, 12, 0.34) 100%);
+}
+html[data-glass="full"][data-desk="1"][data-theme="tint"] .goo-drop::after, html[data-glass="full"][data-desk="1"][data-theme="tint"] .goo-neck::after {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.9) 0, color-mix(in srgb, var(--art-a) 38%, rgba(5, 7, 12, 0.42)) 55%, color-mix(in srgb, var(--art-a) 58%, rgba(5, 7, 12, 0.34)) 100%);
+}
+html[data-glass="full"][data-desk="1"][data-theme="glass"] .goo-drop::after, html[data-glass="full"][data-desk="1"][data-theme="glass"] .goo-neck::after {
+  background: radial-gradient(130% 110% at 50% 130%, rgba(150, 175, 255, 0.34), transparent 60%), linear-gradient(180deg, rgba(0, 0, 0, 0.9) 0, rgba(5, 7, 12, 0.42) 55%, rgba(5, 7, 12, 0.32) 100%);
+}
+
+/* ========================================================
+   층 순서: 큰 노치(.island z-index 1) > 물방울 레이어(.sat-wrap) > 물방울 모양 필터 레이어(.goo)
+   물방울이 노치 안으로 들어갈 때는 노치의 '진짜 모양'(둥근 모서리, 테두리)이 물방울을 가려야 해서 물방울이 노치보다 아래다.
+   노치가 투명한 유리(리퀴드 글래스 '전체')일 때만, 비쳐 보이지 않도록 노치 자리를 마스크로 비운다.
+   ======================================================== */
+.sat-wrap {
+  z-index: 0;
+  -webkit-mask-image: none; mask-image: none; -webkit-mask-size: auto; mask-size: auto; -webkit-mask-position: 0 0; mask-position: 0 0; -webkit-mask-repeat: repeat; mask-repeat: repeat; -webkit-mask-composite: source-over; mask-composite: add;
+}
+html[data-glass="full"][data-desk="1"] .sat-wrap {
+  -webkit-mask-image: linear-gradient(#000, #000), linear-gradient(#000, #000); mask-image: linear-gradient(#000, #000), linear-gradient(#000, #000);
+  -webkit-mask-size: 100% 100%, var(--island-w, 300px) var(--island-h, 32px); mask-size: 100% 100%, var(--island-w, 300px) var(--island-h, 32px);
+  -webkit-mask-position: 0 0, 50% 0; mask-position: 0 0, 50% 0; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+
+/* ========================================================
+   보조 노치 두 개(오른쪽 + 왼쪽) · 스톱워치 아이콘
+   - 왼쪽은 오른쪽 레이어를 가운데 기준으로 좌우로 뒤집은 것이다. 글자·유리 화면은 다시 뒤집어서 바르게 보이게 한다.
+     (유리 화면 이미지는 창 가운데에 놓인 600px 이라 뒤집어도 같은 자리라서, 한 번 더 뒤집으면 원래 화면 그대로다)
+   - 스톱워치는 끝이 없어서 줄어드는 링을 쓰지 않는다: 파란 스톱워치 아이콘이 돌아가는 동안 숨 쉬듯 깜빡이고, 멈추면 흐려진다.
+   ======================================================== */
+.goo-l, .sat-wrap-l { transform: scaleX(-1); }
+.sat-wrap-l .sat-in, .sat-wrap-l .sat-desk, .goo-l .gimg { transform: scaleX(-1); }
+
+.sw-ico { display: none; width: 14px; height: 14px; flex: none; fill: #4da3ff; opacity: 0.6; }
+.tchip[data-k="sw"] .tring { display: none; }
+.tchip[data-k="sw"] .sw-ico { display: block; }
+.tchip[data-k="sw"][data-run="1"] .sw-ico { opacity: 1; animation: swBreath 1.8s ease-in-out infinite; }
+@keyframes swBreath { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+
+.l-timer .tmmodes button { position: relative; }
+.l-timer .tmmodes button.run::after { content: ""; position: absolute; top: 5px; right: 5px; width: 5px; height: 5px; border-radius: 50%; background: #ffd27a; box-shadow: 0 0 6px #ffd27a; }
+
+/* ---------- 보조 노치 하나에 정보 두 개 (폭이 넓어진다) ---------- */
+.sat-in { gap: 7px; }
+.sat-item { display: flex; align-items: center; gap: 6px; }
+.sat-div { display: none; flex: none; width: 1px; height: 14px; border-radius: 1px; background: rgba(255, 255, 255, 0.28); }
+.sat-item[data-kind="clock"] { font-weight: 600; }
+.sat-item[data-run="1"] .sw-ico { opacity: 1; animation: swBreath 1.8s ease-in-out infinite; }
+
+/* ---------- 접힐 때 노치 높이가 목표보다 더 줄었다 돌아오지 않게 ----------
+   스프링(var(--spring))은 목표를 살짝 넘어갔다 돌아온다. 큰 노치가 접힐 때 높이가 접힌 높이(32px)보다 더 낮아졌다가 올라오면,
+   그 사이에 앨범 아트·가사 줄(약 28px)이 노치 아래 모서리에 잘려 보인다(느린 속도에서 특히). 접힌 상태들로 들어갈 때는 높이만
+   넘치지 않는 곡선을 쓴다. 너비와 펼쳐질 때(음악/타이머 등)의 높이는 그대로 스프링이라 통통 튀는 느낌은 유지된다. */
+.island[data-s="mini"], .island[data-s="idle"], .island[data-s="pet"], .island[data-s="peek"] {
+  transition: width 0.62s var(--spring), height 0.62s cubic-bezier(0.22, 1, 0.36, 1), border-radius 0.45s ease, --e 0.62s var(--spring);
+}
+
+/* ---------- 보조 노치가 큰 노치의 '굴곡'을 따라 들어가고 나온다 ----------
+   큰 노치의 아래 모서리는 둥글다(R 15px). 높이 28px 인 보조 노치가 그대로 옆면으로 들어가면, 모서리가 휘어 들어간 자리로 보조 노치의 아랫부분이
+   삐져나와 '네모난 판 뒤로 숨는' 것처럼 보였다. 숨어 있을 땐 노치 옆면의 곧은 구간(위쪽 가운데)에 맞춰 작고 낮게(12px, 가운데 정렬) 있다가,
+   나오면서 위아래로 커지고 들어갈 때는 먼저 가늘어져서 곧은 옆면으로 빨려 들어간다. 위치·높이는 폭과 같은 곡선/시간을 쓴다. */
+:root {
+  --sat-out-top: top 0.85s cubic-bezier(0.4, 0, 0.2, 1.15);
+  --sat-out-h: height 0.85s cubic-bezier(0.4, 0, 0.2, 1.15);
+  --sat-in-top: top 0.5s cubic-bezier(0.5, 0, 0.9, 0.6);
+  --sat-in-h: height 0.5s cubic-bezier(0.5, 0, 0.9, 0.6);
+}
+.goo-drop, .sat { top: 10px; height: 12px; transition: var(--sat-in-left), var(--sat-in-width), var(--sat-in-top), var(--sat-in-h); }
+.goo-drop.show, .sat.show { top: 2px; height: var(--sat-h, 28px); transition: var(--sat-out-left), var(--sat-out-width), var(--sat-out-top), var(--sat-out-h); }
+/* 유리 화면 이미지는 요소가 움직여도 화면의 같은 자리를 비춰야 하니, 요소의 top 이 바뀌는 만큼 반대로 같이 움직인다 */
+.sat-desk, .goo-drop .gimg { top: -10px; }
+.sat.show .sat-desk, .goo-drop.show .gimg { top: -2px; }
+.sat-skin, .sat-desk, .goo-drop .gimg { transition: opacity 0.1s ease 0.85s, var(--sat-in-left), var(--sat-in-top); }
+.sat.show .sat-skin, .sat.show .sat-desk, .goo-drop.show .gimg { transition: opacity 0s, var(--sat-out-left), var(--sat-out-top); }
+
+/* ---------- 윈도우 알림 동그라미 (보조 노치) ---------- */
+.bell-ico { display: none; width: 15px; height: 15px; flex: none; fill: #ffd27a; transform-origin: 50% 10%; }
+.bell-n { display: none; position: absolute; top: 1px; right: 2px; min-width: 11px; height: 11px; padding: 0 2px; box-sizing: border-box; border-radius: 6px; place-items: center; font-size: 8px; font-weight: 800; line-height: 1; font-style: normal; color: #fff; background: #ff453a; }
+.sat[data-kind="notif"] .sat-in { gap: 0; }
+.sat[data-kind="notif"] .sat-item { position: static; }
+.sat[data-kind="notif"] .bell-ico { animation: bellRing 1.1s ease-in-out 0.3s 2; }
+@keyframes bellRing { 0%, 60%, 100% { transform: rotate(0); } 10% { transform: rotate(16deg); } 20% { transform: rotate(-14deg); } 30% { transform: rotate(10deg); } 40% { transform: rotate(-7deg); } 50% { transform: rotate(3deg); } }
+
+/* ---------- 라운드 3: 리퀴드 글래스에서 노치가 흔들릴 때 가림 영역도 같이 움직인다 ---------- */
+html[data-glass="full"][data-desk="1"] .goo,
+html[data-glass="full"][data-desk="1"] .sat-wrap {
+  -webkit-mask-position: 0 0, calc(50% + var(--hole-dx, 0px)) 0; mask-position: 0 0, calc(50% + var(--hole-dx, 0px)) 0;
+}
+/* 타이머/스톱워치 선택 타원: 폭과 위치가 같은 곡선으로 넘치지 않게 움직인다(스프링으로 넘치면 중간에 크기가 이상해 보인다) */
+.l-timer .tmhl { transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1), width 0.34s cubic-bezier(0.22, 1, 0.36, 1); }
+/* 알림 동그라미: 종은 정중앙, 빨간 점은 종 오른쪽 위 */
+.sat[data-kind="notif"] .sat-t { display: none; }
+.sat[data-kind="notif"] .sat-item { width: 100%; height: 100%; justify-content: center; position: relative; }
+.bell-n { top: 4px; right: 5px; }
+.bell-n.dot { min-width: 7px; width: 7px; height: 7px; padding: 0; top: 5px; right: 6px; box-shadow: 0 0 0 1.5px #000; }
+
+/* ========================================================
+   큰 노치도 보조 노치처럼 '글래스 + 테마(앨범 색)'가 한꺼번에 보이게 (리퀴드 글래스 '전체')
+   예전에는 본체 유리의 색 띠가 높이 140px 기준의 px 값(검정 18px, 색은 66px 부터)이라, 높이 32px 인 접힌 노치는 거의 검정으로만 보였다
+   (보조 노치는 28px 에 맞춘 비율 값이라 색이 선명했다). 색 띠의 위치(--gb-*)를 접힌 상태에서는 보조 노치와 같은 비율로 두고,
+   펼쳐질 때는 원래 값으로 부드럽게 옮겨 간다(@property 로 등록해야 변수가 전환된다).
+   ======================================================== */
+@property --gb-a { syntax: '<number>'; inherits: true; initial-value: 1; }
+@property --gb-b { syntax: '<length-percentage>'; inherits: true; initial-value: 18px; }
+@property --gb-c { syntax: '<length-percentage>'; inherits: true; initial-value: 66px; }
+.glassbody { --gb-a: 1; --gb-b: 18px; --gb-c: 66px; transition: --gb-a 0.5s ease, --gb-b 0.5s ease, --gb-c 0.5s ease; }
+.island[data-s="mini"] .glassbody, .island[data-s="idle"] .glassbody, .island[data-s="pet"] .glassbody, .island[data-s="peek"] .glassbody {
+  --gb-a: 0.92; --gb-b: 0px; --gb-c: 55%;
+}
+
+/* ========================================================
+   큰 노치 + 물줄기 + 보조 노치 = 하나의 물방울: 보조 노치의 가로 위치는 CSS 전환이 아니라 JS 가 프레임마다 정하는 --px 로 움직인다
+   (--px: 보조 노치 안쪽 끝이 큰 노치 옆면에서 떨어진 거리. 음수 = 노치 안쪽). 폭·높이·세로 위치는 그대로 CSS 전환.
+   ======================================================== */
+.goo-drop, .sat, .goo-drop.show, .sat.show { left: calc(50% + var(--island-w, 300px) / 2 + var(--px, -34px)); }
+.goo-drop, .sat { transition: var(--sat-in-width), var(--sat-in-top), var(--sat-in-h); }
+.goo-drop.show, .sat.show { transition: var(--sat-out-width), var(--sat-out-top), var(--sat-out-h); }
+/* 유리 화면 이미지: 요소가 움직여도 화면의 같은 자리를 비추도록 --px 만큼 반대로 */
+.sat-desk, .sat.show .sat-desk, .goo-drop .gimg, .goo-drop.show .gimg { left: calc(-1 * (var(--island-w, 300px) / 2 + var(--px, -34px) + 300px)); }
+.sat-skin, .sat-desk, .goo-drop .gimg { transition: opacity 0.1s ease 0.85s, var(--sat-in-top); }
+.sat.show .sat-skin, .sat.show .sat-desk, .goo-drop.show .gimg { transition: opacity 0s, var(--sat-out-top); }
+
+/* ========================================================
+   큰 노치의 테두리(반사광 띠)가 '이어진 몸'을 갈라 보이게 하지 않도록
+   큰 노치 본체(.glassbody)의 가장자리에는 1px 반사광 띠(::before)가 둘러져 있다. 보조 노치·물줄기가 붙어 있을 때 이 띠가 물줄기의 뿌리를 가로지르면
+   '노치와 물줄기가 따로'처럼 보이고(들어갈 때도 경계가 또렷이 남는다), 좌우로 흔들릴 때는 옆 테두리가 노치 양쪽을 자른 것처럼 보인다.
+   - 물줄기/보조 노치가 닿아 있는 쪽의 띠는 닿은 자리(옆면 가운데)를 물줄기 굵기만큼 둥글게 비워서 노치와 물줄기가 한 덩어리로 이어지게 한다(--rim-hr / --rim-hl, JS 가 프레임마다).
+   - 물방울이 움직이는 동안은 옆면(좌우 9px)의 띠를 흐리게 한다(--rim-side). 위·아래 띠는 그대로라 노치의 모양은 유지된다.
+   ======================================================== */
+@property --rim-side { syntax: '<number>'; inherits: true; initial-value: 1; }
+@property --rim-hr { syntax: '<length>'; inherits: true; initial-value: -6px; }
+@property --rim-hl { syntax: '<length>'; inherits: true; initial-value: -6px; }
+.island .glassbody.lg::before {
+  -webkit-mask-image:
+    radial-gradient(circle at 100% 0, transparent var(--e), #000 calc(var(--e) + 4px)),
+    radial-gradient(circle at 0% 0, transparent var(--e), #000 calc(var(--e) + 4px)),
+    radial-gradient(circle at 100% 16px, transparent var(--rim-hr), #000 calc(var(--rim-hr) + 5px)),
+    radial-gradient(circle at 0% 16px, transparent var(--rim-hl), #000 calc(var(--rim-hl) + 5px)),
+    linear-gradient(90deg, rgba(0, 0, 0, var(--rim-side)) 0, #000 9px, #000 calc(100% - 9px), rgba(0, 0, 0, var(--rim-side)) 100%),
+    linear-gradient(#000 0 0), linear-gradient(#000 0 0);
+  mask-image:
+    radial-gradient(circle at 100% 0, transparent var(--e), #000 calc(var(--e) + 4px)),
+    radial-gradient(circle at 0% 0, transparent var(--e), #000 calc(var(--e) + 4px)),
+    radial-gradient(circle at 100% 16px, transparent var(--rim-hr), #000 calc(var(--rim-hr) + 5px)),
+    radial-gradient(circle at 0% 16px, transparent var(--rim-hl), #000 calc(var(--rim-hl) + 5px)),
+    linear-gradient(90deg, rgba(0, 0, 0, var(--rim-side)) 0, #000 9px, #000 calc(100% - 9px), rgba(0, 0, 0, var(--rim-side)) 100%),
+    linear-gradient(#000 0 0), linear-gradient(#000 0 0);
+  -webkit-mask-origin: border-box, border-box, border-box, border-box, border-box, content-box, border-box;
+  mask-origin: border-box, border-box, border-box, border-box, border-box, content-box, border-box;
+  -webkit-mask-clip: border-box, border-box, border-box, border-box, border-box, content-box, border-box;
+  mask-clip: border-box, border-box, border-box, border-box, border-box, content-box, border-box;
+  -webkit-mask-composite: source-in, source-in, source-in, source-in, source-in, xor;
+  mask-composite: intersect, intersect, intersect, intersect, intersect, exclude;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+}
+.island .glassbody { transition: --gb-a 0.5s ease, --gb-b 0.5s ease, --gb-c 0.5s ease, --rim-side 0.25s ease; }
+
+/* ========================================================
+   큰 노치가 당겨질 때 '부푼다' (액체가 늘어나는 느낌)
+   큰 노치를 단단한 사각형으로 옆으로 밀면, 옆면(수직선)이 물줄기 뿌리를 그대로 가로질러 '잘려' 보인다. 당겨지는 쪽 옆면의 물줄기 뿌리에
+   둥근 덩어리(.goo-bulge)를 붙여서(같은 물방울 필터 레이어라서 물줄기와 부드럽게 이어진다) 옆면이 보조 노치 쪽으로 볼록하게 부풀어 오르게 한다.
+   반지름 --br 과 가로 이동 --bdx 는 JS(satStep)가 프레임마다 정한다. 0 이면 보이지 않는다.
+   ======================================================== */
+.goo-bulge {
+  left: calc(50% + var(--island-w, 300px) / 2 + var(--bdx, 0px) - var(--br, 0px) - 2px); top: calc(16px - var(--br, 0px));
+  width: calc(var(--br, 0px) * 2); height: calc(var(--br, 0px) * 2); border-radius: 50%; overflow: hidden;
+}
+.goo-bulge .gimg { display: none; }
+html[data-glass="full"][data-desk="1"] .goo-bulge .gimg {
+  display: block; position: absolute; width: 600px; height: 190px; max-width: none; pointer-events: none; filter: blur(1.2px) saturate(1.5) brightness(0.62);
+  top: calc(-1 * (16px - var(--br, 0px))); left: calc(-1 * (var(--island-w, 300px) / 2 + var(--bdx, 0px) - var(--br, 0px) - 2px + 300px));
+}
+html[data-glass="full"][data-desk="1"] .goo-bulge::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.92) 0, rgba(5, 7, 12, 0.45) 55%, rgba(5, 7, 12, 0.34) 100%);
+}
+html[data-glass="full"][data-desk="1"][data-theme="tint"] .goo-bulge::after {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.9) 0, color-mix(in srgb, var(--art-a) 38%, rgba(5, 7, 12, 0.42)) 55%, color-mix(in srgb, var(--art-a) 58%, rgba(5, 7, 12, 0.34)) 100%);
+}
+html[data-glass="full"][data-desk="1"][data-theme="glass"] .goo-bulge::after {
+  background: radial-gradient(130% 110% at 50% 130%, rgba(150, 175, 255, 0.34), transparent 60%), linear-gradient(180deg, rgba(0, 0, 0, 0.9) 0, rgba(5, 7, 12, 0.42) 55%, rgba(5, 7, 12, 0.32) 100%);
+}
+
+/* ========================================================
+   가림 영역(구멍)과 몸통 실루엣의 모서리도 큰 노치처럼 둥글게
+   리퀴드 글래스 '전체'에서는 큰 노치 자리를 마스크로 비운다. 이 구멍이 직사각형(직각 모서리)이라서, 노치가 좌우로 흔들리거나 당겨질 때
+   구멍의 곧은 옆선과 직각 모서리가 노치의 둥근 아래 모서리와 어긋나 노치 양 끝과 물줄기 뿌리가 '네모에 잘린 것'처럼 보였다.
+   구멍을 노치와 같은 둥근 모서리(반지름 --island-r)로 만든다: 직사각형을 비우고(exclude), 아래 두 모서리의 바깥쪽 조각을 다시 채운다(add).
+   (조각을 이어 붙이지 않고 '빼고 되채우는' 방식이라 경계에 가는 선이 생기지 않는다.)
+   크기(--island-w/h/r)는 @property 로 등록해 노치와 같은 스프링으로 전환한다.
+   ======================================================== */
+@property --island-w { syntax: '<length>'; inherits: true; initial-value: 300px; }
+@property --island-h { syntax: '<length>'; inherits: true; initial-value: 32px; }
+@property --island-r { syntax: '<length>'; inherits: true; initial-value: 15px; }
+html { transition: --island-w 0.62s var(--spring), --island-h 0.62s var(--spring), --island-r 0.62s var(--spring); }
+html[data-anim="off"] { transition: none; }
+.goo-body { border-radius: 0 0 var(--island-r, 15px) var(--island-r, 15px); transition: width 0.62s var(--spring), height 0.62s var(--spring), margin-left 0.62s var(--spring); }
+html[data-glass="full"][data-desk="1"] .goo,
+html[data-glass="full"][data-desk="1"] .sat-wrap {
+  --iw: var(--island-w, 300px); --ih: var(--island-h, 32px); --ir: var(--island-r, 15px);
+  -webkit-mask-image:
+    radial-gradient(circle at 0 0, transparent calc(var(--ir) - 0.6px), #000 var(--ir)),
+    radial-gradient(circle at 100% 0, transparent calc(var(--ir) - 0.6px), #000 var(--ir)),
+    linear-gradient(#000 0 0), linear-gradient(#000 0 0);
+  mask-image:
+    radial-gradient(circle at 0 0, transparent calc(var(--ir) - 0.6px), #000 var(--ir)),
+    radial-gradient(circle at 100% 0, transparent calc(var(--ir) - 0.6px), #000 var(--ir)),
+    linear-gradient(#000 0 0), linear-gradient(#000 0 0);
+  -webkit-mask-size: var(--ir) var(--ir), var(--ir) var(--ir), var(--iw) var(--ih), 100% 100%;
+  mask-size: var(--ir) var(--ir), var(--ir) var(--ir), var(--iw) var(--ih), 100% 100%;
+  -webkit-mask-position:
+    calc(50% + var(--iw) / 2 - var(--ir) / 2 + var(--hole-dx, 0px)) calc(var(--ih) - var(--ir)),
+    calc(50% - var(--iw) / 2 + var(--ir) / 2 + var(--hole-dx, 0px)) calc(var(--ih) - var(--ir)),
+    calc(50% + var(--hole-dx, 0px)) 0, 0 0;
+  mask-position:
+    calc(50% + var(--iw) / 2 - var(--ir) / 2 + var(--hole-dx, 0px)) calc(var(--ih) - var(--ir)),
+    calc(50% - var(--iw) / 2 + var(--ir) / 2 + var(--hole-dx, 0px)) calc(var(--ih) - var(--ir)),
+    calc(50% + var(--hole-dx, 0px)) 0, 0 0;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-composite: source-over, source-over, xor, source-over;
+  mask-composite: add, add, exclude, add;
+}
+
+/* 물줄기·부푼 덩어리의 유리 색을 큰 노치와 같은 높이 기준으로 맞춘다: 각자의 높이(18px 등)에 그라디언트를 펼치면 큰 노치(32px)보다 훨씬 어둡게 보여서
+   노치 옆에 검은 쐐기가 붙은 것처럼 보였다. 그라디언트를 노치 높이(--island-h)에 펼치고 요소의 세로 위치만큼 당겨서 같은 높이에서는 같은 색이 되게 한다. */
+html[data-glass="full"][data-desk="1"][data-theme] .goo-neck::after { background-size: 100% var(--island-h, 32px); background-position: 0 -7px; background-repeat: no-repeat; }
+html[data-glass="full"][data-desk="1"][data-theme] .goo-bulge::after { background-size: 100% var(--island-h, 32px); background-position: 0 calc(-1 * (16px - var(--br, 0px))); background-repeat: no-repeat; }
+
+/* ========================================================
+   귀(노치 윗면 양옆의 오목한 모서리): 모양이 일그러지지 않고, 리퀴드 글래스/테마와 어울리게
+   - 크기(--e)를 @property 로 등록해 노치와 같은 스프링으로 전환한다. 예전에는 --e 가 상태가 바뀌는 순간 바로 바뀌고 귀의 폭·높이만 따로 0.45초로
+     움직여서, 노치가 접힐 때 귀의 곡선과 크기가 어긋나 모양이 잠깐 일그러졌다(펼쳐질 때는 눈에 덜 띄었다).
+   - 귀의 색(--ear)은 노치 윗부분과 같은 재료로: 리퀴드 글래스 '전체'에서는 노치 윗면과 같은 반투명 검정(0.92).
+   - 노치 옆 반사광 띠가 귀와 만나는 윗부분은 귀 크기만큼 둥글게 비워서 귀와 노치가 한 덩어리로 이어지게 한다.
+   ======================================================== */
+@property --e { syntax: '<length>'; inherits: true; initial-value: 10px; }
+@property --r { syntax: '<length>'; inherits: true; initial-value: 15px; }
+
+/* ========================================================
+   귀 + 리퀴드 글래스 '전체'
+   .clip 이 귀 자리까지 넓어져 있으므로(위 .clip 참고) 노치의 내용(뒤 화면 .desk, 앨범색 빛 .ambient, 각 페이지의 빛)은 귀 자리에도 그대로 그려진다.
+   노치 본체(.glassbody)의 어두운 유리 바탕만 노치 상자 안에 있으므로, 같은 바탕을 귀 자리에도 깔아 준다(.ear-fill: 귀 바깥쪽 + 안쪽 1.5px 겹침 = 노치 옆면의 가는 선을 덮는다).
+   귀의 안쪽 곡선에는 노치 옆면의 반사광과 이어지는 가는 유리 테두리(.ear-g)를 둔다. 리퀴드 글래스가 아닐 때는 예전처럼 검정 귀(::before/::after)만 쓴다.
+   ======================================================== */
+.outline { display: none; }
+html[data-glass="full"][data-desk="1"] .island::before, html[data-glass="full"][data-desk="1"] .island::after { background: none; }
+
+/* ========================================================
+   큰 노치 + 귀 = 하나의 윤곽
+   노치 옆면의 반사광 선(.glassbody 의 ::before)은 노치 사각형 기준이라 귀 곡선과 따로 놀았다(노치 따로, 귀 따로).
+   그 선을 없애고(.glassbody::before 숨김, 안쪽 가장자리 선 그림자 제거) 윤곽선을 둘로 그린다: 노치 본체(.rimbody: 옆면·아래 모서리)와 귀 곡선(.rimear).
+   선은 마스크 조각이 아니라 상자 그림자(inset)와 테두리로 그린다: 마스크 조각은 폭이 소수일 때 조각마다 따로 반올림되어 노치가 펼쳐지는 동안 좌우 선 두께가
+   1~3칸으로 흔들렸다. 그림자·테두리는 두께가 길이 그대로(--rim: 화면 배율에 맞춘 정수 물리 픽셀)라 움직이는 동안에도 일정하다.
+   보조 노치가 닿는 옆면에서 띠를 비우는 구멍(--rim-hr/--rim-hl)은 예전과 같은 변수를 쓴다. 움직이는 동안 옆 띠를 흐리게 하던 처리(--rim-side)는 없앴다: 귀 곡선은 그대로인데 옆면 선만 흐려져서 둘이 어긋나 보였다.
+   ======================================================== */
+html[data-glass="full"][data-desk="1"] .island .glassbody.lg::before { display: none; }
+html[data-glass="full"][data-desk="1"] .island .glassbody { box-shadow: inset 0 -18px 30px -22px rgba(255, 255, 255, 0.35); }
+html[data-glass="full"][data-desk="1"][data-theme="glass"] .island .glassbody { box-shadow: inset 0 -18px 30px -20px rgba(150, 175, 255, 0.6); }
+.rimbody, .rimear { display: none; }
+html[data-glass="full"][data-desk="1"] .rimbody {
+  display: block; position: absolute; inset: 0; z-index: 2; pointer-events: none; border-radius: 0 0 var(--r) var(--r);
+  --rl: rgba(255, 255, 255, 0.5); --rr: rgba(255, 255, 255, 0.24); --rb: rgba(255, 255, 255, 0.55);
+  box-shadow: inset var(--rim, 1px) 0 0 0 var(--rl), inset calc(-1 * var(--rim, 1px)) 0 0 0 var(--rr), inset 0 calc(-1 * var(--rim, 1px)) 0 0 var(--rb);
+  -webkit-mask-image:
+    radial-gradient(circle at 100% 16px, transparent var(--rim-hr), #000 calc(var(--rim-hr) + 5px)),
+    radial-gradient(circle at 0% 16px, transparent var(--rim-hl), #000 calc(var(--rim-hl) + 5px)),
+    linear-gradient(180deg, transparent var(--e), #000 var(--e));      /* 귀 높이 위의 세로 선은 없다: 귀 곡선(.rimear)이 옆면으로 이어진다 */
+  mask-image:
+    radial-gradient(circle at 100% 16px, transparent var(--rim-hr), #000 calc(var(--rim-hr) + 5px)),
+    radial-gradient(circle at 0% 16px, transparent var(--rim-hl), #000 calc(var(--rim-hl) + 5px)),
+    linear-gradient(180deg, transparent var(--e), #000 var(--e));
+  -webkit-mask-composite: source-in, source-in, source-over; mask-composite: intersect, intersect, add;
+}
+html[data-glass="full"][data-desk="1"][data-theme="glass"] .rimbody { --rl: rgba(255, 255, 255, 0.55); --rr: rgba(255, 255, 255, 0.3); --rb: rgba(255, 255, 255, 0.7); }
+html[data-glass="full"][data-desk="1"] .rimear {
+  display: block; position: absolute; top: 0; z-index: 2; width: calc(var(--e) + var(--rim, 1px)); height: var(--e); overflow: hidden; pointer-events: none;      /* 귀 곡선의 끝은 옆면 안쪽으로 선 두께만큼 들어간다 */
+}
+html[data-glass="full"][data-desk="1"] .rimear-l { left: calc(-1 * var(--e)); }
+html[data-glass="full"][data-desk="1"] .rimear-r { left: calc(100% - var(--rim, 1px)); }
+html[data-glass="full"][data-desk="1"] .rimear b {
+  position: absolute; top: calc(-1 * var(--rim, 1px)); width: calc(2 * (var(--e) + var(--rim, 1px))); height: calc(2 * (var(--e) + var(--rim, 1px)));
+  border-radius: 50%; box-shadow: inset 0 0 0 var(--rim, 1px) rgba(255, 255, 255, 0.5);
+}
+html[data-glass="full"][data-desk="1"] .rimear-l b { left: calc(-1 * (var(--e) + var(--rim, 1px))); }
+html[data-glass="full"][data-desk="1"] .rimear-r b { left: 0; box-shadow: inset 0 0 0 var(--rim, 1px) rgba(255, 255, 255, 0.26); }
+
+/* ========================================================
+   노치 내용을 자르는 모양과 테두리 선을 '같은 경로'에서 만든다 (CSS shape(), Chromium 135+; 더 오래된 WebView 는 위의 마스크·그림자 방식을 그대로 쓴다)
+   - 마스크 조각/상자 그림자는 노치 폭·귀 크기가 소수일 때(움직이는 동안, 흔들릴 때) 조각마다 따로 반올림되어, 선이 얇아지거나 사라지고 내용이 선 바깥으로 1px 튀어나왔다.
+   - 경로는 반올림 없이 소수 좌표 그대로 안티앨리어싱되므로: 내용의 가장자리 = 선의 바깥 가장자리(항상 같은 곳), 선 두께 = --rim 그대로, 귀 곡선과 옆면은 한 경로라 끊김이 없다.
+   모양: 귀 곡선(반지름 --e) -> 옆면 -> 아래 모서리(반지름 --r) -> 아래 -> ... 위쪽은 화면 밖(-4px)까지 연장. 선 = 바깥 경로 - 1선 두께 안쪽으로 줄인 경로(evenodd).
+   ======================================================== */
+@supports (clip-path: shape(from 0px 0px, line to 1px 0px, line to 1px 1px, close)) {
+  .clip {
+    inset: 0; border-width: 0;      /* 테두리를 쓰지 않는다: 테두리 두께는 정수 물리 픽셀로 내림되어, 귀 크기가 소수인 동안 안쪽 기준점이 최대 1px 밀렸다 */
+    border-radius: 0 0 var(--r) var(--r);      /* 칠하는 데는 영향 없음(overflow 보임). 안쪽 유리 본체(.glassbody)가 이 값을 물려받아 렌즈 모서리 반지름이 된다 — 0 이면 렌즈 띠가 직각 모양이 된다 */
+    -webkit-mask-image: none; mask-image: none;
+    clip-path: shape(from calc(-1 * var(--e)) -4px, line to calc(100% + var(--e)) -4px, line to calc(100% + var(--e)) 0px, arc to 100% var(--e) of var(--e) ccw, line to 100% calc(100% - var(--r)), arc to calc(100% - var(--r)) 100% of var(--r) cw, line to var(--r) 100%, arc to 0px calc(100% - var(--r)) of var(--r) cw, line to 0px var(--e), arc to calc(-1 * var(--e)) 0px of var(--e) ccw, close);
+  }
+  html[data-glass="full"][data-desk="1"] .rimbody, html[data-glass="full"][data-desk="1"] .rimear { display: none; }
+  .rimring { display: none; }
+  html[data-glass="full"][data-desk="1"] .rimring {
+    display: block; position: absolute; inset: 0 calc(-1 * var(--e)); z-index: 2; pointer-events: none;
+    /* 펼쳐진 노치 둘레에 밝은 반투명 띠(유리판처럼 보이는)가 간헐적으로 남는 문제의 해결: 값(--e/--r/--rim/잘림 모양)은 항상 맞는데 실제 화면에 그려지는 결과만
+       틀려서(웹 캡처에는 안 보이고 화면에만 보임) 이 선의 모양 잘림이 GPU 합성에서 가끔 어긋났다. 독립된 합성 층으로 분리하면 사라진다(실제 앱에서 A/B 로 확인). */
+    will-change: clip-path, transform;
+    --rl: rgba(255, 255, 255, 0.5); --rr: rgba(255, 255, 255, 0.24); --rb: rgba(255, 255, 255, 0.55);
+    /* 아래쪽 강조는 모서리 곡선을 따라 옆면 색으로 부드럽게 풀린다(예전에는 아래 6px 에서 딱 끊어져 모서리에서 선의 색·밝기가 갑자기 바뀌었다) */
+    background: linear-gradient(0deg, var(--rb) 0, transparent calc(var(--r) * 1.6)), linear-gradient(90deg, var(--rl), var(--rr));
+    /* 물줄기가 붙는 옆면의 선을 비우는 구멍은 귀 높이(--e) 아래의 옆면에만 낸다: 귀 곡선까지 지워지면 선이 사라진 것처럼 보였다 */
+    -webkit-mask-image:
+      linear-gradient(180deg, #000 var(--e), transparent var(--e)),
+      radial-gradient(circle at calc(100% - var(--e)) 16px, transparent var(--rim-hr), #000 calc(var(--rim-hr) + 5px)),
+      radial-gradient(circle at var(--e) 16px, transparent var(--rim-hl), #000 calc(var(--rim-hl) + 5px));
+    mask-image:
+      linear-gradient(180deg, #000 var(--e), transparent var(--e)),
+      radial-gradient(circle at calc(100% - var(--e)) 16px, transparent var(--rim-hr), #000 calc(var(--rim-hr) + 5px)),
+      radial-gradient(circle at var(--e) 16px, transparent var(--rim-hl), #000 calc(var(--rim-hl) + 5px));
+    -webkit-mask-composite: source-over, source-in, source-over; mask-composite: add, intersect, add;
+    clip-path: shape(evenodd from 0px -4px, line to 100% -4px, line to 100% 0px, arc to calc(100% - var(--e)) var(--e) of var(--e) ccw, line to calc(100% - var(--e)) calc(100% - var(--r)), arc to calc(100% - var(--e) - var(--r)) 100% of var(--r) cw, line to calc(var(--e) + var(--r)) 100%, arc to var(--e) calc(100% - var(--r)) of var(--r) cw, line to var(--e) var(--e), arc to 0px 0px of var(--e) ccw, close, move to 0px -4px, line to 100% -4px, line to 100% calc(-1 * var(--rim, 1px)), arc to calc(100% - var(--e) - var(--rim, 1px)) var(--e) of calc(var(--e) + var(--rim, 1px)) ccw, line to calc(100% - var(--e) - var(--rim, 1px)) calc(100% - var(--r)), arc to calc(100% - var(--e) - var(--r)) calc(100% - var(--rim, 1px)) of calc(var(--r) - var(--rim, 1px)) cw, line to calc(var(--e) + var(--r)) calc(100% - var(--rim, 1px)), arc to calc(var(--e) + var(--rim, 1px)) calc(100% - var(--r)) of calc(var(--r) - var(--rim, 1px)) cw, line to calc(var(--e) + var(--rim, 1px)) var(--e), arc to 0px calc(-1 * var(--rim, 1px)) of calc(var(--e) + var(--rim, 1px)) ccw, close);
+  }
+  html[data-glass="full"][data-desk="1"][data-theme="glass"] .rimring { --rl: rgba(255, 255, 255, 0.55); --rr: rgba(255, 255, 255, 0.3); --rb: rgba(255, 255, 255, 0.7); }
+}
+
+/* 중국어·일본어 글꼴: 한글용 글꼴(Malgun Gothic)에는 한자·가나가 없거나 모양이 달라서, 언어별로 맞는 글꼴을 앞에 둔다 */
+html:lang(zh) { --ui: 'Segoe UI Variable Text', 'Segoe UI', 'Microsoft YaHei UI', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif; }
+html:lang(ja) { --ui: 'Segoe UI Variable Text', 'Segoe UI', 'Yu Gothic UI', 'Meiryo UI', 'Meiryo', system-ui, sans-serif; }
+
+/* 한국어는 두 줄로 나뉠 때 단어 중간(예: 캔/슬링)에서 끊기지 않고 띄어쓰기에서 나뉜다 */
+html:lang(ko) .mbtn, html:lang(ko) .pbtn, html:lang(ko) .ltile { word-break: keep-all; }
+
+/* 노치 테두리 선 끄기(설정 › 모양·동작 › 노치 테두리 선): 리퀴드 글래스 '전체'의 윤곽선(.rimring, 구형 WebView 용 .rimbody/.rimear)을 숨긴다 */
+html[data-rim="off"] .rimring, html[data-rim="off"] .rimbody, html[data-rim="off"] .rimear { display: none !important; }
+
+/* 일정: 목록 / 주 / 월 보기 */
+.island[data-s="agenda"][data-ag="month"] { --w: 480px; --h: 176px; }
+.island[data-s="agenda"][data-ag="month"] .dots { top: 168px; }
+.l-agenda .aseg { display: flex; gap: 2px; padding: 2px; border-radius: 999px; background: rgba(255, 255, 255, 0.1); margin-left: 4px; }
+.l-agenda .aseg button { border: none; background: transparent; color: var(--dim); font: inherit; font-size: 10px; line-height: 1; padding: 4px 8px; border-radius: 999px; cursor: pointer; transition: background 0.2s, color 0.2s; }
+.l-agenda .aseg button:hover { color: #fff; }
+.l-agenda .aseg button.on { background: rgba(255, 255, 255, 0.24); color: #fff; }
+.acal { display: none; left: 24px; right: 24px; top: 44px; bottom: 8px; }
+.l-agenda.v-week .acal, .l-agenda.v-month .acal { display: block; }
+.l-agenda.v-week .tlist, .l-agenda.v-month .tlist, .l-agenda.v-week .tempty, .l-agenda.v-month .tempty { display: none; }
+.agl { position: absolute; left: 0; top: 0; }
+.agnav { display: flex; align-items: center; justify-content: space-between; height: 16px; }
+.agnav .agt { flex: 1; text-align: center; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.agnav button, .agwn button { width: 16px; height: 16px; border: none; background: transparent; padding: 0; display: grid; place-items: center; cursor: pointer; border-radius: 50%; }
+.agnav button:hover, .agwn button:hover { background: rgba(255, 255, 255, 0.14); }
+.agnav svg, .agwn svg { width: 12px; height: 12px; fill: var(--dim); }
+.agwd, .agg { display: grid; grid-template-columns: repeat(7, 1fr); }
+.agwd span { font-size: 8px; text-align: center; color: var(--dim); height: 11px; line-height: 11px; }
+.agg .cell { position: relative; border: none; background: transparent; color: #fff; font: inherit; font-size: 9px; font-variant-numeric: tabular-nums; height: 14px; padding: 0 0 3px; cursor: pointer; border-radius: 5px; transition: background 0.15s; }
+.agg .cell:hover { background: rgba(255, 255, 255, 0.14); }
+.agg .cell.out { color: rgba(255, 255, 255, 0.32); }
+.agg .cell.has::after { content: ''; position: absolute; left: 50%; bottom: 0; width: 3px; height: 3px; margin-left: -1.5px; border-radius: 50%; background: #5fb0ff; }
+.agg .cell.today { font-weight: 700; color: #7fd0ff; }
+.agg .cell.sel { background: rgba(255, 255, 255, 0.24); }
+.agd { position: absolute; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.agdh { font-size: 11px; font-weight: 600; height: 16px; line-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.agdl { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 3px; }
+.agdl::-webkit-scrollbar { display: none; }
+.agdl .trow { height: 18px; padding: 0 8px; font-size: 11px; flex: none; }
+.agdl .none { font-size: 11px; color: var(--dim); padding-top: 4px; }
+.l-agenda.v-month .agl { width: 196px; }
+.l-agenda.v-month .agd { left: 212px; right: 0; top: 0; bottom: 0; }
+.l-agenda.v-week .agl { left: 0; right: 0; width: auto; }
+.l-agenda.v-week .agd { left: 0; right: 0; top: 40px; bottom: 0; }
+.l-agenda.v-week .acal { bottom: 16px; }
+.l-agenda.v-week .agdh { display: none; }
+.l-agenda.v-week .agg { display: none; }
+.agwk { display: flex; align-items: stretch; gap: 2px; height: 36px; }
+.agwk .wcell { position: relative; flex: 1; min-width: 0; border: none; border-radius: 9px; background: rgba(255, 255, 255, 0.07); color: #fff; font: inherit; padding: 3px 0 0; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 1px; transition: background 0.15s; }
+.agwk .wcell:hover { background: rgba(255, 255, 255, 0.14); }
+.agwk .wcell small { font-size: 8px; color: var(--dim); line-height: 10px; }
+.agwk .wcell b { font-size: 13px; font-weight: 600; line-height: 14px; font-variant-numeric: tabular-nums; }
+.agwk .wcell.has::after { content: ''; position: absolute; left: 50%; bottom: 3px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: #5fb0ff; }
+.agwk .wcell.today b { color: #7fd0ff; }
+.agwk .wcell.sel { background: rgba(255, 255, 255, 0.24); }
+.agwk .wnav { flex: none; width: 16px; border: none; background: transparent; padding: 0; display: grid; place-items: center; cursor: pointer; border-radius: 8px; }
+.agwk .wnav:hover { background: rgba(255, 255, 255, 0.14); }
+.agwk .wnav svg { width: 12px; height: 12px; fill: var(--dim); }
+/* 미루기 */
+.trow .snz { width: 16px; height: 16px; flex: none; border: none; background: transparent; padding: 0; display: none; place-items: center; cursor: pointer; }
+.trow:hover .snz { display: grid; }
+.trow .snz svg { width: 12px; height: 12px; fill: var(--dim); transition: fill 0.15s; }
+.trow .snz:hover svg { fill: #7fd0ff; }
+.trow .due.snoozed { color: #7fd0ff; }

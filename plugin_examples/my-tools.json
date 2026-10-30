@@ -1,0 +1,74 @@
+{
+  "id": "mytools",
+  "name": {
+    "ko": "내 도구",
+    "en": "My tools",
+    "zh": "我的工具",
+    "ja": "マイツール"
+  },
+  "desc": {
+    "ko": "예제 플러그인: 이 파일을 %APPDATA%\\Dalu\\plugins 폴더에 복사하고 설정 › 플러그인에서 켜 보세요.",
+    "en": "Example plugin: edit this file to build your own tool set.",
+    "zh": "示例插件：编辑这个文件来制作你自己的工具集。",
+    "ja": "サンプルプラグイン：このファイルを編集して、自分用のツールセットを作ってみましょう。"
+  },
+  "icon": "tool",
+  "actions": [
+    {
+      "label": {
+        "ko": "메모장",
+        "en": "Notepad",
+        "zh": "记事本",
+        "ja": "メモ帳"
+      },
+      "icon": "note",
+      "run": "notepad.exe"
+    },
+    {
+      "label": "VS Code",
+      "icon": "code",
+      "run": "code",
+      "args": "--new-window"
+    },
+    {
+      "label": {
+        "ko": "다운로드 폴더",
+        "en": "Downloads",
+        "zh": "下载文件夹",
+        "ja": "ダウンロードフォルダー"
+      },
+      "icon": "download",
+      "open": "%USERPROFILE%\\Downloads"
+    },
+    {
+      "label": {
+        "ko": "노션",
+        "en": "Notion",
+        "zh": "Notion",
+        "ja": "Notion"
+      },
+      "icon": "globe",
+      "open": "https://www.notion.so"
+    },
+    {
+      "label": {
+        "ko": "서명 복사",
+        "en": "Copy signature",
+        "zh": "复制签名",
+        "ja": "署名をコピー"
+      },
+      "icon": "edit",
+      "copy": "감사합니다.\n홍길동 드림"
+    },
+    {
+      "label": {
+        "ko": "작업 관리자",
+        "en": "Task Manager",
+        "zh": "任务管理器",
+        "ja": "タスクマネージャー"
+      },
+      "icon": "gauge",
+      "keys": "Ctrl+Shift+Esc"
+    }
+  ]
+}

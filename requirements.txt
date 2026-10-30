@@ -1,0 +1,25 @@
+pywebview
+# 이어버드(배터리/소음 제어): Windows Runtime 바인딩. 없으면 해당 기능만 비활성화됩니다.
+winrt-runtime
+winrt-Windows.Foundation
+winrt-Windows.Foundation.Collections
+winrt-Windows.Devices.Bluetooth
+winrt-Windows.Devices.Bluetooth.GenericAttributeProfile
+winrt-Windows.Devices.Bluetooth.Rfcomm
+winrt-Windows.Devices.Enumeration
+winrt-Windows.Networking
+winrt-Windows.Networking.Sockets
+winrt-Windows.Storage.Streams
+# Cider 가 아닌 앱(Spotify, 브라우저 등)의 미디어 표시/제어: 윈도우 미디어 세션(SMTC). 없으면 Cider 만 동작합니다.
+winrt-Windows.Media
+winrt-Windows.Media.Control
+# 윈도우 알림이 오면 보조 노치로 알림(알림 내용은 읽지 않음). 없으면 이 기능만 빠집니다.
+winrt-Windows.UI.Notifications
+winrt-Windows.UI.Notifications.Management
+winrt-Windows.ApplicationModel
+Pillow
+# 시스템 트레이 아이콘 (없으면 트레이 없이 동작)
+pystray
+# 볼륨 믹서/미디어 키는 ctypes 만 사용 (추가 패키지 없음)
+# 캘린더(.ics) 시간대(TZID) 해석용 (윈도우에는 시간대 데이터가 없어 필요)
+tzdata

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dalu</title>
+<link rel="stylesheet" href="island.css">
+</head>
+<body>
+
+<!-- 상태는 .island 의 data-s(뷰) / data-p(페이지) / data-pk(알림 종류) / data-chip / data-timer / data-pm 속성으로 결정된다 -->
+<div class="island" id="island" data-s="idle" data-p="music" data-pk="track" data-chip="0" data-timer="0" data-pm="focus">
+<div class="clip">   <!-- 안쪽 내용을 섬의 둥근 모서리로 자르는 틀. 귀(::before/::after)는 틀 밖(섬의 직속)이라 잘리지 않는다 -->
+
+  <!-- 리퀴드 글래스(전체): 뒤 화면을 찍은 작은 그림(.desk) 위에 가장자리를 굴절시키는 유리판(.glassbody). 평소엔 display:none -->
+  <img class="desk" id="deskImg" alt="">
+  <div class="glassbody" id="glassBody"></div>
+  <i class="rimbody" aria-hidden="true"></i><i class="rimear rimear-l" aria-hidden="true"><b></b></i><i class="rimear rimear-r" aria-hidden="true"><b></b></i><i class="rimring" aria-hidden="true"></i>
+
+  <!-- 공유 앨범 아트: mini / peek / music / lyrics 상태 사이를 위치·크기가 변하며 이동한다 -->
+  <div class="art-box art-main" id="artMain"><div class="art-in" id="artIn"><img class="js-art" alt=""><span class="note">♪</span></div></div>
+
+  <!-- IDLE: 시계 (포모도로가 돌고 있으면 타이머) -->
+  <div class="ly l-idle">
+    <div class="clock" id="clock">--<i>:</i>--</div>
+    <div class="idle-timer"><div class="tchip"><div class="tring"></div><svg class="sw-ico" viewBox="0 0 24 24"><path d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42A8.962 8.962 0 0 0 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9 9-4.03 9-9c0-2.12-.74-4.07-1.97-5.61zM12 20c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg><span class="js-ttime">25:00</span></div></div>
+  </div>
+
+  <!-- PET: 캐릭터(눈) — 한동안 아무 입력이 없으면 시계 대신 나타난다 -->
+  <div class="ly l-pet" id="petLayer" data-mode="awake">
+    <div class="eyes" id="eyes"><i class="eye"><b></b></i><i class="eye"><b></b></i></div>
+    <span class="zzz">z</span>
+    <span class="wave"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12V6.5a1.5 1.5 0 0 1 3 0V11M11 11V5a1.5 1.5 0 0 1 3 0v6M14 11V6.5a1.5 1.5 0 0 1 3 0V14a6 6 0 0 1-6 6h-.5A5.5 5.5 0 0 1 6 15v-2.5a1.5 1.5 0 0 1 2-1.4"/></svg></span>
+  </div>
+
+  <!-- MINI: 접힌 상태 (아트 + 실시간 가사 + 3-dot 간주 + 타이머 칩 + 이퀄라이저) -->
+  <div class="ly l-mini">
+    <div class="art-slot"></div>
+    <div class="mini-lyric-box" id="miniLyricBox">
+      <div class="mini-lyric-line" id="miniLyricLine">Cider</div>
+      <div class="cider-dots" id="miniDots">
+        <div class="dot-item" id="mDot1"><div class="dot-fill" id="mDotFill1"></div></div>
+        <div class="dot-item" id="mDot2"><div class="dot-fill" id="mDotFill2"></div></div>
+        <div class="dot-item" id="mDot3"><div class="dot-fill" id="mDotFill3"></div></div>
+      </div>
+    </div>
+    <div class="mini-clock" id="miniClock"></div>
+    <div class="mini-bg" id="miniBg"><div class="mini-bg-line" id="miniBgLine"></div></div>
+    <div class="tchip"><div class="tring"></div><svg class="sw-ico" viewBox="0 0 24 24"><path d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42A8.962 8.962 0 0 0 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9 9-4.03 9-9c0-2.12-.74-4.07-1.97-5.61zM12 20c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg><span class="js-ttime">25:00</span></div>
+    <div class="bars"><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+
+  <!-- PEEK: 곡이 바뀔 때 / 시스템·기능 알림 -->
+  <div class="ly l-peek">
+    <div class="pk-track">
+      <div class="art-slot"></div>
+      <div class="pk-text">
+        <div class="pk-title js-title">-</div>
+        <div class="pk-artist js-artist"></div>
+      </div>
+    </div>
+    <div class="pk-info">
+      <div class="pk-ico" id="pkIco"></div>
+      <div class="pk-text">
+        <div class="pk-title" id="pkTitle"></div>
+        <div class="pk-artist" id="pkSub"></div>
+      </div>
+      <div class="pk-meter" id="pkMeter"><i></i></div>
+    </div>
+    <div class="pk-msg" id="peekMsg"></div>
+  </div>
+
+  <!-- PLAYER: music ↔ lyrics 는 같은 레이어 안에서 패널이 이동하고 가사가 오른쪽에서 나타난다 (data-mode) -->
+  <div class="ly l-player" id="playerLayer" data-mode="music">
+    <div class="ambient"></div>
+    <button class="a srcbtn" id="srcBtn" data-i18n-title="sourceSwitch"><svg viewBox="0 0 24 24"><path d="M7 7h11l-3-3M17 17H6l3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="srcName">-</span></button>
+    <button class="a volbtn" id="volBtn" data-i18n-title="volumeTitle"><svg viewBox="0 0 24 24"><path id="volIcon" d=""/></svg></button>
+    <div class="a volpop" id="volPop">
+      <button class="vmute" id="volMute" data-i18n-title="muteTitle"><svg viewBox="0 0 24 24"><path id="volMuteIcon" d=""/></svg></button>
+      <input type="range" id="volSlider" min="0" max="100" step="1">
+      <output id="volOut">0%</output>
+    </div>
+    <div class="a ttl js-title">-</div>
+    <div class="a sub js-artist"></div>
+    <div class="a controls">
+      <button class="btn-ctrl mode js-shuffle" data-i18n-title="shuffle"><svg viewBox="0 0 24 24"><path class="js-shuffle-icon" d=""/></svg></button>
+      <button class="btn-ctrl js-prev" data-i18n-title="prev"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+      <button class="btn-ctrl big js-toggle" data-i18n-title="playPause"><svg viewBox="0 0 24 24"><path class="js-play-icon" d="M8 5v14l11-7z"/></svg></button>
+      <button class="btn-ctrl js-next" data-i18n-title="next"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+      <button class="btn-ctrl mode js-repeat" data-i18n-title="repeat"><svg viewBox="0 0 24 24"><path class="js-repeat-icon" d=""/></svg></button>
+      <button class="btn-ctrl lyr-toggle js-lyr-toggle" data-i18n-title="lyricsToggle"><svg viewBox="0 0 24 24" class="ic-chat"></svg></button>
+    </div>
+    <div class="prog-hit js-seek"><div class="prog"><i class="js-fill"></i></div></div>
+    <div class="times"><span class="js-elapsed">0:00</span><span class="js-remain">-0:00</span></div>
+    <div class="lyr" id="lyBox"><ol id="lyList"></ol></div>
+  </div>
+
+  <!-- POMODORO 페이지 -->
+  <div class="ly l-pomo">
+    <div class="glow glow-pomo"></div>
+    <div class="a pring-wrap"><div class="pring" id="pomoRing"></div><div class="ptime js-ptime">25:00</div></div>
+    <div class="a ttl" id="pomoMode">-</div>
+    <div class="a sub" id="pomoSub"></div>
+    <div class="a pstep stepper" id="pomoStep">
+      <button id="pomoMinus"><svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg></button>
+      <span class="val" id="pomoMin">25</span>
+      <button id="pomoPlus"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button>
+    </div>
+    <div class="a pbtns">
+      <button class="pill primary" id="pomoStart"><svg viewBox="0 0 24 24"><path id="pomoStartIcon" d="M8 5v14l11-7z"/></svg><span id="pomoStartText">-</span></button>
+      <button class="pill icon" id="pomoReset" data-i18n-title="reset"><svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></button>
+      <button class="pill" id="pomoSwitch">-</button>
+    </div>
+  </div>
+
+  <!-- WATER 페이지 -->
+  <div class="ly l-water" id="waterLayer">
+    <div class="glow glow-water"></div>
+    <div class="wmain">
+      <div class="a wlabel" data-i18n="waterToday">-</div>
+      <div class="a wamount" id="wAmount">0</div>
+      <div class="a wbar"><i id="wBarFill"></i></div>
+      <div class="a wstatus" id="wStatus"></div>
+      <div class="a wbtns">
+        <button class="pill primary" id="wAdd"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg><span id="wAddText">250 ml</span></button>
+        <button class="pill icon" id="wSnooze"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm4.2 13.4-.8 1.3L11 13.9V7h1.5v6.1l3.7 2.3z"/></svg></button>
+        <button class="pill icon" id="wUndo" data-i18n-title="undo"><svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg></button>
+        <button class="pill icon" id="wSettings" data-i18n-title="settings"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button>
+      </div>
+      <div class="a chart" id="wChart"></div>
+      <div class="caxis" id="wAxis"></div>
+    </div>
+    <div class="wsettings">
+      <div class="srow" style="left:24px; top:18px"><label data-i18n="bottleSize">-</label>
+        <div class="stepper"><button data-w="bottle" data-d="-1"><svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg></button><span class="val" id="wsBottle">250</span><button data-w="bottle" data-d="1"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button></div></div>
+      <div class="srow" style="left:24px; top:50px"><label data-i18n="dailyGoal">-</label>
+        <div class="stepper"><button data-w="goal" data-d="-1"><svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg></button><span class="val" id="wsGoal">2.0 L</span><button data-w="goal" data-d="1"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button></div></div>
+      <div class="srow" style="left:24px; top:82px"><label data-i18n="remindEvery">-</label>
+        <div class="stepper"><button data-w="interval" data-d="-1"><svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg></button><span class="val" id="wsInterval">60</span><button data-w="interval" data-d="1"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button></div></div>
+      <div class="srow" style="left:226px; top:18px"><label data-i18n="remindFrom">-</label>
+        <div class="stepper"><button data-w="start" data-d="-1"><svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg></button><span class="val" id="wsStart">9</span><button data-w="start" data-d="1"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button></div></div>
+      <div class="srow" style="left:226px; top:50px"><label data-i18n="remindTo">-</label>
+        <div class="stepper"><button data-w="end" data-d="-1"><svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg></button><span class="val" id="wsEnd">21</span><button data-w="end" data-d="1"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button></div></div>
+      <div class="srow" style="left:226px; top:82px"><label data-i18n="remindOn">-</label><button class="sw" id="wsEnabled"></button></div>
+      <div class="a" style="right:28px; top:104px"><button class="pill primary" id="wsDone" data-i18n="done">-</button></div>
+    </div>
+  </div>
+
+  <!-- SHELF 페이지 -->
+  <div class="ly l-shelf">
+    <div class="glow glow-shelf"></div>
+    <div class="a szone" id="shZone">
+      <div class="hint" id="shHint">-</div>
+      <div class="shcards" id="shCards"></div>
+    </div>
+    <div class="a shtools">
+      <button class="pill icon" id="shAdd" data-i18n-title="shAdd"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button>
+      <button class="pill hidden" id="shClear" data-i18n="shClear">-</button>
+    </div>
+  </div>
+
+  <!-- TODO 페이지 -->
+  <div class="ly l-todo" id="todoLayer">
+    <div class="glow glow-todo"></div>
+    <div class="a thead">
+      <span class="ttl" data-i18n="todoTitle">-</span><span class="cnt" id="todoCount">0/0</span>
+      <button class="pill icon" id="todoAddBtn" data-i18n-title="todoAdd"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button>
+    </div>
+    <div class="a tlist" id="todoList"></div>
+    <div class="a tempty" id="todoEmpty" data-i18n="todoEmpty">-</div>
+    <div class="a tadd">
+      <div class="row">
+        <input type="text" id="todoText" maxlength="60" data-i18n-ph="todoPlaceholder">
+        <input type="time" id="todoTime" hidden>
+        <button type="button" class="timebtn" id="todoTimeBtn" data-i18n-title="todoTimeHint"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm4.2 13.4-.8 1.3L11 13.9V7h1.5v6.1l3.7 2.3z"/></svg><span id="todoTimeTxt"></span></button>
+      </div>
+      <div class="row" style="justify-content:flex-end">
+        <button class="pill" id="todoCancel" data-i18n="cancel">-</button>
+        <button class="pill primary" id="todoSave" data-i18n="add">-</button>
+      </div>
+      <div class="tpick" id="todoPick">
+        <div class="row mid">
+          <div class="stepper" data-t="h"><button type="button" data-d="-1"><svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg></button><span class="val" id="tpH">18</span><button type="button" data-d="1"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button></div>
+          <span class="colon">:</span>
+          <div class="stepper" data-t="m"><button type="button" data-d="-1"><svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg></button><span class="val" id="tpM">00</span><button type="button" data-d="1"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button></div>
+        </div>
+        <div class="row end">
+          <button type="button" class="pill" id="tpClear" data-i18n="todoTimeClear">-</button>
+          <button type="button" class="pill primary" id="tpOk" data-i18n="done">-</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 타이머 / 스톱워치 -->
+  <div class="ly l-timer" id="timerLayer" data-m="timer" data-run="0">
+    <div class="glow glow-timer"></div>
+    <div class="a tmmodes" id="tmModes"><i class="tmhl" id="tmHl"></i><button data-m="timer" data-i18n="timerMode">-</button><button data-m="stopwatch" data-i18n="stopwatchMode">-</button></div>
+    <div class="a tmtime" id="tmTime">05:00</div>
+    <div class="a tmadj" id="tmAdj">
+      <button class="pill" data-d="-1">−1</button><button class="pill" data-d="1">+1</button><button class="pill" data-d="5">+5</button>
+    </div>
+    <div class="a tmbtns">
+      <button class="pill primary" id="tmStart"><svg viewBox="0 0 24 24"><path id="tmStartIcon" d=""/></svg><span id="tmStartText">-</span></button>
+      <button class="pill icon" id="tmReset" data-i18n-title="reset"><svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.75 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></button>
+    </div>
+  </div>
+
+  <!-- 클립보드 기록 -->
+  <div class="ly l-clip" id="clipLayer">
+    <div class="a thead"><span class="ttl" data-i18n="clipTitle">-</span><span class="cnt" id="clipCount"></span><button class="pill" id="clipClear" data-i18n="clipClear">-</button></div>
+    <div class="a tlist" id="clipList"></div>
+    <div class="a tempty" id="clipEmpty"></div>
+  </div>
+
+  <!-- 일정 (캘린더) -->
+  <div class="ly l-agenda" id="agendaLayer">
+    <div class="glow glow-agenda"></div>
+    <div class="a thead"><span class="ttl" data-i18n="agendaTitle">-</span><span class="cnt" id="agendaCount"></span>
+      <div class="aseg" id="agendaSeg"><button data-v="list" data-i18n="agendaViewList">-</button><button data-v="week" data-i18n="agendaViewWeek">-</button><button data-v="month" data-i18n="agendaViewMonth">-</button></div>
+      <button class="pill icon" id="agendaRefresh" data-i18n-title="agendaRefreshTitle"><svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.75 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></button></div>
+    <div class="a tlist" id="agendaList"></div>
+    <div class="a tempty" id="agendaEmpty"></div>
+    <div class="a acal" id="agendaCal"><div class="agl" id="agGrid"></div><div class="agd"><div class="agdh" id="agDayHead"></div><div class="agdl" id="agDayList"></div></div></div>
+  </div>
+
+  <!-- 사용자 바로가기 -->
+  <div class="ly l-launcher" id="launcherLayer">
+    <div class="a thead"><span class="ttl" data-i18n="launcherTitle">-</span><span class="cnt" id="launcherCount"></span>
+      <button class="pill icon" id="launcherEdit" data-i18n-title="launcherEditTitle"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.8 9.94l-3.75-3.75L3 17.25zM20.7 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></button></div>
+    <div class="a lgrid" id="launcherGrid"></div>
+    <div class="a tempty" id="launcherEmpty"></div>
+  </div>
+
+  <!-- 플러그인 -->
+  <div class="ly l-plugins" id="pluginsLayer">
+    <div class="glow glow-plug"></div>
+    <div class="a phero" id="plugHero"><span class="porb" id="plugOrb"></span><div class="pnm" id="plugName"></div><div class="pst" id="pluginStatus"></div></div>
+    <div class="a pchips" id="pluginChips"></div>
+    <div class="a pgrid" id="pluginGrid"></div>
+    <div class="a tempty" id="pluginsEmpty"></div>
+  </div>
+
+  <!-- BUDS 페이지: 이어버드 배터리(좌/우/케이스)와 소음 제어 모드 -->
+  <div class="ly l-buds" id="budsLayer">
+    <div class="glow glow-buds"></div>
+    <div class="a ttl" id="budsName">-</div>
+    <div class="a sub" id="budsSub"></div>
+    <div class="a bats" id="budsBats">
+      <div class="bat" data-pos="left"><div class="bwrap"><div class="bring"></div><b class="bval">--</b><svg class="bolt" viewBox="0 0 24 24"><path d="M13.5 2L5 13.5h5.5L9.5 22 19 9.5h-5.8z"/></svg></div><span class="blab" data-i18n="budsLeft">L</span></div>
+      <div class="bat" data-pos="right"><div class="bwrap"><div class="bring"></div><b class="bval">--</b><svg class="bolt" viewBox="0 0 24 24"><path d="M13.5 2L5 13.5h5.5L9.5 22 19 9.5h-5.8z"/></svg></div><span class="blab" data-i18n="budsRight">R</span></div>
+      <div class="bat" data-pos="case"><div class="bwrap"><div class="bring"></div><b class="bval">--</b><svg class="bolt" viewBox="0 0 24 24"><path d="M13.5 2L5 13.5h5.5L9.5 22 19 9.5h-5.8z"/></svg></div><span class="blab" data-i18n="budsCase">Case</span></div>
+    </div>
+    <div class="a modes" id="budsModes">
+      <i class="mode-hl" id="modeHl"></i>
+      <button class="mbtn" data-mode="0"><svg class="mic" viewBox="0 0 24 24"></svg><span data-i18n="modeOff">-</span></button>
+      <button class="mbtn" data-mode="2"><svg class="mic" viewBox="0 0 24 24"></svg><span data-i18n="modeAmbient">-</span></button>
+      <button class="mbtn" data-mode="3"><svg class="mic" viewBox="0 0 24 24"></svg><span data-i18n="modeAdaptive">-</span></button>
+      <button class="mbtn" data-mode="1"><svg class="mic" viewBox="0 0 24 24"></svg><span data-i18n="modeAnc">-</span></button>
+    </div>
+  </div>
+
+  <!-- 공통: 페이지 도트 / 핀 / 알림 -->
+  <div class="dots" id="pageDots">
+    <i data-p="music"></i><i data-p="pomo"></i><i data-p="timer"></i><i data-p="water"></i><i data-p="shelf"></i><i data-p="todo"></i><i data-p="clip" class="hidden"></i><i data-p="agenda" class="hidden"></i><i data-p="launcher"></i><i data-p="plugins"></i><i data-p="buds" class="hidden"></i>
+  </div>
+  <button class="btn-pin" id="btnPin" data-i18n-title="pin">
+    <svg viewBox="0 0 24 24"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
+  </button>
+  <div class="toast" id="toast"></div>
+</div>
+</div>
+
+<!-- Right Click Context Menu -->
+<div class="context-menu" id="contextMenu">
+  <div class="menu-item" id="menuPin">
+    <svg viewBox="0 0 24 24"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
+    <span id="menuPinText">-</span>
+  </div>
+  <div class="menu-item" id="menuLyrics">
+    <svg viewBox="0 0 24 24" class="ic-chat"></svg>
+    <span id="menuLyricsText">-</span>
+  </div>
+  <div class="menu-item" id="menuSound">
+    <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+    <span id="menuSoundText">-</span>
+  </div>
+  <div class="menu-item" id="menuLang">
+    <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95a15.65 15.65 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.92 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.987 7.987 0 0 1 5.08 16zm2.95-8H5.08a7.987 7.987 0 0 1 4.33-3.56A15.65 15.65 0 0 0 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2 0-.68.07-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/></svg>
+    <span id="menuLangText">-</span>
+  </div>
+  <div class="menu-item" id="menuCompact">
+    <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+    <span data-i18n="compact">-</span>
+  </div>
+  <div class="menu-item" id="menuClickThrough">
+    <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+    <span data-i18n="clickThrough">-</span>
+  </div>
+  <div class="menu-divider"></div>
+  <div class="menu-item" id="menuSettings">
+    <svg viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="15" cy="7" r="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="9" cy="17" r="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+    <span id="menuSettingsText" data-i18n="menuSettings">설정…</span>
+  </div>
+  <div class="menu-item danger" id="menuExit">
+    <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+    <span data-i18n="exit">-</span>
+  </div>
+</div>
+
+<!-- 보조 노치: 음악이 나오는 접힌 노치 옆에 따로 붙는 작은 알약 (타이머/시계) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <!-- 물방울 필터: 모양을 흐리게 번지게 한 뒤(blur) 다시 선명하게 자른다(threshold). 두 모양이 가까울 때만 '목'이 생겨 한 덩어리처럼 늘어났다 뚝 끊어진다 -->
+  <filter id="goo" x="-5%" y="-60%" width="110%" height="220%" color-interpolation-filters="sRGB">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="b"/>
+    <feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -8"/>
+  </filter>
+</defs></svg>
+<div class="goo" id="gooLayer"><i class="goo-body"></i><i class="goo-neck" id="gooNeck"><img class="gimg" alt=""></i><i class="goo-bulge"><img class="gimg" alt=""></i><i class="goo-drop" id="gooDrop"><img class="gimg" alt=""></i></div>
+<div class="goo goo-l" id="gooLayerL"><i class="goo-body"></i><i class="goo-neck" id="gooNeckL"><img class="gimg" alt=""></i><i class="goo-bulge"><img class="gimg" alt=""></i><i class="goo-drop" id="gooDropL"><img class="gimg" alt=""></i></div>
+<div class="sat-wrap" id="satWrap"><div class="sat" id="sat"><img class="sat-desk" id="satDesk" alt=""><i class="sat-skin"></i><div class="sat-in"><div class="sat-ring tring"></div><svg class="sw-ico" viewBox="0 0 24 24"><path d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42A8.962 8.962 0 0 0 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9 9-4.03 9-9c0-2.12-.74-4.07-1.97-5.61zM12 20c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg><span class="sat-t"></span></div></div></div>
+<div class="sat-wrap sat-wrap-l" id="satWrapL"><div class="sat" id="satL"><img class="sat-desk" id="satDeskL" alt=""><i class="sat-skin"></i><div class="sat-in"><div class="sat-ring tring"></div><svg class="sw-ico" viewBox="0 0 24 24"><path d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42A8.962 8.962 0 0 0 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9 9-4.03 9-9c0-2.12-.74-4.07-1.97-5.61zM12 20c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg><span class="sat-t"></span></div></div></div>
+
+<script src="icons.js"></script>
+<script src="glass.js"></script>
+<script src="prefs_shared.js"></script>
+<script src="i18n_cjk.js"></script>
+<script src="app.js"></script>
+<script src="features.js"></script>
+<script src="features2.js"></script>
+<script src="notchglass.js"></script>
+<script src="satellite.js"></script>
+<script src="prefs.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
