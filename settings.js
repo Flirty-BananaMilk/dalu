@@ -290,7 +290,7 @@ function refreshHotkeys() {
 
 // 모니터 선택지: '주 모니터' + 연결된 모니터들(식별 번호). 저장된 번호의 모니터가 지금 없으면 아무것도 강조되지 않는다.
 function monitorOptions() {
-  const opts = [{ v: 0, label: L('주 모니터', 'Primary') }];
+  const opts = [{ v: 0, label: { ko: '주 모니터', en: 'Primary', zh: '主显示器', ja: 'メインモニター' } }];
   for (const m of MONITORS.monitors || []) opts.push({ v: m.number, label: { ko: `${m.number}번`, en: `#${m.number}`, zh: `${m.number} 号`, ja: `${m.number} 番` } });
   return opts;
 }
