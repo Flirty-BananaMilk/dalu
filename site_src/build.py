@@ -311,7 +311,7 @@ def page(lang):
   </section>
 
   <section class="container band buds" aria-labelledby="bd-h">
-    <div class="buds__row"><p class="num-big" aria-hidden="true">{escape(t["bd_num"])}</p><div class="buds__text"><h2 id="bd-h">{H(t["bd_h"])}</h2><p class="lead">{escape(t["bd_p"])}</p></div></div>
+    <div class="buds__row"><p class="num-big" aria-hidden="true">{escape(t["bd_num"])}</p><div class="buds__text"><h2 id="bd-h">{H(t["bd_h"])}</h2><p class="lead">{escape(t["bd_p"])}</p><p class="note note--fine">{escape(t["bd_note"])}</p></div></div>
     <figure class="shot shot--window rise"><img src="../assets/settings-buds_eq-{lang}-900.webp" srcset="../assets/settings-buds_eq-{lang}-900.webp 900w, ../assets/settings-buds_eq-{lang}-1600.webp 1600w" sizes="(min-width: 60rem) 1120px, 100vw" width="1600" height="WIN_H" alt="{escape(t["buds_alt"])}" loading="lazy" decoding="async"></figure>
   </section>
 
