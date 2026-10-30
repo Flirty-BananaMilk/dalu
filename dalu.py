@@ -867,14 +867,14 @@ class IslandAPI:
     # 노치 본체 유리(glassNotch = full): 노치 뒤의 화면을 찍어 화면(HTML)에 넘긴다 (deskcap.py)
     # ------------------------------------------------------------------
     def _desk_rect(self):
-        """노치 뒤 화면에서 찍을 영역(물리 픽셀): 창 가운데 위쪽의 600x200(CSS px, 탭 아이콘 독이 열린 가장 큰 노치까지 덮는다). 창이 숨겨져 있으면 None."""
+        """노치 뒤 화면에서 찍을 영역(물리 픽셀): 창 가운데 위쪽의 600x210(CSS px, 탭 아이콘 독이 열린 가장 큰 노치까지 덮는다). 창이 숨겨져 있으면 None."""
         hwnd = self._get_hwnd()
         if not hwnd or not ctypes.windll.user32.IsWindowVisible(hwnd):
             return None
         rc = wintypes.RECT()
         ctypes.windll.user32.GetWindowRect(hwnd, ctypes.byref(rc))
         dpr = self._notch_scale()
-        w, h = int(600 * dpr), int(200 * dpr)
+        w, h = int(600 * dpr), int(210 * dpr)
         return int((rc.left + rc.right) / 2 - w / 2), rc.top, w, h
 
     def _desk_push(self, url):

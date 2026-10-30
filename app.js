@@ -188,7 +188,7 @@ const DEFAULT_STORE = {
     animOff: false, animSpeed: 100, bounce: 100, entrance: true, pageAnim: 'slide',
     tabOrder: DEFAULT_TAB_ORDER, tabHidden: '', pluginsEnabled: '',
     focusDnd: true,
-    clipboardOn: false, calendarUrl: '', calendarRemindMin: 10, hotkeysOn: true, tabDock: true, hkToggle: 'Ctrl+Alt+N', hkSettings: 'Ctrl+Alt+S', hkMixer: 'Ctrl+Alt+V', hkLyrics: 'Ctrl+Alt+L', hkCapture: 'Ctrl+Alt+P', captureSeconds: 15, captureNotch: 'auto',
+    clipboardOn: false, calendarUrl: '', calendarRemindMin: 10, hotkeysOn: true, tabDock: true, tabDockDelay: 130, tabDockLeave: 260, tabDockMargin: 7, hkToggle: 'Ctrl+Alt+N', hkSettings: 'Ctrl+Alt+S', hkMixer: 'Ctrl+Alt+V', hkLyrics: 'Ctrl+Alt+L', hkCapture: 'Ctrl+Alt+P', captureSeconds: 15, captureNotch: 'auto',
     todoRemind: true, todoLeadMin: 0, snoozeMin: 10, weekStart: 'sun', agendaView: 'list', mediaKeys: true, upNext: true, upNextSec: 12, appFilterMode: 'off', appFilterList: ''
   },
   pomo: { focusMin: 25, breakMin: 5, doneToday: 0, doneDate: '' },
@@ -458,11 +458,13 @@ function geometryFor(v) {
   }
   if (v === 'peek') return STATES['peek_' + peek.kind] || STATES.peek_track;
   const base = STATES[v] || STATES.mini;
-  return dockOn && isPageView(v) ? { w: base.w, h: base.h + DOCK_H, e: base.e } : base;      // 탭 아이콘 독이 열리면 노치 아래가 조금 늘어난다
+  return dockOn && isPageView(v) ? { w: base.w, h: base.h + dockH(), e: base.e } : base;      // 탭 아이콘 독이 열리면 노치 아래가 조금 늘어난다
 }
 
-// 페이지 점에 마우스를 올리면 큰 아이콘 독으로 바뀐다 (노치 아래가 DOCK_H 만큼 늘어난다. CSS 의 --dk 와 같은 값)
-const DOCK_H = 18;
+// 페이지 점에 마우스를 올리면 큰 아이콘 독으로 바뀐다. 노치 아래가 늘어나는 높이 = 아이콘이 점 자리에서 아래로 나오는 17px + 아래 여백(tabDockMargin).
+// CSS 의 --dkh 와 같은 값이다(prefs.js 가 같이 넣는다)
+const DOCK_BASE = 17;
+const dockH = () => DOCK_BASE + clampN(store.settings.tabDockMargin, 2, 14, 7);
 let dockOn = false;
 function setDock(on) {
   on = !!on && store.settings.tabDock !== false;

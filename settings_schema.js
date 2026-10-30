@@ -188,6 +188,12 @@ const SETTINGS_PAGES = [
       { title: L('펼침/접힘', 'Expand & collapse'), items: [
         { id: 'tabDock', type: 'toggle', path: 'settings', key: 'tabDock', def: true, label: L('페이지 점에 마우스를 올리면 아이콘으로', 'Icons when hovering the page dots'),
           desc: L('노치 아래의 작은 점 위에 마우스를 올리면 점이 탭 아이콘으로 바뀌어 누르기 쉬워요. 이때 노치 아래가 잠깐 조금 늘어나요.', 'Hover the small dots under the notch and they turn into tab icons that are easy to click. The notch grows a little at the bottom meanwhile.') },
+        { id: 'tabDockDelay', type: 'slider', path: 'settings', key: 'tabDockDelay', def: 130, min: 0, max: 800, step: 10, fmt: ms, fmtEn: msEn, enabledIf: (d) => d.settings.tabDock !== false,
+          label: L('아이콘이 나타나기까지 걸리는 시간', 'Delay before the icons appear'), desc: L('페이지 점 위에 마우스를 얼마나 올려 두어야 아이콘으로 바뀌는지 정합니다. 0이면 바로 바뀝니다.', 'How long the cursor must stay on the page dots before they turn into icons. 0 shows them right away.') },
+        { id: 'tabDockLeave', type: 'slider', path: 'settings', key: 'tabDockLeave', def: 260, min: 0, max: 2000, step: 10, fmt: ms, fmtEn: msEn, enabledIf: (d) => d.settings.tabDock !== false,
+          label: L('아이콘이 사라지기까지 걸리는 시간', 'Delay before the icons go away'), desc: L('마우스가 아이콘에서 벗어난 뒤 다시 작은 점으로 돌아가기까지 기다리는 시간입니다.', 'How long the icons stay after the cursor leaves them before they shrink back to dots.') },
+        { id: 'tabDockMargin', type: 'slider', path: 'settings', key: 'tabDockMargin', def: 7, min: 2, max: 14, step: 1, fmt: (v) => `${v}px`, fmtEn: (v) => `${v}px`, enabledIf: (d) => d.settings.tabDock !== false,
+          label: L('아이콘 아래 여백', 'Space below the icons'), desc: L('아이콘과 노치 아래쪽 끝 사이의 간격입니다. 키우면 아이콘이 위로 올라오고, 아이콘이 보이는 동안 노치가 그만큼 더 길어집니다.', 'The gap between the icons and the bottom edge of the notch. A bigger gap moves the icons up and makes the notch a little taller while the icons are shown.') },
         { id: 'hoverDelay', type: 'slider', path: 'settings', key: 'hoverDelay', def: 0, min: 0, max: 800, step: 50, fmt: ms, fmtEn: msEn,
           label: L('마우스를 올린 뒤 펼침 지연', 'Delay before expanding on hover'), desc: L('실수로 스칠 때 펼쳐지는 것을 막습니다.', 'Avoids expanding when the cursor just passes by.') },
         { id: 'collapseDelay', type: 'slider', path: 'settings', key: 'collapseDelay', def: 850, min: 200, max: 2500, step: 50, fmt: ms, fmtEn: msEn,

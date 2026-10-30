@@ -194,7 +194,7 @@ class FrameStream:
 class DeskCapture:
     """노치 뒤 화면을 주기적으로 찍어 push(data_url) 로 넘긴다. 바뀐 게 없으면 넘기지 않는다."""
 
-    OUT_W, OUT_H = 320, 107         # 600x200(CSS px) 영역의 축소본 (굴절이 보이려면 너무 뭉개지면 안 된다)
+    OUT_W, OUT_H = 320, 112         # 600x210(CSS px) 영역의 축소본 (굴절이 보이려면 너무 뭉개지면 안 된다)
 
     def __init__(self, get_hwnd, get_rect, push, log=None, interval=0.5):
         self._get_hwnd, self._get_rect, self._push = get_hwnd, get_rect, push

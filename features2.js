@@ -30,10 +30,10 @@ function initDock() {
     if (!isExpanded || !isPageView(view || '')) return;
     const hit = near(e, dockOn ? 12 : 4);
     clearTimeout(dockTimer);
-    if (hit && !dockOn) dockTimer = setTimeout(() => setDock(true), 130);          // 스치기만 해서는 열리지 않는다
-    else if (!hit && dockOn) dockTimer = setTimeout(() => setDock(false), 260);
+    if (hit && !dockOn) dockTimer = setTimeout(() => setDock(true), clampN(store.settings.tabDockDelay, 0, 1000, 130));          // 스치기만 해서는 열리지 않는다
+    else if (!hit && dockOn) dockTimer = setTimeout(() => setDock(false), clampN(store.settings.tabDockLeave, 0, 2000, 260));
   });
-  island.addEventListener('mouseleave', () => { clearTimeout(dockTimer); setDock(false); });
+  island.addEventListener('mouseleave', () => { clearTimeout(dockTimer); if (dockOn) dockTimer = setTimeout(() => setDock(false), clampN(store.settings.tabDockLeave, 0, 2000, 260)); });
 }
 function updateDockTitles() {
   for (const d of $$('#pageDots i')) d.title = t('tab_' + d.dataset.p);

@@ -1013,7 +1013,7 @@ html[data-theme="tint"] .island {
 /* 전체: 노치 본체가 뒤 화면을 비춘다 (파이썬이 뒤 화면을 찍어 #deskImg 로 넘기고, 오기 전/실패하면 원래의 검정 그대로) */
 .desk, .glassbody { display: none; }
 html[data-glass="full"] .desk {
-  display: block; position: absolute; left: 50%; top: 0; width: 600px; height: 200px; margin-left: -300px; pointer-events: none;
+  display: block; position: absolute; left: 50%; top: 0; width: 600px; height: 210px; margin-left: -300px; pointer-events: none;
   filter: blur(1.2px) saturate(1.5) brightness(0.8); opacity: 0; transition: opacity 0.5s ease;
 }
 html[data-glass="full"][data-desk="1"] .desk { opacity: 1; }
@@ -1126,7 +1126,7 @@ html[data-theme="glass"] .sat-skin {
 }
 html[data-theme="tint"] .sat-skin { background: linear-gradient(180deg, #000 0%, #000 26%, color-mix(in srgb, var(--art-a) 44%, #000) 135%); }
 /* 리퀴드 글래스 '전체': 큰 노치처럼 뒤 화면이 비친다 (같은 화면 스트림을 물방울 안에도 같은 위치로 깔고, 그 위에 어둡게 테마를 얹는다) */
-.sat-desk { display: none; position: absolute; width: 600px; height: 200px; max-width: none; top: -2px; pointer-events: none; filter: blur(1.2px) saturate(1.5) brightness(0.62);
+.sat-desk { display: none; position: absolute; width: 600px; height: 210px; max-width: none; top: -2px; pointer-events: none; filter: blur(1.2px) saturate(1.5) brightness(0.62);
   left: calc(-1 * (var(--island-w, 300px) / 2 - 34px + 300px)); }
 .sat.show .sat-desk { left: calc(-1 * (var(--island-w, 300px) / 2 + var(--sat-gap, 16px) + 300px)); }
 html[data-glass="full"][data-desk="1"] .sat-desk { display: block; }
@@ -1584,7 +1584,7 @@ html[data-rim="off"] .rimring, html[data-rim="off"] .rimbody, html[data-rim="off
 
 /* 탭 아이콘 독: 점 위에 마우스를 올리면 점들이 큰 아이콘 버튼으로 바뀌고 노치 아래가 조금 늘어난다 */
 .dots i .uic { width: 0; height: 0; opacity: 0; transition: width 0.3s var(--spring), height 0.3s var(--spring), opacity 0.2s ease; }
-.island[data-dock="1"] { --dk: 18px; }
+.island[data-dock="1"] { --dk: var(--dkh, 24px); }
 .island[data-dock="1"][data-s] .dots { top: calc(var(--h) + 7px); gap: 6px; }
 .island[data-dock="1"] .dots i { width: 20px; height: 20px; border-width: 0; margin: 0; border-radius: 7px; background-color: rgba(255, 255, 255, 0.1); }
 .island[data-dock="1"] .dots i:hover { background-color: rgba(255, 255, 255, 0.2); }
