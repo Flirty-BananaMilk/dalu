@@ -1600,7 +1600,7 @@ html[data-rim="off"] .rimring, html[data-rim="off"] .rimbody, html[data-rim="off
 
 /* ---------- 슬림: 접힌 노치를 한 번 더 줄인 상태 ----------
    내용은 없고 화면 위로 살짝 돌출된 선만 남는다. 마우스를 올리면(#slimHit: 선보다 넓은 투명 영역) 큰 노치가 펼쳐진다. */
-#slimHit { position: fixed; top: 0; left: 50%; width: 164px; height: 14px; margin-left: -82px; z-index: 5; display: none; background: transparent; }
+#slimHit { position: fixed; top: 0; left: 50%; width: 164px; height: 14px; margin-left: -82px; z-index: 5; display: none; background: transparent; pointer-events: auto; }      /* body 는 pointer-events: none 이라 직접 켜야 마우스를 받는다 */
 html[data-view="slim"] #slimHit { display: block; }
 
 
