@@ -29,6 +29,7 @@ LYRICS = ["Streetlights bloom along the river.", "Every window hums a quiet tune
 # 장면별 트랙 높이(svh). 무대는 그 안에서 위에 고정된다.
 T = {"hero": 320, "lyr": 360, "ch": 560, "cp": 300, "gl": 330, "dk": 260}
 HERO_FRAMES, DOCK_FRAMES = 44, 34
+W3 = 3040          # 앱 화면 정지 이미지의 가장 큰 폭(레티나용)
 
 STAMP = """/* Hallmark · shape: Pinned scenes, each driven by the scroll · genre: atmospheric · theme: custom · job: try · idea: "The page is the desktop: the real notch opens on a real wallpaper as you scroll." · vibe: "slate dusk, amber light, moving glass"
  * paper: oklch(15.5% 0.012 235) · accent: oklch(80% 0.13 78) · display: Funnel Display · body: Albert Sans · hero: a wallpaper stage where the notch opens frame by frame while the headline rises away · nav: one plain row above the first scene, wordmark left, languages and one action right · footer: ruled strip, wordmark, links, photo credits · imagery: screenshots (rendered from the app's own UI with sample data, 78 frames in two sequences), photographs 3 library · signature: the real notch unfolding with the scroll
@@ -197,7 +198,7 @@ def H(x):
 
 def img(name, lang, wp, alt, sizes, w1, w2, h2, eager=False, extra=""):
     base = f"../assets/{name}-{wp}-{lang}" if wp else f"../assets/{name}-{lang}"
-    srcset = f"{base}-{w1}.webp {w1}w, {base}-{w2}.webp {w2}w"
+    srcset = f"{base}-{w1}.webp {w1}w, {base}-{w2}.webp {w2}w, {base}-{W3}.webp {W3}w"
     load = 'fetchpriority="high"' if eager else 'loading="lazy" decoding="async"'
     return f'<img src="{base}-{w1}.webp" srcset="{srcset}" sizes="{sizes}" width="{w2}" height="{h2}" alt="{escape(alt)}" {load}{extra}>'
 
@@ -254,9 +255,9 @@ def pos_html(t):
 def seq(name, n, frm, to, alt):
     """프레임 묶음 자리. 스크립트가 없으면 마지막 프레임(펼친 모습)을, 스크롤 연출이 켜지면 첫 프레임부터 보여 준다."""
     d = "../assets/seq"
-    return (f'<div class="seq"><img class="seq__still" src="{d}/{name}-{n - 1:02d}.webp" width="1200" height="480" alt="{escape(alt)}" fetchpriority="low">'
-            f'<img class="seq__first" src="{d}/{name}-00.webp" width="1200" height="480" alt="{escape(alt)}">'
-            f'<canvas data-seq="{name}" data-n="{n}" data-from="{frm}" data-to="{to}" data-src="{d}" width="1200" height="480" role="img" aria-label="{escape(alt)}" hidden></canvas></div>')
+    return (f'<div class="seq"><img class="seq__still" src="{d}/{name}-{n - 1:02d}.webp" width="1800" height="720" alt="{escape(alt)}" fetchpriority="low">'
+            f'<img class="seq__first" src="{d}/{name}-00.webp" width="1800" height="720" alt="{escape(alt)}">'
+            f'<canvas data-seq="{name}" data-n="{n}" data-from="{frm}" data-to="{to}" data-src="{d}" width="1800" height="720" role="img" aria-label="{escape(alt)}" hidden></canvas></div>')
 
 
 def page(lang):
@@ -375,12 +376,12 @@ def page(lang):
 
   <section class="container band buds" aria-labelledby="bd-h">
     <div class="buds__row"><p class="num-big" aria-hidden="true">{escape(t["bd_num"])}</p><div class="buds__text"><h2 id="bd-h">{H(t["bd_h"])}</h2><p class="lead">{escape(t["bd_p"])}</p><p class="note note--fine">{escape(t["bd_note"])}</p></div></div>
-    <figure class="shot shot--window rise"><img src="../assets/settings-buds_eq-{lang}-900.webp" srcset="../assets/settings-buds_eq-{lang}-900.webp 900w, ../assets/settings-buds_eq-{lang}-1600.webp 1600w" sizes="(min-width: 60rem) 1120px, 100vw" width="1600" height="WIN_H" alt="{escape(t["buds_alt"])}" loading="lazy" decoding="async"></figure>
+    <figure class="shot shot--window rise"><img src="../assets/settings-buds_eq-{lang}-900.webp" srcset="../assets/settings-buds_eq-{lang}-900.webp 900w, ../assets/settings-buds_eq-{lang}-1600.webp 1600w, ../assets/settings-buds_eq-{lang}-2400.webp 2400w" sizes="(min-width: 60rem) 1120px, 100vw" width="1600" height="WIN_H" alt="{escape(t["buds_alt"])}" loading="lazy" decoding="async"></figure>
   </section>
 
   <section class="container band" aria-labelledby="st-h">
     <div class="settings__head"><h2 id="st-h">{H(t["st_h"])}</h2><p class="lead">{escape(t["st_p"])}</p></div>
-    <figure class="shot shot--window rise"><img src="../assets/settings-look-{lang}-900.webp" srcset="../assets/settings-look-{lang}-900.webp 900w, ../assets/settings-look-{lang}-1600.webp 1600w" sizes="(min-width: 60rem) 1120px, 100vw" width="1600" height="WIN_H" alt="{escape(t["set_alt"])}" loading="lazy" decoding="async"></figure>
+    <figure class="shot shot--window rise"><img src="../assets/settings-look-{lang}-900.webp" srcset="../assets/settings-look-{lang}-900.webp 900w, ../assets/settings-look-{lang}-1600.webp 1600w, ../assets/settings-look-{lang}-2400.webp 2400w" sizes="(min-width: 60rem) 1120px, 100vw" width="1600" height="WIN_H" alt="{escape(t["set_alt"])}" loading="lazy" decoding="async"></figure>
   </section>
 
   <section class="container get" aria-labelledby="gt-h">
@@ -435,18 +436,22 @@ def convert_assets():
         for f in sorted(Path(shot_dir).glob("site_*.png")):
             lang, wp, scene = f.stem[5:].split("_", 2)
             im = Image.open(f).convert("RGB")
-            for w in (1140, 2280):
-                im.resize((w, round(im.height * w / im.width)), Image.LANCZOS).save(ASSETS / f"{scene}-{wp}-{lang}-{w}.webp", "WEBP", quality=80, method=6)
+            for w in (1140, 2280, W3):
+                if w > im.width:
+                    w = im.width
+                im.resize((w, round(im.height * w / im.width)), Image.LANCZOS).save(ASSETS / f"{scene}-{wp}-{lang}-{w}.webp", "WEBP", quality=84, method=6)
     shots = os.environ.get("SETTINGS_SHOTS")
     if shots:
         for k in ("buds_eq", "look"):
             for lang in LANGS:
-                im = Image.open(Path(shots) / f"{k}_{lang}.png").convert("RGBA").crop((38, 38, 1922, 1324))
+                im = Image.open(Path(shots) / f"{k}_{lang}.png").convert("RGBA")
+                f = im.width / 1960.0
+                im = im.crop((round(38 * f), round(38 * f), round(1922 * f), round(1324 * f)))
                 mask = Image.new("L", im.size, 0)
-                ImageDraw.Draw(mask).rounded_rectangle((0, 0, im.width - 1, im.height - 1), radius=60, fill=255)
+                ImageDraw.Draw(mask).rounded_rectangle((0, 0, im.width - 1, im.height - 1), radius=round(60 * f), fill=255)
                 im.putalpha(mask)
-                for w in (900, 1600):
-                    im.resize((w, round(im.height * w / im.width)), Image.LANCZOS).save(ASSETS / f"settings-{k}-{lang}-{w}.webp", "WEBP", quality=84, method=6)
+                for w in (900, 1600, 2400):
+                    im.resize((w, round(im.height * w / im.width)), Image.LANCZOS).save(ASSETS / f"settings-{k}-{lang}-{w}.webp", "WEBP", quality=86, method=6)
     wps = SRC / "wallpapers"
     names = {"dusk": "mountain-lake-mylgval-mountain-cirque-before-sunset-caucasus-1920.jpg", "mist": "herbert-lake-beim-icefields-parkway-1920.jpg", "peak": "pumori-nepal-asia-1920.jpg"}
     if wps.exists():
