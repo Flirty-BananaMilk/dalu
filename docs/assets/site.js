@@ -2,6 +2,21 @@
 (() => {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const pinned = CSS.supports('animation-timeline: view()');
+  // The page names above the pages are links. Without scroll scenes they jump to the page's block (plain anchors);
+  // with scroll scenes the five pages share one pinned stage, so the chip scrolls to the moment that page is on screen.
+  if (pinned && !reduce) {
+    document.querySelectorAll('.rail a[data-i]').forEach((a) => {
+      a.addEventListener('click', (e) => {
+        const track = a.closest('.track');
+        if (!track) return;
+        e.preventDefault();
+        const n = a.closest('.rail').querySelectorAll('a[data-i]').length;
+        const span = track.offsetHeight - innerHeight;
+        const top = track.getBoundingClientRect().top + scrollY;
+        scrollTo({ top: top + span * ((+a.dataset.i + 0.5) / n), behavior: 'smooth' });
+      });
+    });
+  }
   if (reduce || !pinned) return;
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   const seqs = [];

@@ -21,7 +21,7 @@
    {
     "name": "집중",
     "h": "하나에만 집중.",
-    "p": "포모도로, 타이머, 물 마시기, 할 일을 노치 안에서.",
+    "p": "포모도로, 타이머와 스톱워치 기록, 물 마시기, 할 일을 노치 안에서.",
     "alt": "집중 페이지: 진행 중인 포모도로"
    },
    {
@@ -92,10 +92,10 @@
   "gl_h": "뒤의 세상을 휘어 보이는 유리.",
   "gl_p": "배경화면을 골라 보세요. 노치가 뒤 화면을 굴절시켜요.",
   "dk_h": "점에 올리면, 탭이 보여요.",
-  "dk_p": "작은 점이 가리키는 순간 탭 아이콘으로 바뀌어요.",
+  "dk_p": "작은 점에 올리면 탭 아이콘으로 바뀌어요. 아이콘마다 무엇인지 알려 드릴게요.",
   "bd_num": "9",
   "bd_h": "아홉 밴드, 나만의 소리.",
-  "bd_p": "이퀄라이저를 맞추고, 게이밍 모드를 켜고, 이어버드 한쪽만 끼고도 소음 제어를 유지해요.",
+  "bd_p": "이퀄라이저를 맞추고(슬라이더를 움직이는 대로 바로 들려요), 게이밍 모드를 켜고, 이어버드 한쪽만 끼고도 소음 제어를 유지해요.",
   "bd_note": "Buds3 Pro에서만 확인했어요.",
   "st_h": "내 방식대로.",
   "st_p": "설정 100개 넘게, 4개 언어, 플러그인은 JSON 파일 하나로.",
@@ -106,7 +106,88 @@
   "cp_off": "글래스 끔",
   "cp_on": "글래스 켬",
   "cp_alt_off": "배경화면 위의 검은 노치, 뒤가 비치지 않는다",
-  "cp_alt_on": "같은 노치를 리퀴드 글래스로 켠 모습, 뒤쪽 풍경을 굴절시킨다"
+  "cp_alt_on": "같은 노치를 리퀴드 글래스로 켠 모습, 뒤쪽 풍경을 굴절시킨다",
+  "rail_label": "페이지 바로가기",
+  "dk_tabs_h": "탭 아이콘",
+  "dk_corner_h": "구석의 아이콘",
+  "dk_items": [
+   [
+    "music",
+    "음악",
+    "곡 정보, 재생, 가사"
+   ],
+   [
+    "target",
+    "집중",
+    "포모도로"
+   ],
+   [
+    "timer",
+    "타이머",
+    "타이머, 스톱워치와 구간 기록"
+   ],
+   [
+    "drop",
+    "물",
+    "물 마실 시간 알림"
+   ],
+   [
+    "folder",
+    "선반",
+    "파일을 잠깐 올려 두기"
+   ],
+   [
+    "checklist",
+    "할 일",
+    "시각을 정해 알려 줘요"
+   ],
+   [
+    "calendar",
+    "일정",
+    "목록, 주, 월 보기"
+   ],
+   [
+    "launch",
+    "바로가기",
+    "자주 쓰는 앱과 폴더"
+   ],
+   [
+    "plug",
+    "플러그인",
+    "다른 앱을 노치에서 조작"
+   ],
+   [
+    "headphones",
+    "이어버드",
+    "배터리와 소음 제어"
+   ],
+   [
+    "volume",
+    "음량",
+    "소리 크기와 음소거"
+   ],
+   [
+    "pin",
+    "고정",
+    "눌러 두면 노치가 접히지 않아요"
+   ]
+  ],
+  "pos_h": "내 자리에, 내 방식으로.",
+  "pos_p": "화면 위쪽을 다섯 칸으로 나눠 노치를 옮겨요. 맨 끝에서는 보조 노치가 안쪽에 모여요.",
+  "pos_legend": "노치 위치",
+  "pos_names": [
+   "맨 왼쪽",
+   "왼쪽",
+   "가운데",
+   "오른쪽",
+   "맨 오른쪽"
+  ],
+  "pos_slim": "슬림",
+  "pos_slim_p": "접으면 가는 선만 남고, 올리면 펼쳐져요.",
+  "pos_game": "게임 중",
+  "pos_game_p": "DirectX·OpenGL·Vulkan 게임이 앞에 있으면 노치가 숨어요.",
+  "pos_game_tag": "게임 실행 중",
+  "pos_alt": "화면 위쪽을 다섯 칸으로 나눈 그림. 고른 자리로 노치가 움직인다"
  },
  "en": {
   "name": "English",
@@ -130,7 +211,7 @@
    {
     "name": "Focus",
     "h": "Stay on one thing.",
-    "p": "Pomodoro, timer, water and to-do, all inside the notch.",
+    "p": "Pomodoro, timer, stopwatch laps, water and to-do, all inside the notch.",
     "alt": "Focus page: a running pomodoro"
    },
    {
@@ -201,10 +282,10 @@
   "gl_h": "Glass that bends the world behind it.",
   "gl_p": "Choose any wallpaper. The notch refracts what is behind it.",
   "dk_h": "Hover the dots. Pick a tab.",
-  "dk_p": "Small dots turn into tab icons the moment you point at them.",
+  "dk_p": "Point at the small dots and they turn into tab icons. Here is what each one does.",
   "bd_num": "9",
   "bd_h": "Nine bands. Your sound.",
-  "bd_p": "Tune the equalizer, switch on gaming mode, or keep noise control on with one earbud in.",
+  "bd_p": "Tune the equalizer and hear it as you drag, switch on gaming mode, or keep noise control on with one earbud in.",
   "bd_note": "Tested on Buds3 Pro only.",
   "st_h": "Make it yours.",
   "st_p": "Over a hundred settings, four languages, and plugins written in plain JSON.",
@@ -215,7 +296,88 @@
   "cp_off": "Glass off",
   "cp_on": "Glass on",
   "cp_alt_off": "The notch as a plain black pill over the wallpaper, nothing showing through",
-  "cp_alt_on": "The same notch as liquid glass, bending the landscape behind it"
+  "cp_alt_on": "The same notch as liquid glass, bending the landscape behind it",
+  "rail_label": "Jump to a page",
+  "dk_tabs_h": "Tab icons",
+  "dk_corner_h": "In the corner",
+  "dk_items": [
+   [
+    "music",
+    "Music",
+    "Track, playback, lyrics"
+   ],
+   [
+    "target",
+    "Focus",
+    "Pomodoro"
+   ],
+   [
+    "timer",
+    "Timer",
+    "Timer, stopwatch and laps"
+   ],
+   [
+    "drop",
+    "Water",
+    "Reminders to drink"
+   ],
+   [
+    "folder",
+    "Shelf",
+    "Park a file for a moment"
+   ],
+   [
+    "checklist",
+    "To-do",
+    "Reminders at a set time"
+   ],
+   [
+    "calendar",
+    "Agenda",
+    "List, week, month"
+   ],
+   [
+    "launch",
+    "Shortcuts",
+    "Your apps and folders"
+   ],
+   [
+    "plug",
+    "Plugins",
+    "Control other apps"
+   ],
+   [
+    "headphones",
+    "Earbuds",
+    "Battery and noise control"
+   ],
+   [
+    "volume",
+    "Volume",
+    "Level and mute"
+   ],
+   [
+    "pin",
+    "Pin",
+    "Keep the notch open"
+   ]
+  ],
+  "pos_h": "Put it where you want.",
+  "pos_p": "Split the top of the screen into five columns and slide the notch along. At the far ends the satellite pills gather on the inner side.",
+  "pos_legend": "Notch position",
+  "pos_names": [
+   "Far left",
+   "Left",
+   "Center",
+   "Right",
+   "Far right"
+  ],
+  "pos_slim": "Slim",
+  "pos_slim_p": "Collapsed, only a thin sliver shows. Hover it and the notch opens.",
+  "pos_game": "In a game",
+  "pos_game_p": "The notch hides while a DirectX, OpenGL or Vulkan game is in front.",
+  "pos_game_tag": "Game running",
+  "pos_alt": "A sketch of the screen split into five columns. The notch slides to the column you pick"
  },
  "zh": {
   "name": "简体中文",
@@ -239,7 +401,7 @@
    {
     "name": "专注",
     "h": "只做一件事。",
-    "p": "番茄钟、计时器、饮水和待办，都在刘海里。",
+    "p": "番茄钟、计时器与秒表分段记录、饮水和待办，都在刘海里。",
     "alt": "专注页面：正在运行的番茄钟"
    },
    {
@@ -310,10 +472,10 @@
   "gl_h": "折射身后|世界的玻璃。",
   "gl_p": "选一张壁纸，刘海会折射它背后的画面。",
   "dk_h": "指向圆点，|标签就出现。",
-  "dk_p": "小圆点在你指向它的瞬间变成标签图标。",
+  "dk_p": "指向小圆点，它们就变成标签图标。下面说明每个图标的作用。",
   "bd_num": "9",
   "bd_h": "九段，|只属于你的声音。",
-  "bd_p": "调节均衡器，开启游戏模式，或只戴一只耳机也保持降噪。",
+  "bd_p": "调节均衡器（拖动时即刻听到变化），开启游戏模式，或只戴一只耳机也保持降噪。",
   "bd_note": "仅在 Buds3 Pro 上验证。",
   "st_h": "按你的方式来。",
   "st_p": "上百项设置，四种语言，插件只需一个 JSON 文件。",
@@ -324,7 +486,88 @@
   "cp_off": "关闭玻璃",
   "cp_on": "开启玻璃",
   "cp_alt_off": "壁纸上的纯黑刘海，看不到背后的画面",
-  "cp_alt_on": "同一个刘海开启液态玻璃后，折射出背后的风景"
+  "cp_alt_on": "同一个刘海开启液态玻璃后，折射出背后的风景",
+  "rail_label": "跳转到页面",
+  "dk_tabs_h": "标签图标",
+  "dk_corner_h": "角落的图标",
+  "dk_items": [
+   [
+    "music",
+    "音乐",
+    "曲目、播放、歌词"
+   ],
+   [
+    "target",
+    "专注",
+    "番茄钟"
+   ],
+   [
+    "timer",
+    "计时器",
+    "计时器、秒表和分段记录"
+   ],
+   [
+    "drop",
+    "饮水",
+    "提醒喝水"
+   ],
+   [
+    "folder",
+    "文件架",
+    "临时放文件"
+   ],
+   [
+    "checklist",
+    "待办",
+    "按时间提醒"
+   ],
+   [
+    "calendar",
+    "日程",
+    "列表、周、月"
+   ],
+   [
+    "launch",
+    "快捷方式",
+    "常用应用和文件夹"
+   ],
+   [
+    "plug",
+    "插件",
+    "控制其他应用"
+   ],
+   [
+    "headphones",
+    "耳机",
+    "电量与降噪"
+   ],
+   [
+    "volume",
+    "音量",
+    "音量与静音"
+   ],
+   [
+    "pin",
+    "固定",
+    "按下后刘海不会收起"
+   ]
+  ],
+  "pos_h": "放到你想要的位置。",
+  "pos_p": "把屏幕顶部分成五列，刘海可以左右移动。在最边缘时，辅助刘海会聚到内侧。",
+  "pos_legend": "刘海位置",
+  "pos_names": [
+   "最左",
+   "偏左",
+   "居中",
+   "偏右",
+   "最右"
+  ],
+  "pos_slim": "纤细",
+  "pos_slim_p": "收起时只留一条细线，鼠标移上去就展开。",
+  "pos_game": "游戏中",
+  "pos_game_p": "有 DirectX、OpenGL 或 Vulkan 游戏在最前时，刘海会自动隐藏。",
+  "pos_game_tag": "游戏运行中",
+  "pos_alt": "把屏幕顶部分成五列的示意图。刘海会移动到你选的位置"
  },
  "ja": {
   "name": "日本語",
@@ -348,7 +591,7 @@
    {
     "name": "集中",
     "h": "ひとつに集中。",
-    "p": "ポモドーロ、タイマー、水分、やること。すべてノッチの中に。",
+    "p": "ポモドーロ、タイマーとストップウォッチのラップ、水分、やること。すべてノッチの中に。",
     "alt": "集中ページ：動作中のポモドーロ"
    },
    {
@@ -419,10 +662,10 @@
   "gl_h": "背後の世界を|曲げるガラス。",
   "gl_p": "壁紙を選んでください。ノッチが背後の景色を屈折させます。",
   "dk_h": "ドットに乗せると、|タブが現れる。",
-  "dk_p": "小さなドットは、指した瞬間にタブのアイコンへ変わります。",
+  "dk_p": "小さなドットに乗せると、タブのアイコンに変わります。それぞれのアイコンの役割はこちら。",
   "bd_num": "9",
   "bd_h": "9 バンド、|自分だけの音。",
-  "bd_p": "イコライザーを整え、ゲーミングモードを入れ、片耳だけでもノイズコントロールを保てます。",
+  "bd_p": "イコライザーを整え（スライダーを動かすそばから聞こえます）、ゲーミングモードを入れ、片耳だけでもノイズコントロールを保てます。",
   "bd_note": "Buds3 Pro でのみ確認しています。",
   "st_h": "あなた流に。",
   "st_p": "100 以上の設定、4 つの言語、プラグインは JSON ファイル 1 つで。",
@@ -433,6 +676,87 @@
   "cp_off": "ガラスなし",
   "cp_on": "ガラスあり",
   "cp_alt_off": "壁紙の上の真っ黒なノッチ。背後は見えない",
-  "cp_alt_on": "同じノッチをリキッドグラスにした姿。背後の景色を屈折させる"
+  "cp_alt_on": "同じノッチをリキッドグラスにした姿。背後の景色を屈折させる",
+  "rail_label": "ページへ移動",
+  "dk_tabs_h": "タブのアイコン",
+  "dk_corner_h": "隅のアイコン",
+  "dk_items": [
+   [
+    "music",
+    "音楽",
+    "曲、再生、歌詞"
+   ],
+   [
+    "target",
+    "集中",
+    "ポモドーロ"
+   ],
+   [
+    "timer",
+    "タイマー",
+    "タイマー、ストップウォッチ、ラップ"
+   ],
+   [
+    "drop",
+    "水分",
+    "水を飲む時間のお知らせ"
+   ],
+   [
+    "folder",
+    "ファイル棚",
+    "ファイルをちょっと置く"
+   ],
+   [
+    "checklist",
+    "やること",
+    "時刻を決めて通知"
+   ],
+   [
+    "calendar",
+    "予定",
+    "リスト・週・月"
+   ],
+   [
+    "launch",
+    "ショートカット",
+    "よく使うアプリとフォルダー"
+   ],
+   [
+    "plug",
+    "プラグイン",
+    "ほかのアプリを操作"
+   ],
+   [
+    "headphones",
+    "イヤホン",
+    "バッテリーとノイズコントロール"
+   ],
+   [
+    "volume",
+    "音量",
+    "音量とミュート"
+   ],
+   [
+    "pin",
+    "固定",
+    "押すとノッチが閉じません"
+   ]
+  ],
+  "pos_h": "好きな場所に。",
+  "pos_p": "画面の上端を 5 つに分けて、ノッチを動かせます。いちばん端では、サブノッチが内側に集まります。",
+  "pos_legend": "ノッチの位置",
+  "pos_names": [
+   "左端",
+   "左寄り",
+   "中央",
+   "右寄り",
+   "右端"
+  ],
+  "pos_slim": "スリム",
+  "pos_slim_p": "閉じているときは細い線だけ。乗せると開きます。",
+  "pos_game": "ゲーム中",
+  "pos_game_p": "DirectX・OpenGL・Vulkan のゲームが前面にあるあいだ、ノッチは隠れます。",
+  "pos_game_tag": "ゲーム実行中",
+  "pos_alt": "画面の上端を 5 つに分けた図。選んだ位置へノッチが動きます"
  }
 }

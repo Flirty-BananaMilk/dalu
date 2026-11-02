@@ -23,6 +23,7 @@ BASE = "https://flirty-bananamilk.github.io/dalu/"
 ITCH = "https://flirty-bananamilk.itch.io/dalu"
 GH = "https://github.com/Flirty-BananaMilk/dalu"
 S = json.loads((SRC / "strings.json").read_text(encoding="utf-8"))
+ICONS = json.loads((SRC / "icons.json").read_text(encoding="utf-8"))      # 앱의 아이콘 세트에서 가져온 경로(탭 아이콘 설명용)
 SCENES = ["music", "pomo", "shelf", "agenda", "buds"]
 LYRICS = ["Streetlights bloom along the river.", "Every window hums a quiet tune.", "Carry me past the midnight bridges."]
 # 장면별 트랙 높이(svh). 무대는 그 안에서 위에 고정된다.
@@ -80,6 +81,21 @@ def crossfade(scene, name, sels, bounds, h, move=True, minop=0.0):
         css.append(f"@keyframes {kf} {{ {body} }}")
         css.append(f"{sel} {{ animation: {kf} linear both; animation-timeline: --{scene}; animation-range: cover {cs:.2f}% cover {ce:.2f}%; }}")
     return "\n    ".join(css)
+
+
+def legend_css():
+    """점 장면: 아이콘이 나타난 뒤(프레임 0.06~0.5) 작은 아이콘 설명이 차례로 나타난다."""
+    out = ["@keyframes lg-in { from { opacity: 0; transform: translateY(1.6svh); } to { opacity: 1; transform: none; } }"]
+    out.append(f".dock .legendbox {{ animation: lg-in linear both; animation-timeline: --dk; animation-range: {rng('dk', 0.42, 0.5)}; }}")
+    out.append(f".dock .legend__t:first-of-type {{ animation: lg-in linear both; animation-timeline: --dk; animation-range: {rng('dk', 0.44, 0.52)}; }}")
+    for j in range(10):
+        f0 = 0.47 + j * 0.028
+        out.append(f".dock .legend:nth-of-type(1) li:nth-child({j + 1}) {{ animation: lg-in linear both; animation-timeline: --dk; animation-range: {rng('dk', f0, f0 + 0.08)}; }}")
+    out.append(f".dock .legend__t:nth-of-type(2) {{ animation: lg-in linear both; animation-timeline: --dk; animation-range: {rng('dk', 0.74, 0.8)}; }}")
+    for j in range(2):
+        f0 = 0.76 + j * 0.03
+        out.append(f".dock .legend:nth-of-type(2) li:nth-child({j + 1}) {{ animation: lg-in linear both; animation-timeline: --dk; animation-range: {rng('dk', f0, f0 + 0.08)}; }}")
+    return "\n    ".join(out)
 
 
 def scene_css():
@@ -159,6 +175,7 @@ def scene_css():
     {gl_block}
 
     {track('dk', '.dock')}
+    {legend_css()}
     .dock .bg {{ animation: fx-zoom linear both; animation-timeline: --dk; animation-range: cover 0% cover 100%; }}
   }}
 }}
@@ -191,6 +208,49 @@ def wp_credits():
             '<a href="https://commons.wikimedia.org/wiki/File:Pumori,_Nepal,_Asia.jpg">Vyacheslav Argenberg</a> (CC BY 4.0), Wikimedia Commons')
 
 
+def icon_svg(name):
+    return (f'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" '
+            f'stroke-linejoin="round" aria-hidden="true" focusable="false">{ICONS[name]}</svg>')
+
+
+def legend_html(t):
+    """점 장면의 작은 아이콘 설명: 탭 아이콘 열 개 + 구석의 두 아이콘."""
+    items = t["dk_items"]
+
+    def lis(rows):
+        return "".join(f'<li><span class="legend__ic">{icon_svg(i)}</span><span class="legend__tx"><b>{escape(n)}</b><small>{escape(d)}</small></span></li>' for i, n, d in rows)
+
+    return (f'<div class="container dock__b"><div class="legendbox">'
+            f'<p class="legend__t">{escape(t["dk_tabs_h"])}</p><ul class="legend" role="list">{lis(items[:10])}</ul>'
+            f'<p class="legend__t">{escape(t["dk_corner_h"])}</p><ul class="legend legend--2" role="list">{lis(items[10:])}</ul>'
+            f'</div></div>')
+
+
+def pos_html(t):
+    """노치 위치·슬림·게임 숨김을 직접 눌러 보는 작은 시연(스크립트 없이 CSS :has 로 움직인다)."""
+    ids = ["m2", "m1", "c0", "p1", "p2"]
+    chips = "".join(f'<label class="chip"><input type="radio" name="pos" id="pos-{k}" value="{k}"{" checked" if k == "c0" else ""}>{escape(n)}</label>' for k, n in zip(ids, t["pos_names"]))
+    cols = "".join(f"<span>{i + 1}</span>" for i in range(5))
+    return f"""<section class="container band pos" aria-labelledby="pos-h">
+    <div class="pos__head"><h2 id="pos-h">{H(t["pos_h"])}</h2><p class="lead">{escape(t["pos_p"])}</p></div>
+    <div class="pos__demo">
+      <div class="pos__screen" role="img" aria-label="{escape(t["pos_alt"])}">
+        <img src="../assets/wp-dusk.webp" width="1920" height="1276" alt="" loading="lazy" decoding="async">
+        <div class="pos__cols" aria-hidden="true">{cols}</div>
+        <i class="pos__notch" aria-hidden="true"></i><i class="pos__sat pos__sat--a" aria-hidden="true"></i><i class="pos__sat pos__sat--b" aria-hidden="true"></i>
+        <p class="pos__game" aria-hidden="true">{escape(t["pos_game_tag"])}</p>
+      </div>
+      <div class="pos__ctl">
+        <fieldset><legend>{escape(t["pos_legend"])}</legend>{chips}</fieldset>
+        <div class="pos__opts">
+          <div class="pos__opt"><label class="chip"><input type="checkbox" id="pos-slim">{escape(t["pos_slim"])}</label><p>{escape(t["pos_slim_p"])}</p></div>
+          <div class="pos__opt"><label class="chip"><input type="checkbox" id="pos-game">{escape(t["pos_game"])}</label><p>{escape(t["pos_game_p"])}</p></div>
+        </div>
+      </div>
+    </div>
+  </section>"""
+
+
 def seq(name, n, frm, to, alt):
     """프레임 묶음 자리. 스크립트가 없으면 마지막 프레임(펼친 모습)을, 스크롤 연출이 켜지면 첫 프레임부터 보여 준다."""
     d = "../assets/seq"
@@ -215,9 +275,9 @@ def page(lang):
         if li < len(LYRICS) - 1:
             words += "<br>"
     pages = "".join(
-        f'<li class="pg"><figure class="shot">{img(sc, lang, "dusk", t["pages"][i]["alt"], "(min-width: 60rem) 1312px, 100vw", 1140, 2280, 900)}</figure>'
+        f'<li class="pg" id="pg-{sc}"><figure class="shot">{img(sc, lang, "dusk", t["pages"][i]["alt"], "(min-width: 60rem) 1312px, 100vw", 1140, 2280, 900)}</figure>'
         f'<div class="pg__text"><h3>{H(t["pages"][i]["h"])}</h3><p>{escape(t["pages"][i]["p"])}</p></div></li>\n' for i, sc in enumerate(SCENES))
-    rail = "".join(f'<li>{escape(t["pages"][i]["name"])}</li>' for i in range(5))
+    rail = "".join(f'<li><a href="#pg-{SCENES[i]}" data-i="{i}">{escape(t["pages"][i]["name"])}</a></li>' for i in range(5))
     wps, keys = ["a", "b", "c"], ["dusk", "mist", "peak"]
     chips = "".join(f'<label class="chip"><input type="radio" name="wp" id="wp-{w}" value="{w}"{" checked" if i == 0 else ""}>{escape(t["wps"][i])}</label>' for i, w in enumerate(wps))
     gimgs = "".join(img("music", lang, k, t["glass_alt"] if i == 0 else "", "(min-width: 60rem) 1312px, 100vw", 1140, 2280, 900, extra=f' data-wp="{w}"') for i, (w, k) in enumerate(zip(wps, keys)))
@@ -276,7 +336,7 @@ def page(lang):
 
   <section class="track chapter" aria-labelledby="ch-h">
     <div class="stage container">
-      <div class="chapter__head"><h2 id="ch-h">{H(t["ch_h"])}</h2><ul class="rail" aria-hidden="true">{rail}</ul></div>
+      <div class="chapter__head"><h2 id="ch-h">{H(t["ch_h"])}</h2><ul class="rail" aria-label="{escape(t["rail_label"])}">{rail}</ul></div>
       <ol class="pages">
 {pages}      </ol>
     </div>
@@ -307,8 +367,11 @@ def page(lang):
       <div class="scrim scrim--bottom"></div>
       {seq("dock", DOCK_FRAMES, 0.06, 0.5, t["dock_alt"])}
       <div class="container dock__a"><h2 id="dk-h">{H(t["dk_h"])}</h2><p class="lead">{escape(t["dk_p"])}</p></div>
+      {legend_html(t)}
     </div>
   </section>
+
+  {pos_html(t)}
 
   <section class="container band buds" aria-labelledby="bd-h">
     <div class="buds__row"><p class="num-big" aria-hidden="true">{escape(t["bd_num"])}</p><div class="buds__text"><h2 id="bd-h">{H(t["bd_h"])}</h2><p class="lead">{escape(t["bd_p"])}</p><p class="note note--fine">{escape(t["bd_note"])}</p></div></div>
