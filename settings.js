@@ -40,7 +40,7 @@ const STR = {
         tabLast: '탭이 하나는 보여야 해요', pluginFolder: '플러그인 폴더 열기', pluginAdd: '추가', pluginRemove: '제거', pluginsAdded: '추가한 플러그인', pluginsAvailable: '추가할 수 있는 플러그인', pluginsNone: '아직 추가한 플러그인이 없어요. 아래에서 필요한 것을 추가하면 노치에 “플러그인” 탭이 나타나요.', pluginsAllAdded: '모든 플러그인을 추가했어요', pluginReload: '다시 읽기', pluginUser: '내가 만든 플러그인', pluginActions: (n) => `동작 ${n}개`,
         capOn: '캡처 모드 켜짐 (다시 누르면 꺼요)', capOff: '캡처 모드 꺼짐', capNone: '이미 캡처할 수 있어요',
         pluginHeroT: '플러그인', pluginHeroD: '노치에 나만의 도구 모음을 붙여요. 필요한 것만 추가하면 “플러그인” 탭에 나란히 나타나고, 추가하지 않은 플러그인은 아무 일도 하지 않아요.', pluginsCount: (n) => `${n}개 사용 중`,
-        pluginInUse: '사용 중', pluginMoveL: '앞으로', pluginMoveR: '뒤로', pluginMore: (n) => `+${n}`, pluginCreateT: '나만의 플러그인 만들기', pluginCreateD: '프로그램 실행, 주소 열기, 글 복사, 키 보내기를 JSON 파일 하나로 묶을 수 있어요. 예제를 설치해서 고쳐 쓰는 게 가장 빨라요.',
+        pluginInUse: '사용 중', pluginMoveL: '앞으로', pluginMoveR: '뒤로', pluginMore: (n) => `+${n}`, pluginCreateT: '나만의 플러그인 만들기', pluginCreateD: '프로그램 실행, 주소 열기, 글 복사, 키 보내기를 JSON 파일 하나로 묶을 수 있어요(버튼은 플러그인마다 최대 6개). 예제를 설치해서 고쳐 쓰는 게 가장 빨라요.',
         pluginInstallEx: '예제 설치', pluginExDone: '예제를 plugins 폴더에 만들었어요 (my-tools.json)', pluginExHave: '예제가 이미 있어요 — 그대로 두었어요', pluginLive: '연결됨',
         pluginHelp: '직접 만들려면 플러그인 폴더에 .json 파일을 넣으세요(예: 프로그램 실행, 주소 열기, 글 복사, 키 보내기). 설명은 README의 “플러그인 만들기”에 있어요.',
         lnAdd: '바로가기 추가', lnBrowse: '찾아보기', lnPresets: '자주 쓰는 것', lnName: '이름', lnTarget: '프로그램·파일·폴더·주소', lnArgs: '인수(선택)', lnIcon: '아이콘', lnEmpty: '아직 바로가기가 없어요. 아래 “자주 쓰는 것”에서 골라 보세요.', lnSaved: '저장했어요', lnFull: '바로가기는 24개까지 만들 수 있어요',
@@ -62,7 +62,7 @@ const STR = {
         tabLast: 'At least one tab must stay visible', pluginFolder: 'Open plugin folder', pluginAdd: 'Add', pluginRemove: 'Remove', pluginsAdded: 'Added plugins', pluginsAvailable: 'Available plugins', pluginsNone: 'No plugins added yet. Add one below and a “Plugins” tab appears on the notch.', pluginsAllAdded: 'All plugins are added', pluginReload: 'Reload', pluginUser: 'My plugin', pluginActions: (n) => `${n} actions`,
         capOn: 'Capture mode on (press again to turn it off)', capOff: 'Capture mode off', capNone: 'Already capturable',
         pluginHeroT: 'Plugins', pluginHeroD: 'Attach your own tool sets to the notch. Add only what you need and they line up in the “Plugins” tab; plugins you have not added do nothing.', pluginsCount: (n) => `${n} in use`,
-        pluginInUse: 'In use', pluginMoveL: 'Move earlier', pluginMoveR: 'Move later', pluginMore: (n) => `+${n}`, pluginCreateT: 'Make your own plugin', pluginCreateD: 'Bundle running a program, opening an address, copying text and sending keys into one JSON file. Installing the example and editing it is the quickest way.',
+        pluginInUse: 'In use', pluginMoveL: 'Move earlier', pluginMoveR: 'Move later', pluginMore: (n) => `+${n}`, pluginCreateT: 'Make your own plugin', pluginCreateD: 'Bundle running a program, opening an address, copying text and sending keys into one JSON file (up to 6 buttons per plugin). Installing the example and editing it is the quickest way.',
         pluginInstallEx: 'Install example', pluginExDone: 'Example created in the plugins folder (my-tools.json)', pluginExHave: 'The example already exists — left untouched', pluginLive: 'Live',
         pluginHelp: 'To make your own, drop a .json file into the plugin folder (run a program, open an address, copy text, send keys). See “Writing plugins” in the README.',
         lnAdd: 'Add shortcut', lnBrowse: 'Browse', lnPresets: 'Common ones', lnName: 'Name', lnTarget: 'Program, file, folder or address', lnArgs: 'Arguments (optional)', lnIcon: 'Icon', lnEmpty: 'No shortcuts yet. Pick some from “Common ones” below.', lnSaved: 'Saved', lnFull: 'You can have up to 24 shortcuts',
@@ -108,24 +108,41 @@ const isChanged = (item) => item.def !== undefined && valueOf(item) !== item.def
 const isEnabled = (item) => (item.enabledIf ? !!item.enabledIf(D) : true);
 
 // ---------------------------------------------------------------- 저장 (슬라이더를 끌 때 쏟아지지 않게 모아서 보낸다)
-let pending = null, flushTimer = null;
-function queuePatch(path, key, value) {
+let pending = null, flushTimer = null, flushWait = 140;
+// 슬라이더를 끌거나 글자를 칠 때는 쏟아지지 않게 140ms 모아서, 토글·선택·버튼은 30ms 뒤(같은 클릭에서 바뀐 값들만 묶어서) 바로 보낸다.
+// (예전에는 모두 140ms 를 기다려서 노치에 반영되기까지 한 박자 느렸다)
+function queuePatch(path, key, value, fast) {
   pending = pending || { settings: {}, pomo: {}, water: {} };
   setPath(pending[path], key, value);
+  const wait = fast ? 30 : 140;
+  if (flushTimer && flushWait <= wait) return;           // 이미 더 빨리 보낼 예정이면 그대로 둔다
   clearTimeout(flushTimer);
-  flushTimer = setTimeout(flushPatch, 140);
+  flushWait = wait;
+  flushTimer = setTimeout(() => flushPatch(true), wait);
 }
-function flushPatch() {
+// 한 번에 하나만 보낸다: 파이썬은 요청마다 다른 스레드에서 처리해서, 연달아 보내면 순서가 뒤바뀌어 마지막 값이 옛 값으로 덮일 수 있다.
+// 보내는 동안 바뀐 값은 모아 두었다가 응답이 오면 이어서 보낸다(같은 키는 마지막 값만 남는다). 창을 닫을 때 등 직접 부르면(인자 없음) 바로 보낸다.
+let patchInflight = false;
+function flushPatch(viaTimer) {
   clearTimeout(flushTimer);
   flushTimer = null;
+  flushWait = 140;
   if (!pending) return;
+  if (viaTimer === true && patchInflight) return;              // 응답이 오면 이어서 보낸다
   const patch = pending;
   pending = null;
   for (const sec of Object.keys(patch)) if (!Object.keys(patch[sec]).length) delete patch[sec];
   const api = getApi();
-  if (api && api.settings_patch && Object.keys(patch).length) api.settings_patch(patch);
+  if (!(api && api.settings_patch && Object.keys(patch).length)) return;
+  patchInflight = true;
+  const done = () => { patchInflight = false; if (pending) { clearTimeout(flushTimer); flushTimer = setTimeout(() => flushPatch(true), 0); } };
+  try {
+    const r = api.settings_patch(patch);
+    if (r && typeof r.then === 'function') r.then(done, done); else done();
+  } catch (e) { done(); }
 }
 
+const LOCAL_KEYS = /^(lang|setAnim|setAnimSpeed|bounce|animSpeed|animOff)$/;
 function commit(item, value) {
   if (item.special === 'autostart') {
     AUTOSTART = !!value;
@@ -139,12 +156,12 @@ function commit(item, value) {
   if (item.special === 'animPreset') {
     const p = ANIM_PRESETS[value];
     if (!p) return;
-    for (const k of Object.keys(p)) { D.settings[k] = p[k]; queuePatch('settings', k, p[k]); }
+    for (const k of Object.keys(p)) { D.settings[k] = p[k]; queuePatch('settings', k, p[k], true); }
   } else {
     setPath(D[item.path], item.key, value);
-    queuePatch(item.path, item.key, value);
+    queuePatch(item.path, item.key, value, item.type === 'toggle' || item.type === 'seg' || item.type === 'button');
   }
-  applyLocal();
+  if (item.special === 'animPreset' || LOCAL_KEYS.test(item.key || '')) applyLocal();      // 설정 창 자신의 언어·애니메이션 값이 아니면 건드리지 않는다(루트 변수를 쓰면 문서 전체가 다시 계산된다)
   updateAll();
   if (item.group === 'anim' || ['animSpeed', 'bounce', 'animOff', 'animPreset'].includes(item.id)) schedulePreview();
   if (item.key === 'lang') rebuild();
@@ -199,7 +216,7 @@ function makeRow(item, opts) {
     sw.className = 'sw'; sw.setAttribute('role', 'switch');
     sw.addEventListener('click', () => commit(item, !valueOf(item)));
     ctl.appendChild(sw);
-    updateCtl = () => sw.setAttribute('aria-checked', String(!!valueOf(item)));
+    updateCtl = () => { const v = String(!!valueOf(item)); if (sw.getAttribute('aria-checked') !== v) sw.setAttribute('aria-checked', v); };
     row.addEventListener('click', (e) => { if (e.target === row || e.target.closest('.row-text')) sw.click(); });
   } else if (item.type === 'slider') {
     const wrap = document.createElement('div');
@@ -211,7 +228,8 @@ function makeRow(item, opts) {
     ctl.appendChild(wrap);
     const paint = (v) => {
       input.style.setProperty('--fill', `${((v - item.min) / (item.max - item.min)) * 100}%`);
-      out.textContent = fmtOf(item)(v);
+      const t = fmtOf(item)(v);
+      if (out.textContent !== t) out.textContent = t;
     };
     input.addEventListener('input', () => { const v = Number(input.value); paint(v); commit(item, v); });
     updateCtl = () => { const v = Number(valueOf(item)); if (document.activeElement !== input || Number(input.value) !== v) input.value = v; paint(v); };
@@ -231,11 +249,17 @@ function makeRow(item, opts) {
       return { o, b };
     });
     ctl.appendChild(seg);
+    let segSig = '';
     updateCtl = () => {
       const cur = valueOf(item);
-      btns.forEach(({ o, b }) => { b.textContent = tr(o.label); b.classList.toggle('on', o.v === cur); });
+      const sig = cur + '|' + LANG + '|' + btns.map(({ o }) => (o.disabled ? 1 : 0)).join('');
+      if (sig === segSig && seg.dataset.placed === '1') return;          // 선택값·언어가 같으면 건드리지 않는다(placeSeg 는 레이아웃을 읽어서 비싸다)
+      segSig = sig;
+      btns.forEach(({ o, b }) => { const t = tr(o.label); if (b.textContent !== t) b.textContent = t; b.classList.toggle('on', o.v === cur); });
       placeSeg(seg);
+      seg.dataset.placed = seg.classList.contains('none') ? '0' : '1';       // 아직 보이지 않아 자리를 못 잡았으면 다음에 다시 시도
     };
+    if (window.ResizeObserver) { const ro = new ResizeObserver(() => { if (seg.dataset.placed === '1') placeSeg(seg); }); ro.observe(seg); }      // 글꼴·창 크기 때문에 버튼 폭이 달라지면 강조 막대를 다시 맞춘다
     row._seg = seg;
   } else if (item.type === 'text') {
     const inp = document.createElement('input');
@@ -258,12 +282,15 @@ function makeRow(item, opts) {
   ctl.appendChild(reset);
 
   const update = () => {
-    title.textContent = tr(item.label);
+    const tt = tr(item.label);
+    if (title.textContent !== tt) title.textContent = tt;
     const d = item.descFn === 'monitors' ? monitorDesc() : (item.descFn === 'hotkey' ? hotkeyDesc(item) : tr(item.desc));
-    desc.textContent = d;
-    desc.style.display = d ? '' : 'none';
-    if (pageTag) pageTag.textContent = opts.pageTitle;
-    reset.title = S('reset');
+    if (desc.textContent !== d) desc.textContent = d;
+    const disp = d ? '' : 'none';
+    if (desc.style.display !== disp) desc.style.display = disp;
+    if (pageTag && pageTag.textContent !== opts.pageTitle) pageTag.textContent = opts.pageTitle;
+    const rt = S('reset');
+    if (reset.title !== rt) reset.title = rt;
     row.classList.toggle('disabled', !isEnabled(item));
     row.classList.toggle('changed', isChanged(item) || (item.special === 'animPreset' && valueOf(item) !== 'normal'));
     updateCtl();
@@ -464,6 +491,7 @@ COMPONENTS.budsEq = function () {
         w.innerHTML = '<span class="bv"></span><input type="range" min="-10" max="10" step="1"><span class="bn"></span>';
         const inp = w.querySelector('input');
         inp.addEventListener('input', () => { editedAt = Date.now(); bands[i] = Number(inp.value); w.querySelector('.bv').textContent = fmt(bands[i]); scheduleSend(); });
+        inp.addEventListener('change', () => { dirty = true; if (!sending) { clearTimeout(sendTimer); sendBands(); } });
         w.querySelector('.bn').textContent = FREQ[i];
         bandsEl.appendChild(w);
       }
@@ -514,18 +542,30 @@ COMPONENTS.budsEq = function () {
     else { cur = prev; fail(res); }
     render();
   };
+  // 슬라이더를 움직이는 동안에도 이어버드로 보낸다(만지면서 바로 들을 수 있게): 한 번에 하나만 보내고, 보내는 동안 바뀐 값은 모았다가 끝나면 '가장 최근 값' 하나만 이어서 보낸다.
+  // 보내는 사이에는 최소 SEND_GAP 간격을 둔다. 놓으면(change) 기다리지 않고 마지막 값을 바로 보낸다. (예전에는 손을 놓고 0.35초 뒤에야 한 번 보내서 드래그하는 동안은 소리가 안 바뀌었다)
+  const SEND_GAP = 80;
+  let sending = false, dirty = false, lastSendEnd = 0;
   const sendBands = async () => {
     const api = getApi();
-    if (!api || !api.buds_set_custom_eq || !usable()) return;
-    if (busy) { scheduleSend(); return; }
-    busy = true; pickedAt = Date.now(); cur = 7; render();
-    let res; try { res = await api.buds_set_custom_eq(bands.slice()); } catch (e) { res = { status: 'error' }; }
-    busy = false;
-    if (res && res.status === 'ok') { BUDS_CACHE.bands = bands.slice(); say('', false); } else fail(res);
-    render();
+    if (!api || !api.buds_set_custom_eq || !usable()) { dirty = false; return; }
+    if (sending) return;                                       // 끝나면 dirty 를 보고 이어서 보낸다
+    if (busy) { clearTimeout(sendTimer); sendTimer = setTimeout(sendBands, 120); return; }     // 프리셋 버튼을 누른 응답을 기다리는 중
+    dirty = false; sending = true; pickedAt = Date.now();
+    if (cur !== 7) { cur = 7; render(); }
+    const sent = bands.slice();
+    let res; try { res = await api.buds_set_custom_eq(sent); } catch (e) { res = { status: 'error' }; }
+    sending = false; lastSendEnd = Date.now();
+    if (res && res.status === 'ok') { BUDS_CACHE.bands = sent.slice(); say('', false); } else { dirty = false; fail(res); }
+    if (dirty) kick(); else render();
   };
-  const scheduleSend = () => { clearTimeout(sendTimer); sendTimer = setTimeout(sendBands, 350); };       // 슬라이더를 움직이는 동안에는 보내지 않고, 멈추면 한 번에 보낸다
-  reset.addEventListener('click', () => { bands = new Array(N).fill(0); renderBands(); sendBands(); });
+  const kick = () => {
+    if (sending) return;
+    clearTimeout(sendTimer);
+    sendTimer = setTimeout(sendBands, Math.max(0, SEND_GAP - (Date.now() - lastSendEnd)));
+  };
+  const scheduleSend = () => { dirty = true; kick(); };
+  reset.addEventListener('click', () => { bands = new Array(N).fill(0); editedAt = Date.now(); renderBands(); dirty = true; if (!sending) { clearTimeout(sendTimer); sendBands(); } });
   const poll = async () => {
     const api = getApi();
     if (!api || !api.get_state) return;
@@ -716,7 +756,11 @@ COMPONENTS.tabs = function () {
   const foot = document.createElement('div');
   foot.className = 'tabfoot';
   box.append(list, foot);
-  const render = () => {
+  let tabSig = '';
+  const render = (force) => {
+    const sig = D.settings.tabOrder + '|' + D.settings.tabHidden + '|' + LANG;
+    if (force !== true && sig === tabSig) return;
+    tabSig = sig;
     const order = parseTabOrder(D.settings.tabOrder), hidden = parseTabHidden(D.settings.tabHidden);
     const visibleCount = order.filter((id) => !hidden.includes(id)).length;
     list.textContent = '';
@@ -748,12 +792,12 @@ COMPONENTS.tabs = function () {
   };
   const setTabs = (order, hidden, flashId) => {
     D.settings.tabOrder = order; D.settings.tabHidden = hidden;
-    queuePatch('settings', 'tabOrder', order); queuePatch('settings', 'tabHidden', hidden);
+    queuePatch('settings', 'tabOrder', order, true); queuePatch('settings', 'tabHidden', hidden, true);
     render();
     if (flashId) { const r = list.querySelector(`.tabrow[data-id="${flashId}"]`); if (r && r.animate && !animOff()) r.animate([{ background: 'rgba(91,140,255,.35)' }, { background: 'transparent' }], { duration: 700 }); }
   };
-  render();
-  return { el: box, update: render };
+  render(true);
+  return { el: box, update: () => render() };
 };
 
 COMPONENTS.plugins = function () {

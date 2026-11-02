@@ -114,7 +114,7 @@ function applyNotchGlass(mode) {
 function setDesk(url) {
   const img = document.getElementById('deskImg');
   const root = document.documentElement;
-  const sats = ['satDesk', 'satDeskL'].map((id) => document.getElementById(id)).filter(Boolean);           // 보조 노치(물방울, 오른쪽·왼쪽)도 같은 뒤 화면을 비춘다
+  const sats = Array.from(document.querySelectorAll('.sat-desk'));           // 보조 노치(물방울, 오른쪽·왼쪽)도 같은 뒤 화면을 비춘다
   const goo = Array.from(document.querySelectorAll('.gimg'));    // 물방울·물줄기의 모양 레이어도 같은 화면으로 채운다(유리 모드에서 검정 얼룩이 생기지 않게)
   if (!img) return;
   if (!url || notchGlassMode !== 'full') { img.removeAttribute('src'); sats.forEach((e) => e.removeAttribute('src')); goo.forEach((g) => g.removeAttribute('src')); delete root.dataset.desk; return; }

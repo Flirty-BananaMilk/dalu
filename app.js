@@ -9,6 +9,7 @@
 // 전환 애니메이션 도중의 getBoundingClientRect() 는 중간값이라 창 클릭 영역 계산에 쓰면 안 된다.
 const BG_EXTRA_H = 24;      // 백그라운드 보컬 줄이 나올 때 작은 노치가 늘어나는 높이 (CSS --h 56px 와 같아야 한다)
 const STATES = {
+  slim:       { w: 92,  h: 6,   e: 3 },        // 접힌 노치를 한 번 더 줄인 상태(설정 slimNotch): 내용 없이 화면 위로 살짝 돌출된 선만 남는다
   idle:       { w: 150, h: 30,  e: 10 },
   pet:        { w: 150, h: 30,  e: 10 },
   mini:       { w: 300, h: 32,  e: 10 },
@@ -95,13 +96,13 @@ const I18N = {
     lyricsOnMsg: '가사 표시 켬', lyricsOffMsg: '가사 표시 끔', menuLyricsOff: '가사 표시 끄기', menuLyricsOn: '가사 표시 켜기',
     pin: '노치 항상 펼쳐두기 (고정)', pinned: '노치 고정됨', autoHide: '자동 숨김 모드',
     menuUnpin: '고정 해제 (자동 숨김)', menuPin: '항상 펼쳐두기 (고정)',
-    compact: '컴팩트 모드 전환',
+    compact: '컴팩트 모드 전환', slimMode: '슬림 모드 전환', slimOnMsg: '슬림 모드 켬', slimOffMsg: '슬림 모드 끔',
     clickThrough: '클릭 투과 (해제: 창 위에서 Ctrl)', ctOn: '클릭 투과 켬 — 해제: 노치 위에서 Ctrl', ctOff: '클릭 투과 해제',
     menuSoundOff: '알림음 끄기', menuSoundOn: '알림음 켜기', soundOnMsg: '알림음 켬', soundOffMsg: '알림음 끔',
     menuLang: '언어', exit: '종료',
     settings: '설정', focusStarted: '집중 시작', dndOnSub: '방해 금지를 켰어요', launcherTitle: '바로가기', launcherEmpty: '설정에서 바로가기를 추가해 보세요', launcherFailed: '실행하지 못했어요', launcherEditTitle: '바로가기 편집',
     pluginsEmpty: '설정에서 플러그인을 켜 주세요', pluginFailed: '실행하지 못했어요', pluginDone: '완료',
-    timerMode: '타이머', stopwatchMode: '스톱워치', timerDone: '타이머 종료', timerDoneSub: '{n}분이 지났어요',
+    timerMode: '타이머', stopwatchMode: '스톱워치', lapTitle: '구간 기록', lapEmpty: '깃발 버튼으로 구간 기록', timerDone: '타이머 종료', timerDoneSub: '{n}분이 지났어요',
     clipTitle: '클립보드', clipClear: '모두 지우기', clipEmpty: '복사한 글이 여기에 쌓여요', clipOff: '클립보드 기록이 꺼져 있어요', openSettings: '설정 열기', clipCopied: '다시 복사했어요',
     delete: '삭제', failed: '실패했어요', agoNow: '방금', agoMin: '{n}분 전', agoHour: '{n}시간 전',
     agendaTitle: '일정', agendaNoTitle: '(제목 없음)', agendaEmpty: '앞으로 7일 동안 일정이 없어요', agendaNoSource: '설정에서 캘린더 주소를 넣어 주세요', agendaError: '캘린더를 불러오지 못했어요',
@@ -134,13 +135,13 @@ const I18N = {
     lyricsOnMsg: 'Lyrics on', lyricsOffMsg: 'Lyrics off', menuLyricsOff: 'Hide lyrics', menuLyricsOn: 'Show lyrics',
     pin: 'Keep notch open (pin)', pinned: 'Notch pinned', autoHide: 'Auto-hide mode',
     menuUnpin: 'Unpin (auto-hide)', menuPin: 'Keep open (pin)',
-    compact: 'Toggle compact mode',
+    compact: 'Toggle compact mode', slimMode: 'Toggle slim mode', slimOnMsg: 'Slim mode on', slimOffMsg: 'Slim mode off',
     clickThrough: 'Click-through (release: Ctrl over it)', ctOn: 'Click-through on — release: Ctrl over the notch', ctOff: 'Click-through off',
     menuSoundOff: 'Mute notification sounds', menuSoundOn: 'Unmute notification sounds', soundOnMsg: 'Sounds on', soundOffMsg: 'Sounds off',
     menuLang: 'Language', exit: 'Quit',
     settings: 'Settings', focusStarted: 'Focus started', dndOnSub: 'Do Not Disturb is on', launcherTitle: 'Shortcuts', launcherEmpty: 'Add shortcuts in Settings', launcherFailed: 'Could not launch it', launcherEditTitle: 'Edit shortcuts',
     pluginsEmpty: 'Turn on plugins in Settings', pluginFailed: 'Could not run it', pluginDone: 'Done',
-    timerMode: 'Timer', stopwatchMode: 'Stopwatch', timerDone: 'Timer finished', timerDoneSub: '{n} min have passed',
+    timerMode: 'Timer', stopwatchMode: 'Stopwatch', lapTitle: 'Record a lap', lapEmpty: 'Press the flag to record laps', timerDone: 'Timer finished', timerDoneSub: '{n} min have passed',
     clipTitle: 'Clipboard', clipClear: 'Clear all', clipEmpty: 'Things you copy will pile up here', clipOff: 'Clipboard history is off', openSettings: 'Open settings', clipCopied: 'Copied again',
     delete: 'Delete', failed: 'Failed', agoNow: 'just now', agoMin: '{n} min ago', agoHour: '{n} h ago',
     agendaTitle: 'Agenda', agendaNoTitle: '(No title)', agendaEmpty: 'Nothing on your calendar for the next 7 days', agendaNoSource: 'Add a calendar address in Settings', agendaError: 'Could not load the calendar',
@@ -184,7 +185,7 @@ const DEFAULT_STORE = {
     visualizer: true, vizGain: 100, artGlow: true, glowStrength: 100,
     notify: { volume: true, brightness: true, caps: true, num: true, scroll: true, lang: true, power: true, battery_low: true, net: true, audio_device: true, buds: true, buds_low: true, buds_alert: true, track: true, capture_mode: true },
     peekDur: 3200, budsLowPct: 20,
-    theme: 'black', monitor: 0, hoverDelay: 0, collapseDelay: 850, idleMin: 2, pet: true, petAfter: 45, fullscreenMode: 'yield',
+    theme: 'black', monitor: 0, hoverDelay: 0, collapseDelay: 850, idleMin: 2, pet: true, petAfter: 45, fullscreenMode: 'yield', notchPos: 0, slimNotch: false, hideInGames: true, gameAlways: '', gameNever: '',
     animOff: false, animSpeed: 100, bounce: 100, entrance: true, pageAnim: 'slide',
     tabOrder: DEFAULT_TAB_ORDER, tabHidden: '', pluginsEnabled: '',
     focusDnd: true,
@@ -428,6 +429,8 @@ function expandedView() {
   return page;
 }
 
+const slimOn = () => !!store.settings.slimNotch;
+
 function petVisible(now) {
   if (!store.settings.pet) return false;
   return pet.idleSec >= petAfterSec() || now < pet.waveUntil;
@@ -436,6 +439,7 @@ function petVisible(now) {
 function computeView() {
   if (isExpanded) return expandedView();
   if (peek.active) return 'peek';
+  if (slimOn()) return 'slim';
   if (hasTrack()) return 'mini';
   if (island.dataset.timer === '1') return 'idle';
   return petVisible(Date.now()) ? 'pet' : 'idle';
@@ -458,7 +462,8 @@ function geometryFor(v) {
   }
   if (v === 'peek') return STATES['peek_' + peek.kind] || STATES.peek_track;
   const base = STATES[v] || STATES.mini;
-  return dockOn && isPageView(v) ? { w: base.w, h: base.h + dockH(), e: base.e } : base;      // 탭 아이콘 독이 열리면 노치 아래가 조금 늘어난다
+  const extra = isPageView(v) ? (dockOn ? dockH() : 0) + (popOn ? POP_H : 0) : 0;      // 탭 아이콘 독이 열리면 노치 아래가, 알림 띠가 뜨면 위쪽이 조금 늘어난다
+  return extra ? { w: base.w, h: base.h + extra, e: base.e } : base;
 }
 
 // 페이지 점에 마우스를 올리면 큰 아이콘 독으로 바뀐다. 아이콘(20px)의 위·아래 여백을 같게(tabDockMargin = g) 맞추려고 노치 아래가 20 + 2g - DOCK_GAP 만큼 늘어난다.
@@ -546,7 +551,8 @@ function updateView() {
   view = next;
   if (next === 'music' || next === 'lyrics') setPlayerMode(next, !(prev === 'music' || prev === 'lyrics'));
   island.dataset.s = next;
-  if (!isPageView(next)) setDock(false);
+  document.documentElement.dataset.view = next;          // 슬림일 때만 마우스 반응 영역(#slimHit)이 켜진다
+  if (!isPageView(next)) { setDock(false); popHide(); }
   syncLayerVisibility(layerOf(next));
   // 뷰가 바뀌면 mini 는 줄을 다시 그리고, 세로 리스트는 다음 배치를 애니메이션 없이 즉시 맞춘다.
   // (리스트의 활성 줄 상태는 DOM 과 함께 유지해야 하므로 listIdx 는 건드리지 않는다)
@@ -610,14 +616,66 @@ function showTrackPeek() {
             [{ opacity: 0, translate: '16px 0' }, { opacity: 1, translate: '0 0' }], 230, 60, { duration: 520 });
 }
 
-let toastTimer = null;
+// 펼친 노치의 알림: 접힌 노치의 알림(peek)과 같은 모양을 노치 맨 위 띠(#popBar)에 띄운다.
+// 노치 높이가 POP_H 만큼 늘고(스프링), 기존 내용은 그만큼 아래로 내려간다. 시간이 지나면 되돌아온다.
+const POP_H = 38;
+let popOn = false, popKey = '', popTimer = null;
+function popShow(opts) {
+  const bar = $('popBar');
+  if (!bar) return;
+  const live = popOn && !!opts.key && popKey === opts.key;           // 같은 종류(예: 볼륨)가 이미 떠 있으면 값만 갱신한다
+  popKey = opts.key || '';
+  const hasIcon = !!opts.icon;
+  bar.dataset.k = hasIcon ? 'info' : 'msg';
+  if (hasIcon) setIcon($('pbIco'), opts.icon, opts.tone);
+  setText($('pbTitle'), opts.title || '');
+  setText($('pbSub'), opts.sub || '');
+  const meter = $('pbMeter');
+  const hasMeter = typeof opts.meter === 'number';
+  meter.classList.toggle('on', hasMeter);
+  if (hasMeter) meter.firstElementChild.style.width = `${Math.round(Math.max(0, Math.min(1, opts.meter)) * 100)}%`;
+  if (!popOn) {
+    popOn = true;
+    island.dataset.pop = '1';
+    island.style.setProperty('--pp', `${POP_H}px`);
+    island.classList.add('toasting');            // 알림이 있는 동안 페이지 점은 숨긴다
+    scheduleRegion();                            // 커질 때는 바로 영역을 넓힌다
+  }
+  if (!live) {
+    const kids = [hasIcon ? $('pbIco') : null, $('pbTitle'), $('pbSub')].filter(Boolean);
+    enterEach(kids, [{ opacity: 0, translate: '0 -6px' }, { opacity: 1, translate: '0 0' }], 120, 45, { duration: 380 });
+  }
+  clearTimeout(popTimer);
+  popTimer = setTimeout(popHide, opts.ms || peekMs(1700));
+}
+function popHide() {
+  clearTimeout(popTimer);
+  popTimer = null;
+  if (!popOn) return;
+  popOn = false;
+  popKey = '';
+  island.dataset.pop = '0';
+  island.style.setProperty('--pp', '0px');
+  island.classList.remove('toasting');
+  scheduleRegion();                              // 줄어들 땐 애니메이션이 끝난 뒤에 영역을 줄인다
+}
+
+// 안전장치: 알림 띠의 상태(popOn / --pp / 타이머)가 어긋난 채 남지 않게 1초마다 맞춘다.
+// 띠가 떠 있는데 닫는 타이머가 없으면 닫고, 띠가 없는데 --pp 가 남아 있으면 0 으로 되돌린다(내용이 아래로 내려간 채 남는 일 방지).
+setInterval(() => {
+  if (popOn && !popTimer) { popHide(); return; }
+  const want = popOn ? POP_H : 0;
+  if ((parseFloat(island.style.getPropertyValue('--pp')) || 0) !== want) {
+    island.style.setProperty('--pp', `${want}px`);
+    island.dataset.pop = popOn ? '1' : '0';
+    island.classList.toggle('toasting', popOn);
+    scheduleRegion();
+  }
+}, 1000);
+
 function showToast(msg) {
   if (isExpanded) {
-    toastEl.textContent = msg;
-    toastEl.classList.add('show');
-    island.classList.add('toasting');   // 토스트가 있는 동안 페이지 도트는 숨긴다
-    clearTimeout(toastTimer); // 연속 호출 시 이전 타이머가 새 토스트를 일찍 닫지 않도록
-    toastTimer = setTimeout(() => { toastEl.classList.remove('show'); island.classList.remove('toasting'); }, 1500);
+    popShow({ title: msg });
   } else {
     peek.kind = 'msg';
     setText(peekMsg, msg);
@@ -630,7 +688,7 @@ function showToast(msg) {
 function notify(opts) {
   opts = Object.assign({}, opts, { ms: (opts.ms || 2600) * peekScale() });   // 표시 시간 설정
   if (isExpanded) {
-    showToast(opts.sub ? `${opts.title} · ${opts.sub}` : opts.title);
+    popShow(opts);
     return;
   }
   const live = !!opts.key && peek.active && peek.kind === 'info' && peek.key === opts.key;
@@ -664,8 +722,15 @@ function playChime(kind) {
 let regionTimer = null;
 let appliedSize = { w: 0, h: 0 };
 
+// 슬림 상태의 마우스 반응 영역(CSS px): 보이는 선(92x6)보다 넉넉하게 — 화면 맨 위에서 맞히기 쉽도록. #slimHit 의 크기와 같다.
+const SLIM_HIT_W = 164, SLIM_HIT_H = 14;
+
 function targetPillRect() {
   const g = geometry();
+  if (view === 'slim') {
+    const l = (window.innerWidth - SLIM_HIT_W) / 2;
+    return { left: l, right: l + SLIM_HIT_W, top: 0, bottom: SLIM_HIT_H, width: g.w, height: g.h, dpr: window.devicePixelRatio || 1 };
+  }
   const pad = g.e + 8;
   const left = (window.innerWidth - g.w) / 2 - pad;
   const satRight = typeof satRegionRight === 'function' ? satRegionRight(g, pad) : 0;

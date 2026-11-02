@@ -59,8 +59,9 @@ function refreshPageDots() {
 // 타이머와 스톱워치는 서로 독립이다: 하나를 돌려 둔 채 다른 탭에서 다른 하나를 쓸 수 있다. 탭(tmrMode)은 지금 보고 있는 쪽일 뿐이다.
 const tmrS = {
   timer: { total: 300, remaining: 300, running: false, endsAt: 0 },
-  stopwatch: { elapsed: 0, running: false, startedAt: 0, baseElapsed: 0 },
+  stopwatch: { elapsed: 0, running: false, startedAt: 0, baseElapsed: 0, laps: [] },      // laps: 구간 기록 [{n, total, split}] (초, 화면에만 있고 저장하지 않는다)
 };
+const LAP_MAX = 99;
 let tmrMode = 'timer';
 
 function tmrMinutes() { return clampN(store.timer && store.timer.minutes, 1, 600, 5); }
@@ -88,7 +89,7 @@ function tmrReset(mode) {
     s.remaining = s.total;
   } else {
     const s = tmrS.stopwatch;
-    s.running = false; s.elapsed = 0; s.baseElapsed = 0;
+    s.running = false; s.elapsed = 0; s.baseElapsed = 0; s.laps = [];
   }
   renderTimer();
 }
@@ -108,6 +109,56 @@ function tmrStartPause(mode) {
     else { s.baseElapsed = s.elapsed; s.startedAt = Date.now(); s.running = true; }
   }
   renderTimer();
+}
+
+// 스톱워치 구간 기록: 돌아가는 동안 누르면 지금까지의 시간(total)과 앞 기록 이후의 시간(split)을 남긴다. 새 기록이 맨 위에 보인다.
+function tmrLap() {
+  const s = tmrS.stopwatch;
+  if (!s.running) return;
+  const total = s.baseElapsed + (Date.now() - s.startedAt) / 1000;
+  const prev = s.laps.length ? s.laps[s.laps.length - 1].total : 0;
+  s.laps.push({ n: (s.laps.length ? s.laps[s.laps.length - 1].n : 0) + 1, total, split: Math.max(0, total - prev) });
+  if (s.laps.length > LAP_MAX) s.laps.shift();
+  renderTimer();
+  const box = $('lapList');
+  if (box) box.scrollTop = 0;
+}
+
+// 기록 시간은 소수 첫째 자리까지 (mm:ss.t, 한 시간이 넘으면 h:mm:ss.t)
+function fmtLap(sec) {
+  const tenth = Math.floor(Math.max(0, sec) * 10);
+  const t10 = tenth % 10, s = Math.floor(tenth / 10);
+  const h = Math.floor(s / 3600);
+  return (h ? `${h}:${pad2(Math.floor(s / 60) % 60)}` : pad2(Math.floor(s / 60))) + ':' + pad2(s % 60) + '.' + t10;
+}
+
+let lapSig = '';
+function renderLaps() {
+  const laps = tmrS.stopwatch.laps;
+  const box = $('lapList');
+  if (!box) return;
+  setText($('lapEmpty'), t('lapEmpty'));
+  $('lapEmpty').style.display = laps.length ? 'none' : '';
+  const sig = laps.length + ':' + (laps.length ? laps[laps.length - 1].total : 0) + ':' + lang;
+  if (sig === lapSig) return;
+  lapSig = sig;
+  // 가장 빠른/느린 구간 표시: 구간이 셋 이상일 때만 (둘뿐이면 항상 하나씩 되어 의미가 없다)
+  let best = -1, worst = -1;
+  if (laps.length >= 3) {
+    let lo = Infinity, hi = -Infinity;
+    laps.forEach((l, i) => { if (l.split < lo) { lo = l.split; best = i; } if (l.split >= hi) { hi = l.split; worst = i; } });
+  }
+  box.textContent = '';
+  for (let i = laps.length - 1; i >= 0; i--) {
+    const l = laps[i];
+    const row = document.createElement('div');
+    row.className = 'laprow' + (i === best ? ' best' : i === worst ? ' worst' : '');
+    const n = document.createElement('span'); n.className = 'lapn'; n.textContent = String(l.n);
+    const tot = document.createElement('span'); tot.className = 'lapt'; tot.textContent = fmtLap(l.total);
+    const sp = document.createElement('span'); sp.className = 'laps'; sp.textContent = '+' + fmtLap(l.split);
+    row.append(n, tot, sp);
+    box.appendChild(row);
+  }
 }
 
 function tmrAdjust(deltaMin) {
@@ -192,6 +243,8 @@ function renderTimer() {
   setText($('tmStartText'), t(running ? 'pause' : (tmrActiveOf(tmrMode) ? 'resume' : 'start')));
   $('tmStartIcon').setAttribute('d', running ? ICONS.pause : ICONS.play);
   $('tmAdj').style.visibility = timerMode ? 'visible' : 'hidden';
+  $('tmLap').disabled = !(tmrMode === 'stopwatch' && tmrS.stopwatch.running);      // 돌아가는 동안만 기록할 수 있다
+  renderLaps();
   $('timerLayer').dataset.run = running ? '1' : '0';
   renderChip();
 }
@@ -202,6 +255,7 @@ function initTimer() {
   tmrReset('timer'); tmrReset('stopwatch');
   $('tmStart').addEventListener('click', () => tmrStartPause());
   $('tmReset').addEventListener('click', () => tmrReset());
+  $('tmLap').addEventListener('click', () => tmrLap());
   for (const b of $$('#tmModes button')) b.addEventListener('click', () => tmrSetMode(b.dataset.m));
   for (const b of $$('#tmAdj [data-d]')) b.addEventListener('click', () => tmrAdjust(Number(b.dataset.d)));
   langHooks.push(renderTimer);

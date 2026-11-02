@@ -27,7 +27,7 @@ import clipwatch
 import keys
 
 MAX_USER_PLUGINS = 20
-MAX_ACTIONS = 24
+MAX_ACTIONS = 6        # 플러그인 하나의 버튼 수: 동작 타일이 3열 x 2행이라 6개가 스크롤 없이 한눈에 들어온다 (내장·사용자 플러그인 모두)
 ID_RE = re.compile(r"^[a-z0-9_-]{1,32}$")
 URL_RE = re.compile(r"^https?://", re.I)
 
@@ -181,13 +181,6 @@ def _spotify_plugin():
             return ok()
         return run
 
-    def search_current(ctx):
-        st = ctx.state() or {}
-        q = " ".join(x for x in (st.get("title"), st.get("artist")) if x)
-        if not q:
-            return err("nothing playing")
-        return open_target("spotify:search:" + urllib.parse.quote(q))
-
     def pb(ctx):
         return ctx.smtc.app_playback("spotify") if ctx.smtc is not None else None
 
@@ -226,8 +219,7 @@ def _spotify_plugin():
         action("shuffle", L("셔플", "Shuffle"), "shuffle", shuffle),
         action("repeat", L("반복", "Repeat"), "repeat", repeat),
         action("open", L("Spotify 열기", "Open Spotify"), "launch", lambda c: open_target("spotify:")),
-        action("search", L("현재 곡 검색", "Search this song"), "search", search_current),
-    ], status, states=states)
+    ], status, states=states)      # 6개: 동작 타일은 3열 x 2행이라 6개가 스크롤 없이 한눈에 들어온다 (의미가 약한 '현재 곡 검색'은 뺐다)
 
 
 def _discord_plugin():
@@ -305,7 +297,7 @@ def _volume_plugin():
             return {}
         pct = round(m["volume"] * 100)
         out = {"mute": st(m["muted"], L("음소거 중", "Muted") if m["muted"] else L("소리 켬", "Sound on"), tone="warn" if m["muted"] else None)}
-        for aid, v in (("v25", 25), ("v50", 50), ("v75", 75), ("v100", 100)):
+        for aid, v in (("v25", 25), ("v50", 50), ("v100", 100)):
             out[aid] = st(not m["muted"] and abs(pct - v) <= 2, L("현재", "Now") if (not m["muted"] and abs(pct - v) <= 2) else None)
         return out
 
@@ -323,7 +315,6 @@ def _volume_plugin():
         action("up", L("+5%", "+5%"), "plus", step(0.05)),
         action("v25", L("25%", "25%"), "volume1", setv(0.25)),
         action("v50", L("50%", "50%"), "volume2", setv(0.50)),
-        action("v75", L("75%", "75%"), "volume", setv(0.75)),
         action("v100", L("100%", "100%"), "volume", setv(1.0)),
     ], status, states=states)
 
@@ -532,14 +523,13 @@ def _steam_plugin():
 def _apps_plugin():
     apps = [("slack", "Slack", "chat", "slack", "slack://open"), ("notion", "Notion", "note", "notion", "notion://"),
             ("telegram", "Telegram", "mail", "tg", "tg://"), ("obsidian", "Obsidian", "edit", "obsidian", "obsidian://open"),
-            ("vscode", "VS Code", "code", "vscode", "vscode://"), ("teams", "Teams", "video", "msteams", "msteams:"),
-            ("figma", "Figma", "brush", "figma", "figma://"), ("epic", "Epic Games", "target", "com.epicgames.launcher", "com.epicgames.launcher://apps")]
+            ("vscode", "VS Code", "code", "vscode", "vscode://"), ("teams", "Teams", "video", "msteams", "msteams:")]
     acts = [_protocol_action(i, L(n), ic, proto, uri) for i, n, ic, proto, uri in apps]
 
     def states(ctx):
         return {i: st(False, L("미설치", "Not installed")) for i, n, ic, proto, uri in apps if not protocol_installed(proto)}
 
-    return Plugin("apps", L("앱 열기", "App launcher"), L("Slack, Notion, Telegram, Obsidian, VS Code, Teams, Figma, Epic Games를 바로 엽니다. 설치돼 있지 않은 앱은 '미설치'로 표시돼요.", "Open Slack, Notion, Telegram, Obsidian, VS Code, Teams, Figma and Epic Games. Apps that are not installed are marked."), "launch", acts, None, states=states)
+    return Plugin("apps", L("앱 열기", "App launcher"), L("Slack, Notion, Telegram, Obsidian, VS Code, Teams를 바로 엽니다. 설치돼 있지 않은 앱은 '미설치'로 표시돼요.", "Open Slack, Notion, Telegram, Obsidian, VS Code and Teams. Apps that are not installed are marked."), "launch", acts, None, states=states)
 
 
 def builtin_plugins():

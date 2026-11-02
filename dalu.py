@@ -46,6 +46,10 @@ try:
 except Exception:      # 없어도 앱은 돌아간다 (자동 캡처 모드만 빠진다)
     capturewatch = None
 try:
+    import gamewatch
+except Exception:
+    gamewatch = None
+try:
     import winnotif
 except Exception:      # 없어도 앱은 돌아간다 (윈도우 알림 표시만 빠진다)
     winnotif = None
@@ -96,8 +100,10 @@ def log(msg):
 
 # 창 크기 (index.html 의 STATES / .island 크기와 맞춰야 함)
 # 높이 200: 가장 큰 상태(선반 172px) + 스프링 오버슈트 + 그림자 여유
-EXPANDED_WIDTH = 740
-EXPANDED_HEIGHT = 200
+# 폭 1040: 보조 노치 두 개를 같은 쪽에 놓을 때(노치를 맨 왼쪽/오른쪽에 둔 경우)도 창 안에 들어가도록 (노치 반폭 150 + 간격 + 보조 노치 둘 <= 520).
+# 창은 투명하고 클릭 영역(SetWindowRgn)이 노치 모양으로 제한돼 있어서, 넓어도 아래 창을 가리지 않는다.
+EXPANDED_WIDTH = 1040
+EXPANDED_HEIGHT = 240   # 가장 큰 상태(선반 172px) + 탭 아이콘 독(23px) + 알림 띠(38px) 에 스프링 오버슈트·그림자 여유
 NOTCH_WIDTH = 300   # 접힌(mini) 노치
 NOTCH_HEIGHT = 32
 
@@ -163,12 +169,13 @@ class IslandAPI:
         self._events = []
         self._events_lock = threading.Lock()
         self._fullscreen = False
+        self._game = ""                # 지금 앞에 있는 게임의 실행 파일 이름 ('' = 없음). 있으면 노치를 숨긴다 (설정 hideInGames)
         self._prefs = prefs.Prefs(self.load_data())     # 파이썬이 읽는 설정 사본 (설정 창/화면이 바꾸면 갱신)
         self._settings_win = None
         self._settings_lock = threading.Lock()
         self._data_lock = threading.Lock()
         self._monitor = sysmon.SysMonitor(push=self._push_event, on_fullscreen=self._on_fullscreen,
-                                         own_hwnd=self._get_hwnd)
+                                         own_hwnd=self._get_hwnd, on_game=self._on_game, game_check=self._game_check)
         self._monitor.start()
         # 비주얼라이저용 오디오 레벨 (루프백). 화면이 get_levels() 를 호출할 때만 계산한다.
         self._buds = None
@@ -287,9 +294,17 @@ class IslandAPI:
         return next((s for s in screens if s.x == 0 and s.y == 0), screens[0])
 
     def _get_scale(self):
+        """시스템 DPI 배율(150% -> 1.5). 이 프로세스는 시스템 DPI 인식이라 값이 프로세스 내내 변하지 않는 GetDpiForSystem 을 쓴다.
+        (예전에는 '물리 폭 / pywebview 의 주 화면 폭'으로 구했는데, 부팅 직후 모니터 번호/목록이 흔들리는 동안 1.5 와 1.0 사이를
+        오가서 창이 작게 만들어지고 노치 아래쪽이 잘렸다)"""
         try:
-            user32 = ctypes.windll.user32
-            phys_w = user32.GetSystemMetrics(0)
+            dpi = int(ctypes.windll.user32.GetDpiForSystem())
+            if 48 <= dpi <= 960:
+                return max(1.0, dpi / 96.0)
+        except Exception:
+            pass
+        try:
+            phys_w = ctypes.windll.user32.GetSystemMetrics(0)
             return max(1.0, phys_w / self._primary_screen().width)
         except Exception:
             return 1.0
@@ -739,10 +754,38 @@ class IslandAPI:
     def _show_window(self, visible):
         try:
             hwnd = self._get_hwnd()
+            if visible and self._game:        # 게임 중에는 다른 기능이 노치를 다시 보이게 하지 못한다
+                return
             if hwnd:
                 ctypes.windll.user32.ShowWindow(hwnd, SW_SHOWNOACTIVATE if visible else SW_HIDE)
         except Exception as e:
             log(f"_show_window error: {e!r}")
+
+    def _game_check(self, own_hwnd):
+        """게임 숨기기가 켜져 있으면 앞의 전체화면 앱이 게임(DirectX/OpenGL/Vulkan)인지 확인해 이름을 돌려준다."""
+        if not self._prefs.get("hideInGames") or gamewatch is None:
+            return ""
+        return gamewatch.foreground_game(own_hwnd, gamewatch.parse_names(self._prefs.get("gameAlways")),
+                                         gamewatch.parse_names(self._prefs.get("gameNever")))
+
+    def _on_game(self, name):
+        """게임이 앞에 생기면 노치를 숨기고(뒤 화면 캡처도 같이 멈춘다), 게임이 끝나면 되돌린다."""
+        try:
+            self._game = name or ""
+            hwnd = self._get_hwnd()
+            if not hwnd:
+                return
+            if self._game:
+                self._cancel_peek_hide()
+                ctypes.windll.user32.ShowWindow(hwnd, SW_HIDE)
+            else:
+                # 전체화면 숨김 모드로 이미 숨겨 둔 경우는 그 규칙을 따른다
+                if not (self._fullscreen and self._prefs.get("fullscreenMode") in ("hide", "hidepeek")):
+                    ctypes.windll.user32.ShowWindow(hwnd, SW_SHOWNOACTIVATE)
+                self._apply_desk()
+            log(f"Game {'detected: ' + self._game if self._game else 'gone'}; notch {'hidden' if self._game else 'shown'}.")
+        except Exception as e:
+            log(f"_on_game error: {e!r}")
 
     def _on_fullscreen(self, is_fullscreen):
         """전체화면 앱이 켜졌을 때의 동작(설정 fullscreenMode):
@@ -858,7 +901,7 @@ class IslandAPI:
                 threading.Thread(target=self.apply_ui_scale, daemon=True, name="ui-scale").start()
             if getattr(self, "_mon_key", None) is not None:      # 창이 이미 자리 잡은 뒤에만 (시작 중에는 on_shown 이 놓는다)
                 key = monitors.monitor_key(self._target_monitor())
-                if key != self._mon_key:
+                if key != self._mon_key or monitors.clamp_pos(self._prefs.get("notchPos")) != getattr(self, "_pos_applied", 0):
                     threading.Thread(target=self.recenter_window, daemon=True, name="move-notch").start()
         except Exception as e:
             log(f"_apply_prefs error: {e!r}")
@@ -914,6 +957,11 @@ class IslandAPI:
                 self._prefs.update_from_data(data)
                 self._apply_prefs()
                 self._push_event({"type": "prefs", "patch": patch})
+                try:   # 다음 폴링(최대 200ms)을 기다리지 않고 노치가 바로 가져가게 한다 (설정을 바꾸고 노치에 반영되기까지 한 박자 느리던 것)
+                    if webview.windows:
+                        webview.windows[0].evaluate_js("pollNow()")
+                except Exception:
+                    pass
                 if "lang" in (patch.get("settings") or {}) and self._settings_win is not None:      # 열려 있는 설정 창의 제목(작업 표시줄)도 새 언어로
                     try:
                         self._settings_win.set_title(self._settings_title())
@@ -1677,6 +1725,7 @@ class IslandAPI:
             if hwnd:
                 scale = float(dpr) if dpr else self._notch_scale()
                 h_phys = int(float(height or EXPANDED_HEIGHT) * scale)
+                self._custom_height = bool(height)       # 메뉴 때문에 일부러 키운 동안에는 창 크기 점검(_window_size_ok)이 높이를 보지 않는다
                 rc = wintypes.RECT()
                 ctypes.windll.user32.GetWindowRect(hwnd, ctypes.byref(rc))
                 ctypes.windll.user32.SetWindowPos(
@@ -1829,7 +1878,7 @@ class IslandAPI:
     def _top_center(self, mon, width_px):
         """모니터 mon 의 가로 가운데·맨 위에 폭 width_px(물리 픽셀) 창을 놓을 좌표. 모니터를 모르면 주 화면 기준."""
         if mon:
-            return monitors.centered_x(mon, width_px), mon["top"]
+            return monitors.placed_x(mon, width_px, self._prefs.get("notchPos"), width_px / float(EXPANDED_WIDTH)), mon["top"]
         return int((self._primary_screen().width * self._get_scale() - width_px) // 2), 0
 
     def get_monitors(self):
@@ -1852,7 +1901,8 @@ class IslandAPI:
                 x_phys, y_phys = self._top_center(mon, w_phys)
                 ctypes.windll.user32.SetWindowPos(hwnd, 0, x_phys, y_phys, w_phys, h_phys, SWP_NOZORDER | SWP_NOACTIVATE)
                 self._mon_key = monitors.monitor_key(mon)
-                log(f"Window placed on monitor {mon['number'] if mon else '?'} at ({x_phys}, {y_phys}).")
+                self._pos_applied = monitors.clamp_pos(self._prefs.get("notchPos"))
+                log(f"Window placed on monitor {mon['number'] if mon else '?'} at ({x_phys}, {y_phys}), scale {scale:.2f}, position {self._pos_applied}.")
             return {"status": "ok"}
         except Exception as e:
             return {"status": "error", "message": str(e)}
@@ -1863,12 +1913,30 @@ class IslandAPI:
         while self._running:
             time.sleep(3.0)
             try:
+                hwnd = self._get_hwnd()
                 key = monitors.monitor_key(self._target_monitor())
-                if key != getattr(self, "_mon_key", None) and self._get_hwnd():
+                if key != getattr(self, "_mon_key", None) and hwnd:
                     log("Monitor layout/choice changed; moving the notch.")
                     self.recenter_window()
+                elif hwnd and getattr(self, "_mon_key", None) is not None and not self._window_size_ok(hwnd):
+                    log("Window size does not match the expected size; fixing it.")
+                    self.apply_ui_scale()
             except Exception as e:
                 log(f"_monitor_watch error: {e!r}")
+
+    def _window_size_ok(self, hwnd):
+        """창의 실제 크기가 (CSS 크기 x 배율)과 맞는지. 시작 직후 배율이 잘못 잡혔을 때 스스로 바로잡기 위한 확인."""
+        try:
+            rc = wintypes.RECT()
+            ctypes.windll.user32.GetWindowRect(hwnd, ctypes.byref(rc))
+            scale = self._notch_scale()
+            if abs((rc.right - rc.left) - int(EXPANDED_WIDTH * scale)) > 2:
+                return False
+            if getattr(self, "_custom_height", False):       # 우클릭 메뉴가 열려 있어 창이 더 높다
+                return (rc.bottom - rc.top) >= int(EXPANDED_HEIGHT * scale) - 2
+            return abs((rc.bottom - rc.top) - int(EXPANDED_HEIGHT * scale)) <= 2
+        except Exception:
+            return True
 
     def toggle_click_through(self, enable: bool):
         try:
@@ -2020,7 +2088,7 @@ def main():
     mon = api._target_monitor()
     scale = api._get_scale()      # 시작 위치는 UI 크기 1.0 기준으로 만들고, 뜬 직후 apply_ui_scale 이 실제 배율로 맞춘다
     if mon:
-        x_center = int((monitors.centered_x(mon, int(EXPANDED_WIDTH * scale))) / scale)
+        x_center = int(monitors.placed_x(mon, int(EXPANDED_WIDTH * scale), api._prefs.get("notchPos"), scale) / scale)
         y_center = int(mon["top"] / scale)
         log(f"Target monitor {mon['number']} ({mon['device']}): {mon['width']}x{mon['height']} at ({mon['left']}, {mon['top']}); window x={x_center}, y={y_center}")
     else:

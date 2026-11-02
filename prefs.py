@@ -45,6 +45,11 @@ PY_DEFAULTS = {
     "glassNotch": "controls",   # 노치 리퀴드 글래스: off | controls(안의 버튼·타일만) | full(+본체가 뒤 화면을 비춤)
     "monitor": 0,               # 노치를 띄울 모니터의 식별 번호 (0 = 주 모니터, 기본). 그 번호가 없으면 주 모니터
     "uiScale": 100,             # 노치 크기 배율(%): 노치와 안의 모든 것이 함께 커지고 작아진다
+    "notchPos": 0,              # 노치 가로 위치: 16:9 기준 화면을 5등분한 칸 단위. -2(맨 왼쪽) -1(조금 왼쪽) 0(가운데, 기본) 1(조금 오른쪽) 2(맨 오른쪽)
+    "slimNotch": False,         # 접힌 큰 노치를 한 번 더 줄여, 화면 맨 위에 살짝 돌출된 가는 선만 남긴다 (마우스를 올리면 큰 노치가 펼쳐짐)
+    "hideInGames": True,        # DirectX/OpenGL/Vulkan 으로 그리는 전체화면 앱(게임)이 앞에 있으면 노치를 숨긴다
+    "gameAlways": "",           # 쉼표로 구분한 실행 파일 이름: 전체화면이면 그래픽 검사 없이 항상 게임으로 본다 (예: mygame.exe)
+    "gameNever": "",            # 쉼표로 구분한 실행 파일 이름: 전체화면이어도 게임으로 보지 않는다 (예: obs64.exe)
     "lang": "ko",
 }
 PRIORITIES = ("auto", "cider", "other")
@@ -156,6 +161,10 @@ class Prefs:
                 merged["monitor"] = max(0, min(32, int(merged.get("monitor", PY_DEFAULTS["monitor"]))))
             except Exception:
                 merged["monitor"] = PY_DEFAULTS["monitor"]
+            try:
+                merged["notchPos"] = max(-2, min(2, int(round(float(merged.get("notchPos", 0))))))
+            except Exception:
+                merged["notchPos"] = 0
             try:
                 merged["uiScale"] = max(80, min(200, int(round(float(merged.get("uiScale", 100))))))
             except Exception:

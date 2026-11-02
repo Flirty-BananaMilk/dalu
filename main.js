@@ -13,6 +13,12 @@ function bindAll(sel, handler) {
 function bindInput() {
   island.addEventListener('mouseenter', onIslandEnter);
   island.addEventListener('mouseleave', onIslandLeave);
+  // 슬림 상태: 화면 맨 위의 가는 선 둘레(#slimHit)에 마우스를 올리면 큰 노치가 펼쳐진다. 펼쳐진 뒤의 접힘은 노치(island)의 mouseleave 가 맡는다.
+  const slimHit = document.getElementById('slimHit');
+  if (slimHit) {
+    slimHit.addEventListener('mouseenter', onIslandEnter);
+    slimHit.addEventListener('mouseleave', () => { if (!isExpanded) { clearTimeout(enterTimer); enterTimer = null; } });
+  }
 
   // 페이지 전환: 도트 클릭 / 마우스 휠
   $('pageDots').addEventListener('click', (e) => {
@@ -119,14 +125,15 @@ function bindInput() {
   $('menuLyrics').addEventListener('click', () => { closeContextMenu(); toggleLyrics(); });
   $('menuSound').addEventListener('click', () => { closeContextMenu(); toggleSound(); });
   $('menuLang').addEventListener('click', () => { closeContextMenu(); toggleLang(); });
-  $('menuCompact').addEventListener('click', () => {
-    compactMode = !compactMode;   // 크기 계산이 compactMode 를 읽으므로 먼저 토글
-    store.settings.compact = compactMode;
+  $('menuSlim').addEventListener('click', () => {       // 슬림 모드 전환 (설정 › 화면 › 슬림 노치와 같은 설정)
+    store.settings.slimNotch = !store.settings.slimNotch;
     saveStoreSoon();
-    island.classList.toggle('compact', compactMode);
-    miniIdx = -1;
     closeContextMenu();
-    scheduleRegion();
+    // 슬림을 켜면 큰 노치를 접어 바로 슬림이 보이게 한다 (고정돼 있지 않을 때). 끄면 원래 접힌 모양으로 돌아간다.
+    if (store.settings.slimNotch && !isPinned) { isExpanded = false; clearTimeout(collapseTimer); collapseTimer = null; }
+    updateView();
+    scheduleRegion(true);
+    showToast(t(store.settings.slimNotch ? 'slimOnMsg' : 'slimOffMsg'));
   });
   let clickThroughActive = false;
   $('menuClickThrough').addEventListener('click', () => {

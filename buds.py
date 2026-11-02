@@ -46,6 +46,7 @@ EQ_PRESETS = (0, 1, 2, 3, 4, 5)
 EQ_CUSTOM = 7                 # '사용자' 프리셋: MSG_CUSTOM_EQ_SEND 로 곡선을 보낸 뒤 이 값을 고른다 (Buds3 Pro 로 확인: 고르면 상태 패킷 9번 자리가 7 이 된다)
 EQ_VALID = EQ_PRESETS + (EQ_CUSTOM,)
 EQ_BANDS = 9
+CUSTOM_EQ_ACK_WAIT = 0.05     # 곡선 전송 뒤 확인 응답을 기다리는 시간(초): 응답이 오지 않는 메시지라 짧게 (오면 바로 끝난다)
 EQ_GAIN_MAX = 10              # 밴드마다 -10 ~ +10
 NC_ONE_BYTE = 28              # 상태 패킷에서 '한쪽만 착용해도 소음 제어' 가 있는 자리: Buds2(개정 3 이상)·Buds2 Pro·Buds3·Buds3 Pro·FE 계열 공통 (GalaxyBudsClient 의 디코더와 같고, Buds3 Pro 로 켜고 끄며 확인)
 GAME_BYTE = 8                 # Buds Live 이후 상태 패킷에서 게이밍 모드(음질 동기/저지연) 자리 (Buds3 Pro 로 확인)
@@ -347,7 +348,8 @@ class BudsService:
         if len(vals) != EQ_BANDS:
             return {"status": "error", "message": "need 9 bands"}
         vals = [max(-EQ_GAIN_MAX, min(EQ_GAIN_MAX, v)) for v in vals]
-        r = self.request(MSG_CUSTOM_EQ_SEND, bytes([EQ_BANDS]) + bytes(v & 0xFF for v in vals))
+        # 곡선 전송(0x89)에는 이어버드가 확인 응답을 보내지 않는다. 예전에는 ACK_TIMEOUT(3초)를 다 기다려서 슬라이더를 놓은 뒤 소리가 바뀌기까지 3초 넘게 걸렸다(실제 Buds3 Pro 로 측정: 한 번에 약 3.0초).
+        r = self.request(MSG_CUSTOM_EQ_SEND, bytes([EQ_BANDS]) + bytes(v & 0xFF for v in vals), ack_timeout=CUSTOM_EQ_ACK_WAIT)
         if r.get("status") != "ok":
             return r
         out = self.set_equalizer(EQ_CUSTOM)
@@ -389,12 +391,13 @@ class BudsService:
             fut.cancel()
             return {"status": "error", "message": f"timeout or error: {e!r}"}
 
-    def request(self, msg_id, payload=b"", reply=None, timeout=CONNECT_TIMEOUT + ACK_TIMEOUT * 2 + 3):
+    def request(self, msg_id, payload=b"", reply=None, timeout=CONNECT_TIMEOUT + ACK_TIMEOUT * 2 + 3, ack_timeout=ACK_TIMEOUT):
         """메시지 하나를 보내고 확인 응답(ack)과, reply 를 주면 같은 번호의 응답 본문(hex)을 기다린다.
-        {'status': 'ok'|'error', 'ack': 값|None, 'reply': hex|None}. 새 기능을 이어버드로 확인할 때와 설정 창에서 쓴다."""
+        {'status': 'ok'|'error', 'ack': 값|None, 'reply': hex|None}. 새 기능을 이어버드로 확인할 때와 설정 창에서 쓴다.
+        ack_timeout: 확인 응답을 기다리는 최대 시간(초). 응답을 보내지 않는 메시지는 이 시간을 다 기다린 뒤 ok 가 된다."""
         if not self._running or self._loop is None:
             return {"status": "error", "message": "buds service not running"}
-        fut = asyncio.run_coroutine_threadsafe(self._transact(msg_id, bytes(payload), reply), self._loop)
+        fut = asyncio.run_coroutine_threadsafe(self._transact(msg_id, bytes(payload), reply, ack_timeout), self._loop)
         try:
             return fut.result(timeout)
         except Exception as e:
@@ -819,7 +822,7 @@ class BudsService:
         except Exception:
             pass
 
-    async def _transact(self, msg_id, payload, reply):
+    async def _transact(self, msg_id, payload, reply, ack_timeout=ACK_TIMEOUT):
         async with self._cmd_lock:
             if self._control_addr is None:
                 return {"status": "error", "message": "no Samsung control channel (not paired / unsupported)"}
@@ -847,7 +850,7 @@ class BudsService:
                                 out["ack"] = ack.result()
                         else:
                             try:
-                                out["ack"] = await asyncio.wait_for(ack, ACK_TIMEOUT)
+                                out["ack"] = await asyncio.wait_for(ack, ack_timeout)
                             except asyncio.TimeoutError:
                                 pass
                     finally:

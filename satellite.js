@@ -36,12 +36,46 @@ function satNotifOpen() {
   if (api && api.open_notification_center) api.open_notification_center();
   satNotifDismiss();
 }
-// 자리: r = 오른쪽(먼저), l = 왼쪽(나중). id = 지금 그 자리에 있는 항목 (우선순위 순으로 채운다)
+// 자리: 보통은 r = 오른쪽(먼저), l = 왼쪽(나중). id = 지금 그 자리에 있는 항목 (우선순위 순으로 채운다)
+// 노치를 화면 맨 오른쪽/왼쪽에 두면(설정 notchPos = 2 / -2) 바깥쪽에는 자리가 없어서, 두 보조 노치를 모두 안쪽에 둔다:
+// 오른쪽 끝이면 l(가까운 쪽) + l2(그 바깥), 왼쪽 끝이면 r + r2. r2/l2 는 처음에 r/l 을 복제해서 만든다(아래 satCloneSlots).
 const satSlots = [
-  { side: 'r', ids: { sat: 'sat', layer: 'gooLayer', drop: 'gooDrop', neck: 'gooNeck', wrap: 'satWrap' }, delay: 0 },
-  { side: 'l', ids: { sat: 'satL', layer: 'gooLayerL', drop: 'gooDropL', neck: 'gooNeckL', wrap: 'satWrapL' }, delay: SAT_SECOND_MS },
+  { name: 'r', side: 'r', rank: 0, ids: { sat: 'sat', layer: 'gooLayer', drop: 'gooDrop', neck: 'gooNeck', wrap: 'satWrap' }, delay: 0 },
+  { name: 'l', side: 'l', rank: 0, ids: { sat: 'satL', layer: 'gooLayerL', drop: 'gooDropL', neck: 'gooNeckL', wrap: 'satWrapL' }, delay: SAT_SECOND_MS },
+  { name: 'r2', side: 'r', rank: 1, ids: { sat: 'sat_r2', layer: 'gooLayer_r2', drop: 'gooDrop_r2', neck: 'gooNeck_r2', wrap: 'satWrap_r2' }, delay: SAT_SECOND_MS },
+  { name: 'l2', side: 'l', rank: 1, ids: { sat: 'satL_l2', layer: 'gooLayerL_l2', drop: 'gooDropL_l2', neck: 'gooNeckL_l2', wrap: 'satWrapL_l2' }, delay: SAT_SECOND_MS },
 ];
-for (const s of satSlots) Object.assign(s, { id: '', items: [], key: '', shown: false, width: 0, gooOffTimer: null, keepUntil: 0, keepTimer: null, px: -34 });
+for (const s of satSlots) Object.assign(s, { id: '', items: [], key: '', shown: false, width: 0, gooOffTimer: null, keepUntil: 0, keepTimer: null, px: -34, shownPx: 16 });
+
+// 같은 쪽에 두 번째 보조 노치를 놓기 위해 r / l 의 레이어(물줄기·겉면)를 복제한다 (id 는 접미사를 붙여 겹치지 않게)
+function satCloneSlots() {
+  for (const [src, dst, sfx] of [['gooLayer', 'gooLayer_r2', '_r2'], ['satWrap', 'satWrap_r2', '_r2'], ['gooLayerL', 'gooLayerL_l2', '_l2'], ['satWrapL', 'satWrapL_l2', '_l2']]) {
+    const el = document.getElementById(src);
+    if (!el || document.getElementById(dst)) continue;
+    const c = el.cloneNode(true);
+    c.id = dst;
+    c.querySelectorAll('[id]').forEach((n) => { n.id = n.id + sfx; });
+    el.parentNode.insertBefore(c, el.nextSibling === null ? null : el.nextSibling);
+  }
+}
+satCloneSlots();
+
+// 노치 가로 위치(설정 notchPos: -2 맨 왼쪽 ... 2 맨 오른쪽). 맨 끝에서는 보조 노치를 모두 안쪽에 둔다.
+const satPos = () => Math.max(-2, Math.min(2, Math.round(Number(store.settings.notchPos) || 0)));
+function satLayout() {
+  const by = (n) => satSlots.find((s) => s.name === n);
+  const p = satPos();
+  if (p >= 2) return [by('l'), by('l2')];
+  if (p <= -2) return [by('r'), by('r2')];
+  return [by('r'), by('l')];
+}
+// 이 자리의 보조 노치가 자리 잡았을 때 큰 노치 옆면에서 안쪽 끝까지의 거리: 같은 쪽의 안쪽 보조 노치 뒤에 놓이는 자리(rank 1)는 그만큼 더 바깥이다
+const SAT_STACK_GAP = 8;
+function satShownPxOf(slot) {
+  if (!slot.rank) return SAT_GAP;
+  const near = satSlots.find((s) => s.side === slot.side && !s.rank);
+  return near && near.shown ? SAT_GAP + near.width + SAT_STACK_GAP : SAT_GAP;
+}
 function satEls(slot) {
   const e = {};
   for (const k of Object.keys(slot.ids)) e[k] = document.getElementById(slot.ids[k]);
@@ -178,14 +212,22 @@ function renderSat(nextView) {
 
   const cands = satCandidates(v, settled);
   const split = satSplit(cands);
-  satSlots.forEach((s, i) => { s.items = split[i].map((c) => c.id); s.id = s.items[0] || ''; });
+  const lay = satLayout();          // [먼저 나오는 자리, 나중에 나오는 자리] (노치 위치에 따라 r/l 이거나 같은 쪽의 안쪽·바깥)
+  satSlots.forEach((s) => { s.items = []; s.id = ''; });
+  lay.forEach((s, i) => { s.items = split[i].map((c) => c.id); s.id = s.items[0] || ''; });
   let nextWake = 0;
   let anyChanged = false;
-  satSlots.forEach((slot, i) => {
-    const slotReady = satReadyAt + satScale(i === 1 && split[0].length === 0 ? 0 : slot.delay);      // 왼쪽은 오른쪽이 나오고 큰 노치가 흔들리는 시간을 기다린다 — 오른쪽이 없으면 기다릴 이유가 없다
+  satSlots.forEach((slot) => { slot.shownPx = satShownPxOf(slot); });
+  satSlots.forEach((slot) => {
+    const i = lay.indexOf(slot);
+    if (i < 0) { if (satRenderSlot(slot, [], v, g, h)) anyChanged = true; return; }       // 이 위치에서 쓰지 않는 자리는 비운다
+    const slotReady = satReadyAt + satScale(i === 1 && split[0].length === 0 ? 0 : (i === 1 ? SAT_SECOND_MS : 0));      // 두 번째 자리는 첫 번째가 나오고 큰 노치가 흔들리는 시간을 기다린다 — 첫 번째가 없으면 기다릴 이유가 없다
     const slotSettled = now >= slotReady;
     if (split[i].length && !slotSettled) nextWake = Math.max(nextWake, slotReady - now + 30);
     if (satRenderSlot(slot, slotSettled ? split[i] : [], v, g, h)) anyChanged = true;
+  });
+  satSlots.forEach((slot) => {          // 자리 잡은 보조 노치의 거리가 바뀌면(안쪽 보조 노치의 폭이 바뀜) 부드럽게 옮긴다
+    if (slot.shown && !satAnims.has(slot) && Math.abs(slot.px - slot.shownPx) > 0.5) { satSetPx(slot, slot.shownPx); anyChanged = true; }
   });
   if (satCollapsedView(v) && !settled && !satReadyTimer) nextWake = Math.max(nextWake, satReadyAt - now + 30);
   if (nextWake > 0 && !satReadyTimer) satReadyTimer = setTimeout(() => { satReadyTimer = null; renderSat(); }, nextWake);
@@ -232,7 +274,7 @@ function satRenderSlot(slot, items, v, g, h) {
   }
   e.sat.classList.toggle('show', show);
   e.drop.classList.toggle('show', show);
-  if (changed) satDroplet(show ? 'out' : 'in', slot, v === 'mini' || v === 'idle' || v === 'pet');      // 노치가 펼쳐지는 중에 들어갈 때는 큰 노치를 끌거나 흔들지 않는다(보조 노치만 들어간다)
+  if (changed) satDroplet(show ? 'out' : 'in', slot, !slot.rank && (v === 'mini' || v === 'idle' || v === 'pet'));      // 노치가 펼쳐지는 중에 들어갈 때는 큰 노치를 끌거나 흔들지 않는다(보조 노치만 들어간다)
   return changed || show;
 }
 
@@ -261,6 +303,15 @@ const _lerp = (a, b, t) => a + (b - a) * t;
 const _smooth = (t) => { t = _c01(t); return t * t * (3 - 2 * t); };
 const _inQ = (t) => t * t;
 const _outQ = (t) => 1 - (1 - t) * (1 - t);
+
+// 같은 쪽의 바깥 자리(rank 1)는 더 멀리 나가야 한다: 계획은 그대로 'q'(큰 노치 기준 거리)로 짜고, 실제 거리 p 는 q 에 off 를 서서히 더해 구한다
+const satMapP = (q, off) => (off ? q + off * _smooth((q - SAT_PX_HIDDEN) / (SAT_PX_SHOWN - SAT_PX_HIDDEN)) : q);
+function satUnmapP(p, off) {
+  if (!off) return p;
+  let q = p;
+  for (let i = 0; i < 8; i++) q = p - off * _smooth((q - SAT_PX_HIDDEN) / (SAT_PX_SHOWN - SAT_PX_HIDDEN));
+  return q;
+}
 
 // u(0~1) -> { p, pull, thick }
 function satPlanOut(p0) {
@@ -322,11 +373,14 @@ function satNeckReset(slot) {
 function satDroplet(kind, slot, sway) {
   const e = satEls(slot);
   if (!e.layer) return;
-  const final = kind === 'out' ? SAT_PX_SHOWN : SAT_PX_HIDDEN;
+  const off = Math.max(0, (slot.shownPx || SAT_PX_SHOWN) - SAT_PX_SHOWN);          // 같은 쪽 바깥 자리: 더 멀리 나간다
+  const final = kind === 'out' ? SAT_PX_SHOWN + off : SAT_PX_HIDDEN;
   if (typeof PREF !== 'undefined' && PREF.animOff) { satAnims.delete(slot); satSetPx(slot, final); satNeckReset(slot); return; }
-  const p0 = Number.isFinite(slot.px) ? slot.px : (kind === 'out' ? SAT_PX_HIDDEN : SAT_PX_SHOWN);
-  const plan = kind === 'out' ? satPlanOut(p0) : satPlanIn(p0);
-  satAnims.set(slot, { plan, t0: performance.now(), total: SAT_DROP_MS[kind] / ((typeof PREF !== 'undefined' && PREF.rate) || 1), kind, sway: sway !== false });
+  const p0 = Number.isFinite(slot.px) ? slot.px : (kind === 'out' ? SAT_PX_HIDDEN : SAT_PX_SHOWN + off);
+  const q0 = satUnmapP(p0, off);
+  const base = kind === 'out' ? satPlanOut(q0) : satPlanIn(q0);
+  const plan = off ? (u) => { const r = base(u); return Object.assign({}, r, { p: satMapP(r.p, off) }); } : base;
+  satAnims.set(slot, { plan, t0: performance.now(), total: SAT_DROP_MS[kind] / ((typeof PREF !== 'undefined' && PREF.rate) || 1), kind, sway: sway !== false, final });
   if (!satRaf) satRaf = requestAnimationFrame(satStep);
 }
 
@@ -380,7 +434,7 @@ function satStep(now) {
     }
   }
   for (const [slot, st] of res) {
-    if (st.u >= 1) { satAnims.delete(slot); satSetPx(slot, st.a.kind === 'out' ? SAT_PX_SHOWN : SAT_PX_HIDDEN); satNeckReset(slot); }
+    if (st.u >= 1) { satAnims.delete(slot); satSetPx(slot, st.a.final); satNeckReset(slot); }
   }
   if (satAnims.size) { satRaf = requestAnimationFrame(satStep); return; }
   satRaf = 0;
@@ -398,15 +452,21 @@ function satStep(now) {
 // 클릭 가능 영역(SetWindowRgn)에 보조 노치를 포함시킨다 (큰 노치 가운데 기준 좌우로 얼마나 나가는지)
 // 들어가는 중(slot.keepUntil 전까지)에도 영역을 유지한다: 큰 노치가 펼쳐지며 영역이 먼저 줄어들면, 아직 노치 쪽으로 움직이는 물방울이 영역 경계에 잘린다.
 const satHolds = (s) => s.shown || performance.now() < (s.keepUntil || 0);
+// side 쪽에서 큰 노치 옆면으로부터 가장 멀리 나가는 거리 (없으면 -1)
+function satExtent(side) {
+  let m = -1;
+  for (const s of satSlots) if (s.side === side && satHolds(s)) m = Math.max(m, (s.shownPx || SAT_GAP) + s.width);
+  return m;
+}
 function satRegionRight(g, pad) {
-  const s = satSlots[0];
-  if (!satHolds(s)) return 0;
-  return (window.innerWidth + g.w) / 2 + SAT_GAP + s.width + pad;
+  const ext = satExtent('r');
+  if (ext < 0) return 0;
+  return (window.innerWidth + g.w) / 2 + ext + pad;
 }
 function satRegionLeft(g, pad) {
-  const s = satSlots[1];
-  if (!satHolds(s)) return Infinity;
-  return (window.innerWidth - g.w) / 2 - SAT_GAP - s.width - pad;
+  const ext = satExtent('l');
+  if (ext < 0) return Infinity;
+  return (window.innerWidth - g.w) / 2 - ext - pad;
 }
 
 function initSatellite() {

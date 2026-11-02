@@ -191,6 +191,20 @@ class FrameStream:
             pass
 
 
+def is_blank(rgb, tol=6):
+    """거의 한 가지 색인 화면(부팅 직후나 그래픽 드라이버가 준비되기 전에 찍힌 빈 화면)인지. 몇 군데만 표본으로 본다."""
+    if not rgb:
+        return True
+    step = max(1, len(rgb) // 997)
+    lo, hi = 255, 0
+    for b in rgb[::step]:
+        if b < lo:
+            lo = b
+        if b > hi:
+            hi = b
+    return (hi - lo) <= tol
+
+
 class DeskCapture:
     """노치 뒤 화면을 주기적으로 찍어 push(data_url) 로 넘긴다. 바뀐 게 없으면 넘기지 않는다."""
 
@@ -208,6 +222,7 @@ class DeskCapture:
         self._frozen = False
         self._frozen_until = 0.0
         self._thaw_timer = None
+        self._t_first = None          # '표시'에서 첫 화면이 온 시각
         self._visible = False        # 설정 '캡처·영상 녹화에서 노치: 표시' — 캡처 모드를 계속 켜 둔다(뒤 화면은 정지 화면)
         self.supported = True
 
@@ -224,6 +239,7 @@ class DeskCapture:
             self._excluded_hwnd = hwnd
             self._on = True
             self._last = None
+            self._t_first = None
             self._t_on = time.perf_counter()
             self._stream = FrameStream()
             self._thread = threading.Thread(target=self._loop, daemon=True, name="desk-capture")
@@ -273,8 +289,7 @@ class DeskCapture:
         if not self._on or not self._excluded_hwnd:
             return
         if on:
-            if self._last is not None:
-                self._apply_visible()
+            self._t_first = None          # 다음 화면부터 (빈 화면이 아닌지 보고) 얼린다
         else:
             self.thaw()
 
@@ -316,6 +331,18 @@ class DeskCapture:
             return None
         return "data:image/png;base64," + base64.b64encode(to_png(rgb, self.OUT_W, self.OUT_H)).decode("ascii")
 
+    BLANK_GRACE = 8.0                # '표시'에서 빈 화면만 계속 올 때 이 시간(초)이 지나면 그대로 얼린다 (바탕이 정말 한 가지 색일 수도 있다)
+
+    def _maybe_freeze_visible(self, rgb, now):
+        """'표시' 설정: 첫 화면이 오면 얼려서 노치를 캡처에 보이게 한다. 다만 그 화면이 거의 한 가지 색(빈 화면)이면 얼리지 않고 진짜 화면이 올 때까지
+        기다린다 — 빈 화면을 얼리면 리퀴드 글래스가 영영 빈 배경을 비춘다(다른 PC 에서 '표시'일 때 글래스가 안 먹던 원인)."""
+        if not (self._visible and self._on and self._excluded_hwnd and not self._frozen) or rgb is None:
+            return
+        if self._t_first is None:
+            self._t_first = now
+        if not is_blank(rgb) or now - self._t_first >= self.BLANK_GRACE:
+            self._apply_visible()
+
     ACTIVE_GAP = 1 / 60.0            # 화면이 움직이는 동안의 목표 간격 (60fps)
     IDLE_GAP = 0.1                   # 한동안 안 바뀌면 10fps 로 낮춰 CPU 를 아낀다
     IDLE_AFTER = 1.0
@@ -339,12 +366,12 @@ class DeskCapture:
                         stream.publish(png)
                     first = self._last is None
                     self._last = True
-                    if first and self._visible:
-                        self._apply_visible()
                     if first and stream is not None:
                         self._push(stream.url)          # 화면에 스트림 주소를 한 번 알린다 (이후 프레임은 브라우저가 직접 받는다)
                         self._log(f"deskcap: streaming at {stream.url.rsplit('/', 1)[0]}/... first frame after {t0 - self._t_on:.2f}s ({len(png)} bytes)")
                     self.stats["frames"] += 1
+                if self._visible and rgb is not None:
+                    self._maybe_freeze_visible(rgb, t0)           # 새 화면이 없어도(빈 화면이 계속 와도) 시간이 지나면 얼린다
                 if self._stream is not None and t0 - self._url_at > 3.0:
                     self._url_at = t0
                     self._push(self._stream.url)        # 화면이 새로 고쳐졌어도 다시 연결되도록 주기적으로 알린다 (같은 주소면 화면이 무시한다)

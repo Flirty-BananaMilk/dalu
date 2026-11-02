@@ -122,7 +122,10 @@ const LG = (() => {
   function lens(el, opts) {
     opts = opts || {};
     const apply = () => {
-      const r = el.getBoundingClientRect();
+      // 크기는 레이아웃 크기(offsetWidth/Height)로 잰다: getBoundingClientRect 는 등장 연출의 scale 같은 변형이 걸려 있는 동안 줄어든 크기를 돌려줘서,
+      // 필터가 버튼보다 작게(예: 88x41 버튼에 50x24) 만들어져 그 크기만큼만 굴절되는 네모 조각이 생겼다. 변형은 ResizeObserver 에도 잡히지 않아 고쳐지지 않았다.
+      const bb = el.getBoundingClientRect();
+      const r = { width: el.offsetWidth || bb.width, height: el.offsetHeight || bb.height };
       if (r.width < 8 || r.height < 8) return;
       const o = Object.assign({}, opts);
       if (o.radius == null) {                                    // 요소의 border-radius 를 그대로 따른다 (50% 도 처리)

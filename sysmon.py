@@ -289,38 +289,43 @@ def rect_covers(win, mon):
 
 def is_fullscreen_foreground(own_hwnd=None):
     """전경 창이 모니터 전체를 덮는 전체화면 앱인지. 바탕화면/작업표시줄/자기 자신은 제외한다."""
+    return bool(fullscreen_foreground_hwnd(own_hwnd))
+
+
+def fullscreen_foreground_hwnd(own_hwnd=None):
+    """is_fullscreen_foreground 와 같은 판정이되, 전체화면 앱이면 그 창 핸들을 돌려준다(아니면 0)."""
     try:
         hwnd = user32.GetForegroundWindow()
         if not hwnd or hwnd == own_hwnd:
-            return False
+            return 0
         cls = ctypes.create_unicode_buffer(64)
         user32.GetClassNameW(hwnd, cls, 64)
         if cls.value in _SHELL_CLASSES:
-            return False
+            return 0
         rc = wintypes.RECT()
         if not user32.GetWindowRect(hwnd, ctypes.byref(rc)):
-            return False
+            return 0
         mi = _MONITORINFO()
         mi.cbSize = ctypes.sizeof(mi)
         mon = user32.MonitorFromWindow(hwnd, 2)   # MONITOR_DEFAULTTONEAREST
         if not mon or not user32.GetMonitorInfoW(mon, ctypes.byref(mi)):
-            return False
+            return 0
         m = mi.rcMonitor
         if not rect_covers((rc.left, rc.top, rc.right, rc.bottom), (m.left, m.top, m.right, m.bottom)):
-            return False
+            return 0
         # 노치가 다른 모니터에 있으면 이 전체화면 앱은 노치를 가리지 않는다
         if own_hwnd:
             own_mon = user32.MonitorFromWindow(own_hwnd, 2)
             if own_mon and own_mon != mon:
-                return False
+                return 0
         # 작업표시줄을 숨겨 둔 환경의 '최대화' 일반 창(제목 표시줄 있음)은 전체화면이 아니다
         WS_CAPTION = 0x00C00000
         style = user32.GetWindowLongW(hwnd, -16)
         if user32.IsZoomed(hwnd) and (style & WS_CAPTION) == WS_CAPTION:
-            return False
-        return True
+            return 0
+        return hwnd
     except Exception:
-        return False
+        return 0
 
 
 # ----------------------------------------------------------------------
@@ -350,12 +355,14 @@ class SysMonitor:
 
     # 항목별 점검 주기(초)
     PERIODS = {'caps': 0.15, 'num': 0.15, 'scroll': 0.15, 'mediakeys': 0.0, 'lang': 0.4, 'volume': 0.15, 'device': 1.5, 'brightness': 1.0,
-               'power': 2.0, 'online': 2.0, 'fullscreen': 0.5}
+               'power': 2.0, 'online': 2.0, 'fullscreen': 0.5, 'game': 1.0}
     BATTERY_LOW = 20
     BATTERY_RECOVER = 25
 
-    def __init__(self, push, on_fullscreen=None, own_hwnd=None, readers=None):
+    def __init__(self, push, on_fullscreen=None, own_hwnd=None, readers=None, on_game=None, game_check=None):
         self._push = push
+        self._on_game = on_game          # on_game(name): 게임이 앞에 생기면 실행 파일 이름, 사라지면 ''
+        self._game_check = game_check    # game_check(own_hwnd) -> 이름 또는 ''
         self._on_fullscreen = on_fullscreen
         self._own_hwnd = own_hwnd or (lambda: None)
         self.readers = readers or default_readers()
@@ -483,3 +490,9 @@ class SysMonitor:
             if self._changed('fullscreen', v) or ('fullscreen_sent' not in self._prev):
                 self._prev['fullscreen_sent'] = True
                 self._on_fullscreen(v)
+
+        if self._on_game and self._game_check and self._due('game', now):
+            g = self._game_check(self._own_hwnd()) or ''
+            if self._changed('game', g) or ('game_sent' not in self._prev):
+                self._prev['game_sent'] = True
+                self._on_game(g)
