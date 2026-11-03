@@ -179,7 +179,7 @@ function t(key, params) {
 const DEFAULT_STORE = {
   settings: {
     lang: 'ko', lyricsOn: true, sound: true, compact: false,
-    clock24: true, clockSeconds: false, compactClock: true, satellite: 'full', glassNotch: 'controls', glassStrength: 100, glassRim: true, winNotify: false, winNotifyIgnore: '', uiScale: 100, setAnim: true, setAnimSpeed: 100, budsWatch: true,
+    clock24: true, clockSeconds: false, compactClock: true, satellite: 'full', glassNotch: 'controls', glassStrength: 100, glassClear: 50, glassRim: true, winNotify: false, winNotifyIgnore: '', uiScale: 100, setAnim: true, setAnimSpeed: 100, budsWatch: true,
     wordSync: true, lyricSize: 100, lyricGlow: true,
     smtcOn: true, mediaPriority: 'auto', extLyrics: true, extApple: true, extNetease: true, extLrclib: true,
     visualizer: true, vizGain: 100, artGlow: true, glowStrength: 100,

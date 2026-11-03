@@ -28,6 +28,12 @@ function applyPrefs() {
   root.dataset.theme = ['glass', 'tint'].includes(s.theme) ? s.theme : 'black';
   root.dataset.glow = s.lyricGlow ? '1' : '0';
   const gmode = ['off', 'controls', 'full'].includes(s.glassNotch) ? s.glassNotch : 'controls';
+  { // 글래스 투명도(0~100, 기본 50 = 지금까지의 모양): 어두운 막의 짙기(--gd)와 뒤 화면의 밝기(--gbr)에 곱한다. 위쪽 검정 띠는 그대로.
+    const t = clampN(s.glassClear, 0, 100, 50);
+    const lo = t <= 50;
+    root.style.setProperty('--gd', (lo ? 1.6 - 0.6 * (t / 50) : 1 - 0.8 * ((t - 50) / 50)).toFixed(3));
+    root.style.setProperty('--gbr', (lo ? 0.7 + 0.3 * (t / 50) : 1 + 0.35 * ((t - 50) / 50)).toFixed(3));
+  }
   root.dataset.rim = s.glassRim === false ? 'off' : 'on';      // 리퀴드 글래스 '전체'의 노치 테두리 선(끄면 유리만 보인다)
   if (typeof applyNotchGlass === 'function') { if (gmode !== notchGlassMode) applyNotchGlass(gmode); else refreshNotchGlassStrength(); }
   root.style.setProperty('--dkh', dockH() + 'px');
