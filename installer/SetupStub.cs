@@ -38,6 +38,20 @@ static class Setup
     {
         bool quiet = false;
         foreach (string a in args) if (string.Equals(a, "-Quiet", StringComparison.OrdinalIgnoreCase)) quiet = true;
+        // 설치/제거가 겹쳐 돌지 않게 한다(Setup.exe 를 두 번 눌렀거나, 제거 중에 다시 설치할 때). 제거 스크립트도 같은 이름의 잠금을 쓴다.
+        Mutex lockMutex = null;
+        bool owned = false;
+        try
+        {
+            lockMutex = new Mutex(false, @"Local\Dalu-Setup-Uninstall");
+            try { owned = lockMutex.WaitOne(0); } catch (AbandonedMutexException) { owned = true; }
+        }
+        catch (Exception) { owned = true; }      // 잠금을 만들지 못해도 설치 자체는 막지 않는다
+        if (!owned)
+        {
+            if (!quiet) MessageBox.Show(T("다른 설치 또는 제거가 이미 진행 중이에요. 끝난 뒤에 다시 실행해 주세요.", "Another install or uninstall of Dalu is already running. Please try again when it has finished.", "已有另一个 Dalu 安装或卸载正在进行。请等它结束后再试。", "別の Dalu のインストールまたはアンインストールがすでに実行中です。終わってからもう一度実行してください。"), "Dalu Setup", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return 2;
+        }
         string work = Path.Combine(Path.GetTempPath(), "Dalu-" + Guid.NewGuid().ToString("N").Substring(0, 8));
         int code = 0;
         string error = null;
@@ -83,7 +97,7 @@ static class Setup
                 ZipFile.ExtractToDirectory(zip, dir);
                 File.Delete(zip);
                 string script = Path.Combine(Path.Combine(dir, "Dalu"), "install.ps1");
-                StringBuilder sb = new StringBuilder("-NoProfile -ExecutionPolicy Bypass -File " + Quote(script));
+                StringBuilder sb = new StringBuilder("-NoProfile -ExecutionPolicy Bypass -File " + Quote(script) + " -FromSetup");
                 foreach (string a in args) sb.Append(' ').Append(Quote(a));
                 if (form != null) form.Invoke((MethodInvoker)delegate { label.Text = T("설치하는 중...", "Installing...", "正在安装…", "インストール中…"); form.Hide(); });
                 ProcessStartInfo psi = new ProcessStartInfo("powershell.exe", sb.ToString());
@@ -111,6 +125,7 @@ static class Setup
         worker.Start();
         if (form != null) Application.Run(form);
         worker.Join();
+        try { if (lockMutex != null) lockMutex.ReleaseMutex(); } catch (Exception) { }
         if (error != null && !quiet)
             MessageBox.Show(T("설치 파일을 처리하지 못했어요: ", "Could not process the installer: ", "无法处理安装文件：", "インストールファイルを処理できませんでした：") + error, "Dalu Setup", MessageBoxButtons.OK, MessageBoxIcon.Error);
         return code;

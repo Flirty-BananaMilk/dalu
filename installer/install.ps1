@@ -10,7 +10,10 @@ param(
     [switch]$Autostart,        # Windows 시작 시 자동 실행 (대화형에서는 묻는다)
     [switch]$NoLaunch,         # 설치 후 바로 실행하지 않는다
     [switch]$Quiet,            # 대화상자 없이 설치 (자동 실행은 -Autostart 로만 켠다)
-    [switch]$NoWebView2Check   # WebView2 런타임 확인/설치를 건너뛴다
+    [switch]$NoWebView2Check,  # WebView2 런타임 확인/설치를 건너뛴다
+    [switch]$FromSetup,        # Setup.exe 가 넘긴다: 중복 실행 잠금은 Setup.exe 가 이미 잡고 있다
+    [switch]$Uninstall,        # 설치하지 않고, 이미 설치된 Dalu 를 제거한다 (Setup.exe -Uninstall)
+    [string]$LockName = 'Local\Dalu-Setup-Uninstall'   # 설치/제거가 동시에 돌지 않게 하는 이름 있는 잠금 (시험용으로만 바꾼다)
 )
 $ErrorActionPreference = 'Stop'
 $Src = $PSScriptRoot
@@ -24,11 +27,50 @@ function Log($m) { try { Add-Content -Path $Log -Value ("[{0}] {1}" -f (Get-Date
 Add-Type -AssemblyName PresentationFramework
 function Say($text, $title, $buttons = 'OK', $icon = 'Information') {
     if ($Quiet) { return 'Yes' }
+    if ($env:DALU_SETUP_ANSWER) { return $env:DALU_SETUP_ANSWER }       # 자동 시험용: 대화상자 대신 이 답을 돌려준다
     return [System.Windows.MessageBox]::Show($text, $title, $buttons, $icon).ToString()
 }
 Log "install start: $InstallDir"
 
+# --- 설치/제거가 이미 돌고 있으면(두 번 눌렀거나, 제거 중이면) 겹쳐 실행하지 않는다. Setup.exe 로 들어온 경우는 Setup.exe 가 잠금을 잡고 있다.
+if (-not $FromSetup) {
+    $script:LockMutex = New-Object System.Threading.Mutex($false, $LockName)
+    $got = $false
+    try { $got = $script:LockMutex.WaitOne(0) } catch [System.Threading.AbandonedMutexException] { $got = $true }
+    if (-not $got) {
+        Log 'another install/uninstall is running; exit'
+        $null = Say (T "다른 설치 또는 제거가 이미 진행 중이에요. 끝난 뒤에 다시 실행해 주세요." "Another install or uninstall of Dalu is already running. Please try again when it has finished." "已有另一个 Dalu 安装或卸载正在进行。请等它结束后再试。" "別の Dalu のインストールまたはアンインストールがすでに実行中です。終わってからもう一度実行してください。") $AppName 'OK' 'Information'
+        exit 2
+    }
+}
+
 try {
+    # --- 이미 설치돼 있나? (제거 프로그램 등록에 적힌 위치 먼저, 없으면 기본 위치) 다른 위치를 지정하지 않았다면 같은 자리에 업데이트해서 두 벌이 생기지 않게 한다
+    $existing = $null
+    try {
+        $rk = Join-Path $RegistryRoot $UninstallId
+        if (Test-Path $rk) { $loc = (Get-ItemProperty -Path $rk -ErrorAction Stop).InstallLocation; if ($loc -and (Test-Path (Join-Path $loc 'app\dalu.py'))) { $existing = $loc } }
+    } catch {}
+    if (-not $existing -and (Test-Path (Join-Path $InstallDir 'app\dalu.py'))) { $existing = $InstallDir }
+    if ($existing -and -not $PSBoundParameters.ContainsKey('InstallDir')) { $InstallDir = $existing }
+    Log "existing install: $existing"
+
+    function Start-Removal {
+        $un = Join-Path $existing 'uninstall.ps1'
+        if (-not (Test-Path $un)) { throw (T "제거 프로그램을 찾지 못했어요. 설정 › 앱 에서 제거해 주세요." "Could not find the uninstaller. Please remove it from Settings > Apps." "找不到卸载程序。请在 设置 › 应用 中卸载。" "アンインストーラーが見つかりません。設定 › アプリ から削除してください。") }
+        $q = { param($v) '"' + $v + '"' }
+        $ua = '-NoProfile -ExecutionPolicy Bypass -File ' + (& $q $un) + ' -InstallDir ' + (& $q $existing) + ' -StartMenuDir ' + (& $q $StartMenuDir) + ' -RegistryRoot ' + (& $q $RegistryRoot) + ' -RunKey ' + (& $q $RunKey) + ' -LockName ' + (& $q $LockName) + ' -FromSetup'
+        if ($Quiet) { $ua += ' -Quiet' }
+        Log "starting uninstall: $ua"
+        Start-Process powershell.exe -ArgumentList $ua -WindowStyle Hidden
+    }
+
+    if ($Uninstall) {
+        if (-not $existing) { $null = Say (T 'Dalu 가 설치되어 있지 않아요.' 'Dalu is not installed.' 'Dalu 尚未安装。' 'Dalu はインストールされていません。') $AppName 'OK' 'Information'; Log 'nothing to uninstall'; exit 0 }
+        Start-Removal
+        exit 0
+    }
+
     # --- 사전 확인: 페이로드가 온전한가
     foreach ($need in 'runtime\pythonw.exe', 'app\dalu.py') {
         if (-not (Test-Path (Join-Path $Src $need))) { throw (T "설치 파일이 온전하지 않아요: $need 가 없습니다." "The installer files are incomplete: $need is missing." "安装文件不完整：缺少 $need。" "インストールファイルが不完全です：$need がありません。") }
@@ -41,13 +83,25 @@ try {
     # --- 업데이트인지 확인: 설치된 버전이 이 설치 파일보다 새것이면 낮추기 전에 묻는다
     $newVer = if (Test-Path (Join-Path $Src 'VERSION.txt')) { (Get-Content (Join-Path $Src 'VERSION.txt') -Raw).Trim() } else { '0' }
     $oldFile = Join-Path $InstallDir 'VERSION.txt'
-    if (Test-Path $oldFile) {
+    if ($existing -and (Test-Path $oldFile)) {
         $oldVer = (Get-Content $oldFile -Raw).Trim()
         Log "installed $oldVer, installing $newVer"
         $o = $null; $n = $null
         if ([version]::TryParse($oldVer, [ref]$o) -and [version]::TryParse($newVer, [ref]$n) -and $o -gt $n) {
             $ans = Say (T "이미 더 새 버전($oldVer)이 설치되어 있어요. 이전 버전($newVer)으로 바꿀까요?" "A newer version ($oldVer) is already installed. Replace it with the older $newVer?" "已经安装了更新的版本 ($oldVer)。要换成较旧的 $newVer 吗？" "新しいバージョン ($oldVer) がすでにインストールされています。古い $newVer に置き換えますか？") $AppName 'YesNo' 'Question'
             if ($ans -ne 'Yes') { Log 'downgrade declined'; exit 0 }
+        }
+        elseif (-not $Quiet) {
+            # 이미 설치돼 있으면 묻지 않고 또 설치하지 않는다: 업데이트(또는 다시 설치) / 제거 / 취소 중에서 고른다
+            $same = ($oldVer -eq $newVer)
+            $head = if ($same) { T "Dalu $oldVer 이(가) 이미 설치되어 있어요." "Dalu $oldVer is already installed." "已经安装了 Dalu $oldVer。" "Dalu $oldVer はすでにインストールされています。" }
+                    else { T "Dalu $oldVer 이(가) 설치되어 있어요. 새 버전 $newVer 으로 업데이트할 수 있어요." "Dalu $oldVer is installed. You can update it to $newVer." "已安装 Dalu $oldVer。可以更新到 $newVer。" "Dalu $oldVer がインストールされています。$newVer に更新できます。" }
+            $yes = if ($same) { T '다시 설치 (문제가 있을 때 복구)' 'Reinstall (repair)' '重新安装（修复）' '再インストール（修復）' } else { T "$newVer 으로 업데이트" "Update to $newVer" "更新到 $newVer" "$newVer に更新" }
+            $body = $head + "`n`n" + (T '예' 'Yes' '是' 'はい') + ': ' + $yes + "`n" + (T '아니요' 'No' '否' 'いいえ') + ': ' + (T '제거' 'Uninstall' '卸载' 'アンインストール') + "`n" + (T '취소' 'Cancel' '取消' 'キャンセル') + ': ' + (T '아무것도 하지 않기' 'Do nothing' '什么都不做' '何もしない')
+            $ans = Say $body $AppName 'YesNoCancel' 'Question'
+            Log "existing install prompt answer: $ans"
+            if ($ans -eq 'Cancel' -or $ans -eq 'None') { exit 0 }
+            if ($ans -eq 'No') { Start-Removal; exit 0 }
         }
     }
 

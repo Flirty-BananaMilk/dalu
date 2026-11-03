@@ -8,7 +8,9 @@ param(
     [string]$DataDir = (Join-Path $env:APPDATA 'Dalu'),
     [switch]$RemoveData,
     [switch]$Quiet,
-    [switch]$FromTemp
+    [switch]$FromTemp,
+    [switch]$FromSetup,        # Setup.exe 가 시작시켰다: Setup.exe 가 끝나면서 잠금을 놓을 때까지 잠깐 기다린다
+    [string]$LockName = 'Local\Dalu-Setup-Uninstall'   # 설치/제거가 동시에 돌지 않게 하는 이름 있는 잠금 (시험용으로만 바꾼다)
 )
 $ErrorActionPreference = 'Continue'
 $AppName = 'Dalu'
@@ -24,11 +26,23 @@ if (-not $FromTemp -and $PSScriptRoot -and ($PSScriptRoot.TrimEnd('\') -ieq $Ins
     Copy-Item $PSCommandPath $tmp -Force
     # Start-Process 는 배열 인자를 따옴표 없이 이어 붙인다: 공백이 든 경로(기본 설치 위치도 그렇다)는 직접 따옴표로 감싸야 한다
     function Q($v) { '"' + $v + '"' }
-    $argList = '-NoProfile -ExecutionPolicy Bypass -File ' + (Q $tmp) + ' -InstallDir ' + (Q $InstallDir) + ' -StartMenuDir ' + (Q $StartMenuDir) + ' -RegistryRoot ' + (Q $RegistryRoot) + ' -RunKey ' + (Q $RunKey) + ' -DataDir ' + (Q $DataDir) + ' -FromTemp'
+    $argList = '-NoProfile -ExecutionPolicy Bypass -File ' + (Q $tmp) + ' -InstallDir ' + (Q $InstallDir) + ' -StartMenuDir ' + (Q $StartMenuDir) + ' -RegistryRoot ' + (Q $RegistryRoot) + ' -RunKey ' + (Q $RunKey) + ' -DataDir ' + (Q $DataDir) + ' -LockName ' + (Q $LockName) + ' -FromTemp'
+    if ($FromSetup) { $argList += ' -FromSetup' }
     if ($RemoveData) { $argList += ' -RemoveData' }
     if ($Quiet) { $argList += ' -Quiet' }
     Start-Process powershell.exe -ArgumentList $argList -WindowStyle Hidden
     exit 0
+}
+
+# 설치/제거가 이미 돌고 있으면(제거를 두 번 눌렀거나 설치 중이면) 겹쳐 실행하지 않는다. 임시 사본에서 다시 실행된 뒤(= 실제 작업을 하는 프로세스)에 잠금을 잡는다.
+$script:LockMutex = New-Object System.Threading.Mutex($false, $LockName)
+$got = $false
+$waitMs = if ($FromSetup) { 15000 } else { 0 }
+try { $got = $script:LockMutex.WaitOne($waitMs) } catch [System.Threading.AbandonedMutexException] { $got = $true }
+if (-not $got) {
+    if (-not $Quiet) { [void][System.Windows.MessageBox]::Show((T "다른 설치 또는 제거가 이미 진행 중이에요. 끝난 뒤에 다시 실행해 주세요." "Another install or uninstall of Dalu is already running. Please try again when it has finished." "已有另一个 Dalu 安装或卸载正在进行。请等它结束后再试。" "別の Dalu のインストールまたはアンインストールがすでに実行中です。終わってからもう一度実行してください。"), $AppName, 'OK', 'Information') }
+    if ($FromTemp) { Start-Process cmd.exe -ArgumentList ('/c ping -n 3 127.0.0.1 >nul & del /f /q "' + $PSCommandPath + '"') -WindowStyle Hidden }
+    exit 2
 }
 
 if (-not $Quiet) {
