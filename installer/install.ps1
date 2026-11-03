@@ -20,7 +20,7 @@ $Src = $PSScriptRoot
 $AppName = 'Dalu'
 $UninstallId = 'Dalu'
 $RunName = 'Dalu'          # 앱(prefs.py)의 '시작 프로그램' 설정이 쓰는 이름과 같아야 한다
-$uiLang = (Get-UICulture).TwoLetterISOLanguageName      # ko | zh | ja | 그 밖은 영어
+$uiLang = if ($env:DALU_UI_LANG) { $env:DALU_UI_LANG } else { (Get-UICulture).TwoLetterISOLanguageName }      # ko | zh | ja | 그 밖은 영어
 function T($k, $e, $z, $j) { switch ($uiLang) { 'ko' { $k } 'zh' { if ($z) { $z } else { $e } } 'ja' { if ($j) { $j } else { $e } } default { $e } } }
 $Log = Join-Path $env:TEMP 'Dalu-install.log'
 function Log($m) { try { Add-Content -Path $Log -Value ("[{0}] {1}" -f (Get-Date -Format 'HH:mm:ss'), $m) -Encoding UTF8 } catch {} }
