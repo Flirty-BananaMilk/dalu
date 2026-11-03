@@ -29,7 +29,7 @@ const STR = {
         removed: (n) => `가사 캐시 ${n}개를 지웠어요`, sent: '테스트 알림을 보냈어요', armed: '정말 초기화할까요?', resetDone: '모든 설정을 초기화했어요',
         restarting: '다시 시작합니다…', failed: '실패했어요', on: '사용 가능', off: '사용 불가',
         eqTitle: '이퀄라이저', eqDesc: '이어버드의 소리 성향을 골라요. 이어버드에 직접 적용되는 설정이라 삼성 Galaxy Buds 앱과 같아요.', eqNormal: '일반', eqBass: '베이스 부스트', eqSoft: '소프트', eqDynamic: '다이내믹', eqClear: '클리어', eqTreble: '트레블 부스트', eqFailed: '적용하지 못했어요', eqInUse: '다른 앱이 이어버드를 쓰고 있어요 (Galaxy Buds 앱을 닫아 주세요)', eqNoDevice: '이어버드가 연결돼 있지 않거나 제어를 쓸 수 없어요',
-        eqCustom: '사용자 설정', eqCustomHint: '9개 대역의 소리를 직접 조절해요. 슬라이더를 놓으면 이어버드에 바로 적용돼요.', eqReset: '모두 0으로', eqLow: '저음', eqHigh: '고음', eqBand: '대역', advTitle: '고급', advGame: '게이밍 모드', advGameDesc: '소리가 늦게 들리는 지연을 줄여요. 켜고 끌 때 연결이 잠깐 바뀌어 소리가 순간 끊길 수 있어요.', advOne: '한쪽만 끼고도 소음 제어', advOneDesc: '한쪽 이어버드만 착용해도 노이즈 캔슬링이 자동으로 꺼지지 않게 해요.', advUnknown: '(이 모델에서는 아직 확인하지 못해 바꿀 수 없어요)',
+        eqCustom: '사용자 설정', eqCustomHint: '9개 대역의 소리를 직접 조절해요. 슬라이더를 놓으면 이어버드에 바로 적용돼요.', eqReset: '모두 0으로', eqLow: '저음', eqHigh: '고음', eqBand: '대역', advTitle: '고급', advOne: '한쪽만 끼고도 소음 제어', advOneDesc: '한쪽 이어버드만 착용해도 노이즈 캔슬링이 자동으로 꺼지지 않게 해요.', advUnknown: '(이 모델에서는 아직 확인하지 못해 바꿀 수 없어요)',
         btNone: '연결된 이어버드가 없어요', btConnected: '연결됨', btControl: '소음 제어', btLeft: '왼쪽', btRight: '오른쪽', btCase: '케이스',
         btTip: '삼성 <b>Galaxy Buds 앱</b>이 켜져 있으면 이어버드 제어 연결을 먼저 잡고 있어서 노이즈 컨트롤 모드 변경이 막힐 수 있어요. 모드가 안 바뀌면 그 앱을 닫아 보세요.',
         pvTitle: '지금 설정으로 움직여 보기', pvPlay: '다시 재생', pvNote: '클릭하면 <b>접힘 → 미니 → 펼침</b> 순서로 노치가 움직여요. 아래 값을 바꾸면 바로 다시 재생돼요.',
@@ -51,7 +51,7 @@ const STR = {
         removed: (n) => `Cleared ${n} cached lyric file(s)`, sent: 'Sent a test alert', armed: 'Really reset?', resetDone: 'All settings were reset',
         restarting: 'Restarting…', failed: 'Failed', on: 'Available', off: 'Unavailable',
         eqTitle: 'Equalizer', eqDesc: 'Pick the sound profile. It is applied to the earbuds themselves, same as in the Samsung Galaxy Buds app.', eqNormal: 'Normal', eqBass: 'Bass boost', eqSoft: 'Soft', eqDynamic: 'Dynamic', eqClear: 'Clear', eqTreble: 'Treble boost', eqFailed: 'Could not apply', eqInUse: 'Another app is using the earbuds (close the Galaxy Buds app)', eqNoDevice: 'Earbuds are not connected or control is unavailable',
-        eqCustom: 'Custom', eqCustomHint: 'Shape the sound in nine bands. Letting go of a slider applies it to the earbuds right away.', eqReset: 'Reset to 0', eqLow: 'Low', eqHigh: 'High', eqBand: 'Band', advTitle: 'Advanced', advGame: 'Gaming mode', advGameDesc: 'Reduces the audio delay. Switching it can briefly change the connection, so the sound may cut out for a moment.', advOne: 'Noise controls with one earbud', advOneDesc: 'Keeps noise canceling on when only one earbud is worn.', advUnknown: '(Not verified on this model yet, so it cannot be changed.)',
+        eqCustom: 'Custom', eqCustomHint: 'Shape the sound in nine bands. Letting go of a slider applies it to the earbuds right away.', eqReset: 'Reset to 0', eqLow: 'Low', eqHigh: 'High', eqBand: 'Band', advTitle: 'Advanced', advOne: 'Noise controls with one earbud', advOneDesc: 'Keeps noise canceling on when only one earbud is worn.', advUnknown: '(Not verified on this model yet, so it cannot be changed.)',
         btNone: 'No earbuds connected', btConnected: 'Connected', btControl: 'Noise control', btLeft: 'Left', btRight: 'Right', btCase: 'Case',
         btTip: 'If the Samsung <b>Galaxy Buds app</b> is running it can hold the earbuds’ control connection, which blocks noise-control changes. Close it if modes will not change.',
         pvTitle: 'Try your current settings', pvPlay: 'Replay', pvNote: 'Click to move the notch through <b>collapsed → mini → expanded</b>. It replays when you change a value below.',
@@ -587,11 +587,10 @@ COMPONENTS.budsEq = function () {
 COMPONENTS.budsAdvanced = function () {
   const box = document.createElement('div');
   box.className = 'card badv';
-  box.innerHTML = '<div class="badv-row" data-k="game"><div class="badv-t"><div class="row-title"></div><div class="row-desc"></div></div><div class="sw" role="switch"></div></div>'
-    + '<div class="badv-row" data-k="nc_one"><div class="badv-t"><div class="row-title"></div><div class="row-desc"></div></div><div class="sw" role="switch"></div></div>'
+  box.innerHTML = '<div class="badv-row" data-k="nc_one"><div class="badv-t"><div class="row-title"></div><div class="row-desc"></div></div><div class="sw" role="switch"></div></div>'
     + '<div class="beq-msg"></div>';
   const msg = box.querySelector('.beq-msg');
-  const ROWS = { game: ['advGame', 'advGameDesc', 'buds_set_game_mode'], nc_one: ['advOne', 'advOneDesc', 'buds_set_nc_one'] };
+  const ROWS = { nc_one: ['advOne', 'advOneDesc', 'buds_set_nc_one'] };
   let snap = BUDS_CACHE.snap ? Object.assign({}, BUDS_CACHE.snap) : null, busy = false, msgTimer = null;
   const say = (text, bad) => { msg.textContent = text; msg.classList.toggle('bad', !!bad); clearTimeout(msgTimer); if (text) msgTimer = setTimeout(() => { msg.textContent = ''; }, 4000); };
   const render = () => {

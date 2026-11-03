@@ -713,15 +713,6 @@ class IslandAPI:
         except Exception as e:
             return {"status": "error", "message": repr(e)}
 
-    def buds_set_game_mode(self, on):
-        """게이밍 모드(저지연) 켜기/끄기."""
-        if self._buds is None:
-            return {"status": "error", "message": "buds unavailable"}
-        try:
-            return self._buds.set_game_mode(bool(on))
-        except Exception as e:
-            return {"status": "error", "message": repr(e)}
-
     def buds_set_nc_one(self, on):
         """한쪽만 착용해도 소음 제어 허용 켜기/끄기."""
         if self._buds is None:

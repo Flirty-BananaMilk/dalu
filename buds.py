@@ -32,7 +32,6 @@ MSG_EQUALIZER = 0x86          # 이퀄라이저 프리셋 설정: payload = [프
 MSG_CUSTOM_EQ_SEND = 0x89     # 9밴드 사용자 이퀄라이저: payload = [밴드 수][밴드별 이득(부호 있는 1바이트, -10~+10)]. 보낸 뒤 MSG_EQUALIZER 로 '사용자' 프리셋을 골라야 적용된다
 MSG_CUSTOM_EQ_RECV = 0x69     # 이어버드의 프리셋 표 요청(빈 본문) -> 같은 번호로 [프리셋 수][밴드 수][표...][사용자 밴드값] 응답
 MSG_ANC_ONE_EARBUD = 0x6F     # 한쪽만 착용해도 소음 제어 허용: payload = [0|1]
-MSG_ADJUST_SOUND_SYNC = 0x85  # 게이밍 모드(저지연): payload = [0|1]. Buds3 Pro 로 확인: 켜면 상태 패킷 8번 자리가 1 이 된다
 
 # 소음 제어 모드 번호 (갤럭시 버즈 계열). 실제 소리와의 대응은 장치/펌웨어마다 다를 수 있으니 한 곳에서만 정의한다.
 MODE_OFF = 0
@@ -49,7 +48,6 @@ EQ_BANDS = 9
 CUSTOM_EQ_ACK_WAIT = 0.05     # 곡선 전송 뒤 확인 응답을 기다리는 시간(초): 응답이 오지 않는 메시지라 짧게 (오면 바로 끝난다)
 EQ_GAIN_MAX = 10              # 밴드마다 -10 ~ +10
 NC_ONE_BYTE = 28              # 상태 패킷에서 '한쪽만 착용해도 소음 제어' 가 있는 자리: Buds2(개정 3 이상)·Buds2 Pro·Buds3·Buds3 Pro·FE 계열 공통 (GalaxyBudsClient 의 디코더와 같고, Buds3 Pro 로 켜고 끄며 확인)
-GAME_BYTE = 8                 # Buds Live 이후 상태 패킷에서 게이밍 모드(음질 동기/저지연) 자리 (Buds3 Pro 로 확인)
 EQ_BYTE = 9                   # EXTENDED_STATUS_UPDATED(0x61) 본문에서 이퀄라이저 프리셋이 있는 자리: Buds Live 이후(Buds2, Pro, Buds3 …)는 9 (실제 Buds3 Pro 패킷에서 확인한 레이아웃: 6=착용, 7=케이스 배터리, 8=음질 동기, 9=이퀄라이저, 10=터치 잠금)
 EQ_BYTE_BUDS_PLUS = 11        # 오래된 Buds+ 는 11
 
@@ -161,10 +159,8 @@ def parse_ext_status(payload: bytes, name: str = ""):
         return None
     pos = eq_byte_for(name)
     n = (name or "").lower().replace(" ", "")
-    plus = pos != EQ_BYTE
     out = {"revision": payload[0], "placement": {"left": payload[6] >> 4, "right": payload[6] & 15}, "charging": None,
            "eq": payload[pos] if len(payload) > pos and payload[pos] in EQ_VALID else None,
-           "game": (payload[GAME_BYTE] == 1) if (not plus and len(payload) > GAME_BYTE and payload[GAME_BYTE] in (0, 1)) else None,
            "nc_one": (payload[NC_ONE_BYTE] == 1) if (nc_one_supported(n, payload[0]) and len(payload) > NC_ONE_BYTE and payload[NC_ONE_BYTE] in (0, 1)) else None}
     if "buds3" in (name or "").lower().replace(" ", "") and len(payload) > CHARGE_BYTE_BUDS3:
         out["charging"] = charging_bits(payload[CHARGE_BYTE_BUDS3])
@@ -371,10 +367,6 @@ class BudsService:
         with self._lock:
             self._snap["eq_custom"] = list(t["custom"])      # 설정 창이 다시 그려져도 곡선을 바로 보여 줄 수 있게 기억해 둔다
         return t
-
-    def set_game_mode(self, on, timeout=CONNECT_TIMEOUT + ACK_TIMEOUT + 3):
-        """게이밍 모드(저지연) 켜기/끄기."""
-        return self._set_flag(MSG_ADJUST_SOUND_SYNC, bool(on), "game", timeout)
 
     def set_nc_one_earbud(self, on, timeout=CONNECT_TIMEOUT + ACK_TIMEOUT + 3):
         """한쪽만 착용해도 소음 제어 허용 켜기/끄기."""
@@ -765,7 +757,7 @@ class BudsService:
                 if diff:
                     self._log("buds: ext status changed " + " ".join(diff))
             self._ext_prev = raw
-            for key in ("game", "nc_one"):
+            for key in ("nc_one",):
                 if st.get(key) is not None:
                     with self._lock:
                         self._snap[key] = st[key]
@@ -915,7 +907,7 @@ class BudsService:
                     if ok(codes[-1]):
                         if len(codes) > 1:
                             self._log(f"buds: {what} {mode} accepted after {len(codes) - 1} rejection(s) {codes[:-1]}")
-                        if key in ("eq", "game", "nc_one"):
+                        if key in ("eq", "nc_one"):
                             with self._lock:
                                 self._snap[key] = mode if key == "eq" else bool(mode)
                         return finish({"status": "ok", key: mode})
