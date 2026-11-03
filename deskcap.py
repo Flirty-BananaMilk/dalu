@@ -152,8 +152,12 @@ class FrameStream:
                             frame, seen = outer._frame, outer._seq
                         if frame is None:
                             continue
-                        self.wfile.write(b"--" + outer.BOUNDARY.encode() + b"\r\nContent-Type: image/png\r\nContent-Length: "
-                                         + str(len(frame)).encode() + b"\r\n\r\n" + frame + b"\r\n")
+                        part = (b"--" + outer.BOUNDARY.encode() + b"\r\nContent-Type: image/png\r\nContent-Length: "
+                                + str(len(frame)).encode() + b"\r\n\r\n" + frame + b"\r\n")
+                        # 같은 프레임을 연달아 두 번 보낸다: Chromium 은 multipart 이미지의 한 조각을 '다음 조각이 시작될 때' 비로소 화면에 올린다.
+                        # 한 번만 보내면 마지막으로 바뀐 화면이 다음 프레임(= 뒤 화면이 또 바뀔 때)이 올 때까지 안 보여서, 뒤 화면이 멈춘 뒤 노치를 다시 펼치면
+                        # 몇 초 동안 옛 화면이 비쳤다. 두 번째 사본이 첫 사본을 바로 완성시키고, 둘은 같은 그림이라 보이는 것은 그대로다.
+                        self.wfile.write(part + part)
                         self.wfile.flush()
                 except (OSError, ValueError):
                     return
