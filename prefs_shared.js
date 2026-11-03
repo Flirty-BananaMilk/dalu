@@ -16,6 +16,17 @@ function springCurves(bounce) {
   };
 }
 
+// 노치 크기 전환(--spring)이 목표를 지나치는 정도(0~1): 높이 전환 폭의 이 비율만큼 더 커졌다 돌아온다.
+// 클릭 영역(SetWindowRgn)이 이만큼 여유를 두지 않으면 펼치는 도중 노치 아랫부분이 잘려 보인다.
+function springOvershoot(bounce) {
+  const n = Number(bounce);
+  const k = Math.max(0, Math.min(200, Number.isFinite(n) ? n : 100)) / 100;
+  const y1 = 1 + 0.32 * k;                  // springCurves 의 soft 곡선: cubic-bezier(0.34, y1, 0.5, 1)
+  let m = 1;
+  for (let i = 1; i <= 100; i++) { const t = i / 100; m = Math.max(m, 3 * (1 - t) * (1 - t) * t * y1 + 3 * (1 - t) * t * t + t * t * t); }
+  return m - 1;
+}
+
 // 애니메이션 프리셋: 한 번에 바꾸는 설정 묶음. 'normal' 은 기본값과 같아야 한다.
 const ANIM_PRESETS = {
   off:     { animOff: true,  animSpeed: 100, bounce: 100, entrance: false, pageAnim: 'fade' },

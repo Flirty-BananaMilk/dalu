@@ -162,6 +162,8 @@ class IslandAPI:
     def __init__(self, client: CiderClient):
         self._client = client
         self._lock = threading.Lock()
+        self._region_lock = threading.Lock()      # 클릭 영역(SetWindowRgn) 호출은 pywebview 가 스레드를 따로 만들어 부르므로, 순서가 뒤바뀌지 않게 하나씩 처리한다
+        self._region_seq = 0                      # 가장 최근에 적용한 호출 번호: 더 낮은 번호(= 늦게 도착한 옛 호출)는 버린다
         self._running = True
         self._misses = 0
 
@@ -1663,48 +1665,67 @@ class IslandAPI:
         threading.Thread(target=play, daemon=True, name="chime").start()
         return {"status": "ok"}
 
+    def _region_is_stale(self, rect):
+        """화면(JS)이 호출마다 붙이는 순번이 이미 적용한 것보다 낮으면 옛 호출이다 (늦게 도착해 작은 영역으로 되돌리는 일을 막는다)."""
+        try:
+            seq = int(rect.get('seq')) if isinstance(rect, dict) and rect.get('seq') is not None else None
+        except (TypeError, ValueError):
+            seq = None
+        if seq is None:
+            return False
+        if seq < self._region_seq:
+            return True
+        self._region_seq = seq
+        return False
+
     def expand_window(self, rect=None):
         """rect 가 있으면 확장된 필 영역만 클릭 가능하게, 없으면 창 전체를 상호작용 가능하게(컨텍스트 메뉴용)."""
         try:
-            hwnd = self._get_hwnd()
-            if hwnd:
-                if rect and isinstance(rect, dict):
-                    dpr = float(rect.get('dpr') or self._notch_scale())
-                    phys_l = int((float(rect['left']) - 4) * dpr)
-                    phys_r = int((float(rect['right']) + 4) * dpr)
-                    phys_b = int((float(rect['bottom']) + 6) * dpr)
-                    self._set_window_region(hwnd, phys_l, phys_r, phys_b, dpr, int(32 * dpr))
-                    log("Expanded window region applied (pill area interactive).")
-                else:
-                    ctypes.windll.user32.SetWindowRgn(hwnd, 0, True)
-                    log("Expanded window region cleared (full window interactive).")
-            return {"status": "ok"}
+            with self._region_lock:
+                if self._region_is_stale(rect):
+                    return {"status": "ok", "stale": True}
+                hwnd = self._get_hwnd()
+                if hwnd:
+                    if rect and isinstance(rect, dict):
+                        dpr = float(rect.get('dpr') or self._notch_scale())
+                        phys_l = int((float(rect['left']) - 4) * dpr)
+                        phys_r = int((float(rect['right']) + 4) * dpr)
+                        phys_b = int((float(rect['bottom']) + 6) * dpr)
+                        self._set_window_region(hwnd, phys_l, phys_r, phys_b, dpr, int(32 * dpr))
+                        log("Expanded window region applied (pill area interactive).")
+                    else:
+                        ctypes.windll.user32.SetWindowRgn(hwnd, 0, True)
+                        log("Expanded window region cleared (full window interactive).")
+                return {"status": "ok"}
         except Exception as e:
             log(f"expand_window error: {e}")
             return {"status": "error", "message": str(e)}
 
     def collapse_window(self, rect=None):
         try:
-            hwnd = self._get_hwnd()
-            if hwnd:
-                if rect and isinstance(rect, dict):
-                    dpr = float(rect.get('dpr') or self._notch_scale())
-                    pad_x, pad_y = 4, 6
-                    left, right, bottom = float(rect['left']), float(rect['right']), float(rect['bottom'])
-                else:
-                    # 렉트가 없을 때(초기 on_shown): 창 중앙 기준 노치 크기로 계산. 여유를 조금 더 둔다.
-                    dpr = self._notch_scale()
-                    pad_x, pad_y = 12, 6
-                    left = (EXPANDED_WIDTH - NOTCH_WIDTH) / 2
-                    right = left + NOTCH_WIDTH
-                    bottom = NOTCH_HEIGHT
+            with self._region_lock:
+                if self._region_is_stale(rect):
+                    return {"status": "ok", "stale": True}
+                hwnd = self._get_hwnd()
+                if hwnd:
+                    if rect and isinstance(rect, dict):
+                        dpr = float(rect.get('dpr') or self._notch_scale())
+                        pad_x, pad_y = 4, 6
+                        left, right, bottom = float(rect['left']), float(rect['right']), float(rect['bottom'])
+                    else:
+                        # 렉트가 없을 때(초기 on_shown): 창 중앙 기준 노치 크기로 계산. 여유를 조금 더 둔다.
+                        dpr = self._notch_scale()
+                        pad_x, pad_y = 12, 6
+                        left = (EXPANDED_WIDTH - NOTCH_WIDTH) / 2
+                        right = left + NOTCH_WIDTH
+                        bottom = NOTCH_HEIGHT
 
-                phys_l = int((left - pad_x) * dpr)
-                phys_r = int((right + pad_x) * dpr)
-                phys_b = int((bottom + pad_y) * dpr)
-                self._set_window_region(hwnd, phys_l, phys_r, phys_b, dpr, int(22 * dpr))
-                log(f"Collapsed notch region applied: l={phys_l}, r={phys_r}, b={phys_b}")
-            return {"status": "ok"}
+                    phys_l = int((left - pad_x) * dpr)
+                    phys_r = int((right + pad_x) * dpr)
+                    phys_b = int((bottom + pad_y) * dpr)
+                    self._set_window_region(hwnd, phys_l, phys_r, phys_b, dpr, int(22 * dpr))
+                    log(f"Collapsed notch region applied: l={phys_l}, r={phys_r}, b={phys_b}")
+                return {"status": "ok"}
         except Exception as e:
             log(f"collapse_window error: {e}")
             return {"status": "error", "message": str(e)}

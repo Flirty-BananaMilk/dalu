@@ -640,6 +640,8 @@ function updateSourceBtn(res) {
   if (sources.length <= 1) btn.classList.remove('on');
   else if (!btn.classList.contains('on')) srcOnTimer = setTimeout(() => btn.classList.add('on'), 1200);
   if (cur) setText($('srcName'), cur.name);
+  // 버튼 폭을 재서 곡 제목이 그 앞에서 끝나게 한다(island.css 의 --srcw). 이름 글자가 바뀐 다음 프레임에 잰다
+  requestAnimationFrame(() => { const w = btn.offsetWidth; if (w > 0) document.documentElement.style.setProperty('--srcw', Math.ceil(w) + 'px'); });
   btn.dataset.next = (sources.find((s) => s.id !== res.source) || {}).id || '';
 }
 

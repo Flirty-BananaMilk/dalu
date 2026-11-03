@@ -912,6 +912,8 @@ html[data-theme="tint"] .island {
 .volbtn:hover, .srcbtn:hover { background: rgba(255, 255, 255, 0.2); color: #fff; }
 .l-player .ttl, .l-player .sub { max-width: 200px; }
 .l-player[data-mode="lyrics"] .ttl, .l-player[data-mode="lyrics"] .sub { max-width: none; }
+/* 재생 소스 버튼(오른쪽 위)이 켜져 있으면 곡 제목·가수가 그 버튼 왼쪽에서 끝나게 한다: 음악 페이지 폭 420 - 버튼 오른쪽 여백 76 - 버튼 폭(--srcw, features2.js 가 잰다) - 틈 8 - 제목 왼쪽 114 */
+.island:has(.srcbtn.on) .l-player:not([data-mode="lyrics"]) .ttl, .island:has(.srcbtn.on) .l-player:not([data-mode="lyrics"]) .sub { max-width: calc(420px - 76px - var(--srcw, 96px) - 8px - 114px); }
 .volpop {
   position: absolute; left: 106px; top: 54px; width: 296px; height: 40px; border-radius: 14px; z-index: 5; display: flex; align-items: center; gap: 10px; padding: 0 12px;
   background: rgba(24, 25, 30, 0.96); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 8px 24px rgba(0, 0, 0, 0.5);

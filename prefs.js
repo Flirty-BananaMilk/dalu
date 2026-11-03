@@ -17,6 +17,7 @@ function applyPrefs() {
   root.style.setProperty('--spring', c.soft);
   root.style.setProperty('--spring-hard', c.hard);
   SPRING = c.hard;
+  PREF.overshoot = springOvershoot(s.bounce);      // 클릭 영역 아래쪽 여유(app.js targetPillRect)
   PREF.rate = clampN(clampN(s.animSpeed, 50, 200, 100) / 100, 0.3, 3, 1);
   PREF.animOff = !!s.animOff;
   PREF.entrance = !!s.entrance && !s.animOff;

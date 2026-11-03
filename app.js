@@ -93,7 +93,7 @@ const I18N = {
     budsLeft: '왼쪽', budsRight: '오른쪽', budsCase: '케이스', modeOff: '끄기', modeAmbient: '주변 소리 듣기', modeAdaptive: '소음 제어 최적화', modeAnc: '액티브 노이즈 캔슬링',
     budsConnected: '연결됨', budsNoControl: '소음 제어를 사용할 수 없어요', budsModeFailed: '모드를 바꾸지 못했어요', budsInUse: '다른 앱이 이어버드를 쓰고 있어요 (Galaxy Buds 앱을 닫아 주세요)', budsModeSet: '{mode}(으)로 변경', budsLowMsg: '{pos} 배터리 부족', budsGone: '이어버드 연결 끊김', captureOn: '캡처 모드', captureOnSub: '지금 {n}초 동안 스크린샷에 노치가 보여요', captureNone: '이미 캡처할 수 있어요', captureNoneSub: '리퀴드 글래스 “전체”일 때만 필요해요', captureOff: '캡처 모드 꺼짐', captureOffSub: '노치가 다시 캡처에서 빠져요', captureHoldSub: '끌 때까지 녹화·스크린샷에 노치가 보여요', budsAlertT: '충전이 중지되었습니다', budsAlertS: '땀이나 얼룩이 감지됐어요. 버즈와 케이스의 단자를 닦아 주세요', budsCharging: '충전 중',
     shuffleOnMsg: '셔플 켬', shuffleOffMsg: '셔플 끔', repeatNoneMsg: '반복 끔', repeatAllMsg: '전체 반복', repeatOneMsg: '한 곡 반복', playPause: '재생 / 일시정지', lyricsToggle: '가사 표시 켜기/끄기',
-    lyricsOnMsg: '가사 표시 켬', lyricsOffMsg: '가사 표시 끔', menuLyricsOff: '가사 표시 끄기', menuLyricsOn: '가사 표시 켜기',
+    lyricsOnMsg: '가사 표시 켬', lyricsOffMsg: '가사 표시 끔',
     pin: '노치 항상 펼쳐두기 (고정)', pinned: '노치 고정됨', autoHide: '자동 숨김 모드',
     menuUnpin: '고정 해제 (자동 숨김)', menuPin: '항상 펼쳐두기 (고정)',
     compact: '컴팩트 모드 전환', slimMode: '슬림 모드 전환', slimOnMsg: '슬림 모드 켬', slimOffMsg: '슬림 모드 끔',
@@ -132,7 +132,7 @@ const I18N = {
     budsLeft: 'Left', budsRight: 'Right', budsCase: 'Case', modeOff: 'Off', modeAmbient: 'Ambient sound', modeAdaptive: 'Adaptive', modeAnc: 'Active noise cancelling',
     budsConnected: 'Connected', budsNoControl: 'Noise control unavailable', budsModeFailed: 'Could not change mode', budsInUse: 'Another app is using the earbuds (close the Galaxy Buds app)', budsModeSet: 'Set to {mode}', budsLowMsg: '{pos} battery low', budsGone: 'Earbuds disconnected', captureOn: 'Capture mode', captureOnSub: 'The notch is visible to screenshots for {n}s', captureNone: 'Already capturable', captureNoneSub: 'Only needed with Liquid Glass “Full”', captureOff: 'Capture mode off', captureOffSub: 'The notch is hidden from capture again', captureHoldSub: 'Visible until turned off', budsAlertT: 'Charging stopped', budsAlertS: 'Sweat or a stain was detected. Wipe the earbuds and the case contacts', budsCharging: 'Charging',
     shuffleOnMsg: 'Shuffle on', shuffleOffMsg: 'Shuffle off', repeatNoneMsg: 'Repeat off', repeatAllMsg: 'Repeat all', repeatOneMsg: 'Repeat one', playPause: 'Play / Pause', lyricsToggle: 'Show / hide lyrics',
-    lyricsOnMsg: 'Lyrics on', lyricsOffMsg: 'Lyrics off', menuLyricsOff: 'Hide lyrics', menuLyricsOn: 'Show lyrics',
+    lyricsOnMsg: 'Lyrics on', lyricsOffMsg: 'Lyrics off',
     pin: 'Keep notch open (pin)', pinned: 'Notch pinned', autoHide: 'Auto-hide mode',
     menuUnpin: 'Unpin (auto-hide)', menuPin: 'Keep open (pin)',
     compact: 'Toggle compact mode', slimMode: 'Toggle slim mode', slimOnMsg: 'Slim mode on', slimOffMsg: 'Slim mode off',
@@ -719,8 +719,10 @@ function playChime(kind) {
 // ========================================================
 // 창 클릭 영역(SetWindowRgn): 노치(귀 + 스프링 오버슈트 여유 포함)만 클릭되고 나머지는 통과
 // ========================================================
-let regionTimer = null;
+let regionTimer = null, regionSettleTimer = null;
 let appliedSize = { w: 0, h: 0 };
+// 호출마다 늘어나는 순번: pywebview 는 호출마다 스레드를 따로 만들어 파이썬 쪽 도착 순서가 뒤바뀔 수 있어, 파이썬이 옛 호출을 버릴 수 있게 한다(Date.now() 에서 시작해 화면을 다시 불러와도 줄어들지 않는다)
+let regionSeq = Date.now();
 
 // 슬림 상태의 마우스 반응 영역(CSS px): 보이는 선(92x6)보다 넉넉하게 — 화면 맨 위에서 맞히기 쉽도록. #slimHit 의 크기와 같다.
 const SLIM_HIT_W = 164, SLIM_HIT_H = 14;
@@ -736,7 +738,8 @@ function targetPillRect() {
   const satRight = typeof satRegionRight === 'function' ? satRegionRight(g, pad) : 0;
   const satLeft = typeof satRegionLeft === 'function' ? satRegionLeft(g, pad) : Infinity;
   return {
-    left: Math.min(left, satLeft), right: Math.max(left + g.w + pad * 2, satRight), top: 0, bottom: g.h + 4,
+    // 아래쪽: 스프링이 목표 높이를 지나치는 만큼(설정 '탄성'에 따라 최대 높이의 12%)을 더 열어 둔다. 안 그러면 펼치는 도중 아랫부분이 잘린다.
+    left: Math.min(left, satLeft), right: Math.max(left + g.w + pad * 2, satRight), top: 0, bottom: g.h + 4 + Math.min(30, Math.ceil((PREF.overshoot || 0) * g.h)),
     width: g.w, height: g.h,
     dpr: window.devicePixelRatio || 1
   };
@@ -753,6 +756,7 @@ function applyRegion() {
   if (!api || contextMenuOpen) return;
   const g = geometry();
   const r = targetPillRect();
+  r.seq = ++regionSeq;
   if (isExpanded) {
     if (api.expand_window) api.expand_window(r);
   } else if (api.collapse_window) {
@@ -764,11 +768,14 @@ function applyRegion() {
 // 커질 때는 즉시(애니메이션보다 먼저 영역을 넓혀야 안 잘림), 작아질 때는 애니메이션이 끝난 뒤.
 function scheduleRegion(force) {
   clearTimeout(regionTimer);
+  clearTimeout(regionSettleTimer);
   if (contextMenuOpen) return;
   const g = geometry();
   const grow = g.w > appliedSize.w || g.h > appliedSize.h;
   if (force || grow) applyRegion();
   else regionTimer = setTimeout(applyRegion, PREF.animOff ? 60 : Math.round(700 / (PREF.rate || 1)));      // 줄어드는 전환이 끝난 뒤에 영역을 줄인다: 애니메이션 속도(느리게)에 맞춰야 도중에 잘리지 않는다
+  // 전환이 끝난 뒤 한 번 더 맞춘다: 늦게 도착한 옛 호출이나 잠깐 어긋난 크기가 남아 있어도 여기서 바로잡힌다
+  regionSettleTimer = setTimeout(() => { if (!contextMenuOpen) applyRegion(); }, PREF.animOff ? 150 : Math.round(1100 / (PREF.rate || 1)));
 }
 
 // ========================================================
@@ -1758,7 +1765,6 @@ function togglePin() {
 function updateLyricsButtons() {
   const on = lyricsOn();
   for (const b of $$('.js-lyr-toggle')) b.classList.toggle('on', on);
-  setText($('menuLyricsText'), t(on ? 'menuLyricsOff' : 'menuLyricsOn'));
 }
 
 function toggleLyrics() {

@@ -122,7 +122,6 @@ function bindInput() {
   });
 
   $('menuPin').addEventListener('click', () => { closeContextMenu(); togglePin(); });
-  $('menuLyrics').addEventListener('click', () => { closeContextMenu(); toggleLyrics(); });
   $('menuSound').addEventListener('click', () => { closeContextMenu(); toggleSound(); });
   $('menuLang').addEventListener('click', () => { closeContextMenu(); toggleLang(); });
   $('menuSlim').addEventListener('click', () => {       // 슬림 모드 전환 (설정 › 화면 › 슬림 노치와 같은 설정)
