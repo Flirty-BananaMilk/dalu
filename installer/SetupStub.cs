@@ -15,6 +15,9 @@ using System.Windows.Forms;
 
 [assembly: AssemblyTitle("Dalu Setup")]
 [assembly: AssemblyProduct("Dalu")]
+[assembly: AssemblyDescription("Installer for Dalu, a notch overlay for Windows")]
+[assembly: AssemblyCompany("Flirty_BananaMilk")]
+[assembly: AssemblyCopyright("Copyright (c) 2026 Flirty_BananaMilk")]
 [assembly: AssemblyVersion("@VERSION@.0")]
 [assembly: AssemblyFileVersion("@VERSION@.0")]
 

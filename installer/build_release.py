@@ -247,10 +247,11 @@ def make_setup(ver, portable_zip):
     (work / "SetupStub.cs").write_text(src, encoding="utf-8-sig")
     shutil.copy2(portable_zip, work / "payload.zip")
     shutil.copy2(STAGE / "dalu.ico", work / "dalu.ico")
+    shutil.copy2(ROOT / "installer" / "Setup.manifest", work / "Setup.manifest")      # 실행 권한(asInvoker)과 지원 OS 를 밝히는 매니페스트
     target = OUT / f"Dalu-{ver}-Setup.exe"
     if target.exists():
         target.unlink()
-    cmd = [CSC, "/nologo", "/target:winexe", f"/out:{target}", f"/win32icon:{work / 'dalu.ico'}", f"/resource:{work / 'payload.zip'},payload.zip",
+    cmd = [CSC, "/nologo", "/target:winexe", f"/out:{target}", f"/win32icon:{work / 'dalu.ico'}", f"/win32manifest:{work / 'Setup.manifest'}", f"/resource:{work / 'payload.zip'},payload.zip",
            "/reference:System.IO.Compression.FileSystem.dll", "/reference:System.IO.Compression.dll", "/reference:System.Windows.Forms.dll", "/reference:System.Drawing.dll", str(work / "SetupStub.cs")]
     r = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
     if not target.exists():
