@@ -17,6 +17,7 @@ import webview
 from cider_client import CiderClient
 import sysmon
 import prefs
+import chimes
 import monitors
 import audiomix
 import hotkeys
@@ -261,8 +262,7 @@ class IslandAPI:
         threading.Thread(target=self._calendar_worker, daemon=True, name="calendar").start()
         # 전역 단축키
         self._hotkeys = hotkeys.HotkeyService({"hkToggle": self._hk_toggle, "hkSettings": lambda: self.open_settings(),
-                                               "hkMixer": lambda: self.open_settings("mixer"), "hkLyrics": self._hk_lyrics,
-                                               "hkCapture": lambda: self.capture_toggle()}, log=log)
+                                               "hkMixer": lambda: self.open_settings("mixer"), "hkLyrics": self._hk_lyrics}, log=log)
         self._hotkeys.start()
         self._next_for, self._next_at = None, 0.0
         self._desk = deskcap.DeskCapture(self._get_hwnd, self._desk_rect, self._desk_push, log=log)
@@ -837,12 +837,34 @@ class IslandAPI:
                 with open(DATA_FILE, encoding="utf-8-sig") as f:     # 메모장 등으로 저장해 BOM 이 붙어도 읽는다
                     data = json.load(f)
                 if isinstance(data, dict):
+                    self._migrate_monitor_numbering(data)
                     return data
             if not os.path.exists(DATA_FILE):
                 return {"settings": {"lang": self._system_lang()}}        # 처음 실행: 저장된 설정이 없다
         except Exception as e:
             log(f"load_data error: {e!r}")
         return {}
+
+    def _migrate_monitor_numbering(self, data):
+        """모니터 번호의 기준이 바뀌었다: 예전에는 장치 이름 DISPLAYn 의 n(1, 2, 5 …), 지금은 윈도우 식별 번호(1, 2, 3 …).
+        저장된 설정 'monitor' 가 예전 번호면 새 번호로 한 번만 옮긴다(monitorScheme = 2 로 표시). 그 모니터가 지금 없으면 주 모니터(0)."""
+        try:
+            st = data.get("settings")
+            if not isinstance(st, dict) or st.get("monitorScheme") == 2:
+                return
+            try:
+                old = int(st.get("monitor") or 0)
+            except (TypeError, ValueError):
+                old = 0
+                if "monitor" in st:
+                    st["monitor"] = 0        # 읽을 수 없는 값은 주 모니터
+            if old > 0:
+                hit = next((m for m in monitors.list_monitors() if m.get("gdi") == old), None)
+                st["monitor"] = hit["number"] if hit else 0
+            st["monitorScheme"] = 2
+            self._write_data(data)
+        except Exception as e:
+            log(f"_migrate_monitor_numbering error: {e!r}")
 
     def _write_data(self, data):
         raw = json.dumps(data, ensure_ascii=False)
@@ -884,7 +906,7 @@ class IslandAPI:
                 self._buds.set_watch(bool(self._prefs.get("budsWatch")))
             self._clipwatch.enabled = bool(self._prefs.get("clipboardOn"))
             self._cal.set_source(self._prefs.get("calendarUrl"))
-            self._hotkeys.set_bindings({k: self._prefs.get(k) for k in ("hkToggle", "hkSettings", "hkMixer", "hkLyrics", "hkCapture")},
+            self._hotkeys.set_bindings({k: self._prefs.get(k) for k in ("hkToggle", "hkSettings", "hkMixer", "hkLyrics")},
                                        bool(self._prefs.get("hotkeysOn")))
             if self._smtc is not None and smtc is not None:
                 self._smtc.filter_mode = self._prefs.get("appFilterMode")
@@ -1045,42 +1067,17 @@ class IslandAPI:
             log(f"open_notification_center error: {e!r}")
             return {"status": "error", "message": str(e)}
 
-    MANUAL_CAPTURE_SECONDS = 4 * 3600      # '끌 때까지' 설정의 안전 한도(끄는 걸 잊어도 언젠가는 원래대로 돌아온다)
     AUTO_RECORD_SECONDS = 1800             # 엔비디아 녹화 단축키(Alt+F9)로 켠 캡처 모드의 안전 한도
 
-    def capture_mode(self, seconds=15, quiet=False):
-        """리퀴드 글래스 '전체'는 노치 창을 화면 캡처에서 빼 둔다(자기 자신을 비추지 않으려고). 스크린샷/녹화를 하고 싶을 때 이걸 부르면
-        seconds 초 동안 뒤 화면을 얼려 두고 노치가 캡처에 보이게 한 뒤, 자동으로 원래대로 돌아간다. seconds 가 0 이면 '끌 때까지'(안전 한도 있음).
-        (캡처에서 빠진 창이 있으면 NVIDIA 녹화가 '보호된 콘텐츠'라며 바탕화면 녹화를 거부하므로, 영상은 캡처 모드를 켜고 찍어야 한다.)"""
+    def capture_mode(self, seconds=15):
+        """리퀴드 글래스 '전체'는 노치 창을 화면 캡처에서 빼 둔다(자기 자신을 비추지 않으려고). 스크린샷/녹화가 시작되면(capturewatch)
+        seconds 초 동안 뒤 화면을 얼려 두고 노치가 캡처에 보이게 한 뒤, 자동으로 원래대로 돌아간다. 조용히(알림 없이) 동작한다.
+        (예전의 수동 캡처 모드 단축키와 안내는 자동 캡처가 같은 일을 해서 없앴다.)"""
         try:
-            hold = not seconds
-            secs = self.MANUAL_CAPTURE_SECONDS if hold else float(seconds)
-            on = self._desk.freeze(secs)
-            if not quiet:                # 자동 캡처 모드(capturewatch)는 알림 없이 조용히 켠다
-                self._push_event({"type": "capture_mode", "on": bool(on), "seconds": int(secs), "hold": bool(hold)})
+            on = self._desk.freeze(float(seconds))
             return {"status": "ok", "active": bool(on)}
         except Exception as e:
             log(f"capture_mode error: {e!r}")
-            return {"status": "error", "message": str(e)}
-
-    def capture_toggle(self):
-        """단축키/설정 버튼: 켜져 있으면 끄고, 꺼져 있으면 설정한 시간(captureSeconds) 동안 켠다."""
-        try:
-            if getattr(self._desk, "_visible", False) and self._desk.frozen:      # 설정이 '표시'면 항상 켜져 있어서 끌 게 없다
-                self._push_event({"type": "capture_mode", "on": True, "seconds": 0, "hold": True})
-                return {"status": "ok", "active": True}
-            if self._desk.frozen:
-                self._desk.thaw()
-                self._rec_hold = False
-                self._push_event({"type": "capture_mode", "on": False, "off": True})
-                return {"status": "ok", "active": False, "off": True}
-            try:
-                secs = int(self._prefs.get("captureSeconds"))
-            except Exception:
-                secs = 15
-            return self.capture_mode(secs)
-        except Exception as e:
-            log(f"capture_toggle error: {e!r}")
             return {"status": "error", "message": str(e)}
 
     _rec_hold = False
@@ -1091,13 +1088,10 @@ class IslandAPI:
             if self._rec_hold and self._desk.frozen:
                 self._rec_hold = False
                 self._desk.thaw()
-                self._push_event({"type": "capture_mode", "on": False, "off": True})
             else:
                 self._rec_hold = bool(self._desk.freeze(self.AUTO_RECORD_SECONDS))
-                if self._rec_hold:
-                    self._push_event({"type": "capture_mode", "on": True, "seconds": self.AUTO_RECORD_SECONDS, "hold": True})
             return
-        self.capture_mode(seconds, quiet=True)
+        self.capture_mode(seconds)
 
     def _hk_lyrics(self):
         self._js("toggleLyrics()")
@@ -1105,7 +1099,7 @@ class IslandAPI:
     def hotkeys_status(self):
         """설정 창용: 단축키별 등록 결과(ok/invalid/conflict/off)와 정규화된 표기."""
         st = self._hotkeys.status()
-        return {"status": st, "combos": {k: hotkeys.format_combo(self._prefs.get(k)) for k in ("hkToggle", "hkSettings", "hkMixer", "hkLyrics", "hkCapture")}}
+        return {"status": st, "combos": {k: hotkeys.format_combo(self._prefs.get(k)) for k in ("hkToggle", "hkSettings", "hkMixer", "hkLyrics")}}
 
     # ---- 클립보드 기록
     def clip_list(self):
@@ -1648,22 +1642,62 @@ class IslandAPI:
     # ------------------------------------------------------------------
     # 알림음
     # ------------------------------------------------------------------
-    _CHIMES = {
+    _OLD_BEEPS = {      # 합성음을 못 쓸 때만 쓰는 옛 삑 소리
         "pomo": [(784, 140), (1047, 140), (1319, 260)],
         "water": [(660, 150), (880, 220)],
         "todo": [(880, 120), (880, 120), (1175, 220)],
     }
 
-    def chime(self, kind="pomo"):
+    def _sound_opts(self, opts=None):
+        """알림음 설정: opts(설정 창의 미리듣기가 지금 화면의 값을 넘긴다)가 있으면 그것, 없으면 저장된 설정."""
+        o = opts if isinstance(opts, dict) else {}
+        pick = lambda key, pref: o[key] if key in o else self._prefs.get(pref)
+        return {"type": pick("type", "soundType"), "volume": pick("volume", "soundVolume"),
+                "length": pick("length", "soundLength"), "file": pick("file", "soundFile")}
+
+    def chime(self, kind="pomo", opts=None):
+        """알림음을 낸다(설정: 종류·길이·크기·내 파일). 소리가 끝날 때까지 스레드에서 재생한다."""
+        so = self._sound_opts(opts)
+
         def play():
             try:
-                import winsound
-                for freq, ms in self._CHIMES.get(kind, self._CHIMES["pomo"]):
-                    winsound.Beep(freq, ms)
+                if so["type"] == "custom":
+                    try:
+                        chimes.play_custom(str(so["file"] or ""), so["volume"] if so["volume"] is not None else 70)
+                        return
+                    except Exception as e:
+                        log(f"custom sound failed ({e!r}), using the default chime")
+                    chimes.play(kind, "chime", so["length"], so["volume"])
+                else:
+                    chimes.play(kind, so["type"], so["length"], so["volume"])
             except Exception as e:
                 log(f"chime error: {e!r}")
+                try:
+                    import winsound
+                    for freq, ms in self._OLD_BEEPS.get(kind, self._OLD_BEEPS["pomo"]):
+                        winsound.Beep(freq, ms)
+                except Exception as e2:
+                    log(f"beep fallback error: {e2!r}")
         threading.Thread(target=play, daemon=True, name="chime").start()
         return {"status": "ok"}
+
+    def pick_sound_file(self):
+        """설정 창의 '찾아보기': .wav 파일을 고르고 검사한다. {'status': 'ok', 'path': ...} / cancelled / invalid."""
+        w = self._settings_win
+        if w is None:
+            return {"status": "error", "message": "no window"}
+        try:
+            res = w.create_file_dialog(webview.OPEN_DIALOG, allow_multiple=False, file_types=("WAV audio (*.wav)",))
+            if not res:
+                return {"status": "cancelled"}
+            path = res if isinstance(res, str) else res[0]
+            info = chimes.custom_info(path)
+            if not info["ok"]:
+                return {"status": "invalid", "why": info.get("why", "")}
+            return {"status": "ok", "path": path, "seconds": info["seconds"]}
+        except Exception as e:
+            log(f"pick_sound_file failed: {e!r}")
+            return {"status": "error", "message": str(e)}
 
     def _region_is_stale(self, rect):
         """화면(JS)이 호출마다 붙이는 순번이 이미 적용한 것보다 낮으면 옛 호출이다 (늦게 도착해 작은 영역으로 되돌리는 일을 막는다)."""

@@ -257,7 +257,7 @@ class BudsService:
         self._log = log or (lambda m: None)
         self._push = push or (lambda e: None)
         self._lock = threading.Lock()
-        self._snap = {"available": False, "connected": False, "name": "", "battery": {}, "control": False, "charging": None}
+        self._snap = {"available": False, "connected": False, "name": "", "battery": {}, "control": False, "charging": None, "placement": None}
         self.watch = True              # 제어 연결을 계속 열어 두고 충전 상태/경고를 받는다 (설정 budsWatch)
         self._last_status = 0.0
         self._watch_retry_at = 0.0
@@ -587,6 +587,7 @@ class BudsService:
             self._snap.update({"connected": connected, "name": name, "battery": battery, "control": control})
             if not connected:
                 self._snap["charging"] = None
+                self._snap["placement"] = None
             elif charging != "keep":
                 self._snap["charging"] = charging
         if connected and not before:
@@ -716,11 +717,20 @@ class BudsService:
                     fut.set_exception(ConnectionError("control session closed"))
             sess["waiters"].clear()
 
+    def _set_placement(self, placement):
+        """착용 상태 {'left','right'}: 0=연결 끊김, 1=착용, 2=미착용, 3=케이스, 4=닫힌 케이스 (GalaxyBudsClient 의 PlacementStates).
+        연결이 끊긴(0/4) 버드의 배터리·충전 값은 옛 값이므로 화면에서 흐리게 보여 주려고 상태에 함께 둔다."""
+        if not isinstance(placement, dict):
+            return
+        with self._lock:
+            self._snap["placement"] = {"left": int(placement.get("left", 1)), "right": int(placement.get("right", 1))}
+
     def _apply_status(self, battery, charging, placement, source):
         with self._lock:
             bat = dict(self._snap["battery"])
             name = self._snap["name"]
             prev = self._snap.get("charging")
+        self._set_placement(placement)
         for pos, v in battery.items():
             if pos == "case" and v == 0:
                 continue            # 케이스 수치를 모르면 0 을 보낸다
@@ -767,6 +777,7 @@ class BudsService:
                     self._snap["eq"] = st["eq"]
                 if changed:
                     self._log(f"buds: equalizer preset {st['eq']} (from 0x61)")
+            self._set_placement(st["placement"])
             if not self._status60:
                 self._apply_status({}, st["charging"], st["placement"], "0x61")
         except Exception as e:

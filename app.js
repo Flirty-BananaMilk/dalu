@@ -102,7 +102,7 @@ const I18N = {
     menuLang: '언어', exit: '종료',
     settings: '설정', focusStarted: '집중 시작', dndOnSub: '방해 금지를 켰어요', launcherTitle: '바로가기', launcherEmpty: '설정에서 바로가기를 추가해 보세요', launcherFailed: '실행하지 못했어요', launcherEditTitle: '바로가기 편집',
     pluginsEmpty: '설정에서 플러그인을 켜 주세요', pluginFailed: '실행하지 못했어요', pluginDone: '완료',
-    timerMode: '타이머', stopwatchMode: '스톱워치', lapTitle: '구간 기록', lapEmpty: '깃발 버튼으로 구간 기록', timerDone: '타이머 종료', timerDoneSub: '{n}분이 지났어요',
+    timerMode: '타이머', stopwatchMode: '스톱워치', tmrSetTime: '시간 직접 설정', unitHour: '시간', unitMin: '분', budsOff: '연결 끊김', lapTitle: '구간 기록', lapEmpty: '깃발 버튼으로 구간 기록', timerDone: '타이머 종료', timerDoneSub: '{n}분이 지났어요',
     clipTitle: '클립보드', clipClear: '모두 지우기', clipEmpty: '복사한 글이 여기에 쌓여요', clipOff: '클립보드 기록이 꺼져 있어요', openSettings: '설정 열기', clipCopied: '다시 복사했어요',
     delete: '삭제', failed: '실패했어요', agoNow: '방금', agoMin: '{n}분 전', agoHour: '{n}시간 전',
     agendaTitle: '일정', agendaNoTitle: '(제목 없음)', agendaEmpty: '앞으로 7일 동안 일정이 없어요', agendaNoSource: '설정에서 캘린더 주소를 넣어 주세요', agendaError: '캘린더를 불러오지 못했어요',
@@ -141,7 +141,7 @@ const I18N = {
     menuLang: 'Language', exit: 'Quit',
     settings: 'Settings', focusStarted: 'Focus started', dndOnSub: 'Do Not Disturb is on', launcherTitle: 'Shortcuts', launcherEmpty: 'Add shortcuts in Settings', launcherFailed: 'Could not launch it', launcherEditTitle: 'Edit shortcuts',
     pluginsEmpty: 'Turn on plugins in Settings', pluginFailed: 'Could not run it', pluginDone: 'Done',
-    timerMode: 'Timer', stopwatchMode: 'Stopwatch', lapTitle: 'Record a lap', lapEmpty: 'Press the flag to record laps', timerDone: 'Timer finished', timerDoneSub: '{n} min have passed',
+    timerMode: 'Timer', stopwatchMode: 'Stopwatch', tmrSetTime: 'Set the time', unitHour: 'h', unitMin: 'min', budsOff: 'Disconnected', lapTitle: 'Record a lap', lapEmpty: 'Press the flag to record laps', timerDone: 'Timer finished', timerDoneSub: '{n} min have passed',
     clipTitle: 'Clipboard', clipClear: 'Clear all', clipEmpty: 'Things you copy will pile up here', clipOff: 'Clipboard history is off', openSettings: 'Open settings', clipCopied: 'Copied again',
     delete: 'Delete', failed: 'Failed', agoNow: 'just now', agoMin: '{n} min ago', agoHour: '{n} h ago',
     agendaTitle: 'Agenda', agendaNoTitle: '(No title)', agendaEmpty: 'Nothing on your calendar for the next 7 days', agendaNoSource: 'Add a calendar address in Settings', agendaError: 'Could not load the calendar',
@@ -178,12 +178,12 @@ function t(key, params) {
 // ========================================================
 const DEFAULT_STORE = {
   settings: {
-    lang: 'ko', lyricsOn: true, sound: true, compact: false,
+    lang: 'ko', lyricsOn: true, sound: true, soundType: 'chime', soundVolume: 70, soundLength: 'normal', soundFile: '', compact: false,
     clock24: true, clockSeconds: false, compactClock: true, satellite: 'full', glassNotch: 'controls', glassStrength: 100, glassClear: 50, glassRim: true, winNotify: false, winNotifyIgnore: '', uiScale: 100, setAnim: true, setAnimSpeed: 100, budsWatch: true,
     wordSync: true, lyricSize: 100, lyricGlow: true,
     smtcOn: true, mediaPriority: 'auto', extLyrics: true, extApple: true, extNetease: true, extLrclib: true,
     visualizer: true, vizGain: 100, artGlow: true, glowStrength: 100,
-    notify: { volume: true, brightness: true, caps: true, num: true, scroll: true, lang: true, power: true, battery_low: true, net: true, audio_device: true, buds: true, buds_low: true, buds_alert: true, track: true, capture_mode: true },
+    notify: { volume: true, brightness: true, caps: true, num: true, scroll: true, lang: true, power: true, battery_low: true, net: true, audio_device: true, buds: true, buds_low: true, buds_alert: true, track: true },
     peekDur: 3200, budsLowPct: 20,
     theme: 'black', monitor: 0, hoverDelay: 0, collapseDelay: 850, idleMin: 2, pet: true, petAfter: 45, fullscreenMode: 'yield', notchPos: 0, slimNotch: false, hideInGames: true, gameAlways: '', gameNever: '',
     animOff: false, animSpeed: 100, bounce: 100, entrance: true, pageAnim: 'slide',
@@ -324,10 +324,19 @@ function anim(el, keyframes, opts) {
     return el.animate(keyframes, o);
   } catch (e) { return null; }
 }
+// 원래 흐리게 그려지는 요소(비활성 버튼 등)가 등장 연출의 끝에서 완전히 밝아졌다가, 연출이 끝나는 순간 흐려지지 않게
+// 끝 불투명도(1)를 그 요소의 원래 값으로 맞춘다.
+function restOpacityKf(el, kf) {
+  const last = kf[kf.length - 1];
+  if (!last || last.opacity !== 1) return kf;
+  const o = parseFloat(getComputedStyle(el).opacity);
+  if (!(o < 0.999)) return kf;
+  return kf.map((k, i) => (i === kf.length - 1 ? Object.assign({}, k, { opacity: o }) : k));
+}
 // 여러 요소를 시차를 두고 차례로 등장시킨다
 function enterEach(els, keyframes, delay, step, opts) {
   if (!PREF.entrance) return;
-  Array.from(els).forEach((el, i) => anim(el, keyframes, Object.assign({ delay: delay + i * step }, opts)));
+  Array.from(els).forEach((el, i) => anim(el, restOpacityKf(el, keyframes), Object.assign({ delay: delay + i * step }, opts)));
 }
 const RISE = [{ opacity: 0, translate: '0 10px' }, { opacity: 1, translate: '0 0' }];
 const POP = [{ opacity: 0, scale: 0.55 }, { opacity: 1, scale: 1 }];
@@ -583,6 +592,7 @@ function setPage(p, dir) {
     const a = order.indexOf(page), b = order.indexOf(p);   // 방향은 전체 순서 기준
     pageDir = dir || (b >= a ? 1 : -1);
   }
+  if (p !== page && typeof tmrPickClose === 'function') tmrPickClose();
   page = p;
   island.dataset.p = p;
   for (const dot of $$('#pageDots i')) dot.classList.toggle('on', dot.dataset.p === p);
@@ -1763,6 +1773,10 @@ function triggerCollapse() {
   collapseTimer = setTimeout(() => {
     // 대기 중에 메뉴가 열리거나 고정됐다면 접지 않는다 (mouseleave 직후 우클릭한 경우)
     if (isPinned || contextMenuOpen) return;
+    // 알림 띠가 떠 있는 동안은 접지 않고 띠가 사라진 뒤에 다시 확인한다(마우스가 노치에 없다고 알림이 뜬 채로 접히지 않게).
+    // 그 사이 마우스가 노치 위로 돌아와 있으면 접지 않는다.
+    if (popOn || popShrinkTimer) { triggerCollapse(); return; }
+    if (island.matches(':hover')) return;
     // 입력창에 글을 쓰는 중이면 접지 않고 잠시 뒤 다시 확인한다. 다만 창이 포커스를 잃었거나(다른 창으로 옮겨 감) 15초가 지나도록
     // 입력이 이어지지 않으면 포기하고 접는다: 입력창이 열린 채 떠난 노치가 화면을 계속 가리는(소프트락) 일이 없게 한다
     const waited = editWaitSince ? Date.now() - editWaitSince : 0;
@@ -1770,6 +1784,7 @@ function triggerCollapse() {
       if (!editWaitSince) editWaitSince = Date.now();
       triggerCollapse(); return;
     }
+    if (typeof tmrPickClose === 'function') tmrPickClose();
     editWaitSince = 0;
     if (isEditing() && typeof todoCloseAdd === 'function') todoCloseAdd();      // 열려 있던 입력 창은 닫는다(다시 펼쳤을 때 입력 창이 그대로 남지 않게)
     isExpanded = false;

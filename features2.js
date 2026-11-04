@@ -76,8 +76,34 @@ function tmrRunning(mode) { return tmrS[mode === 'stopwatch' ? 'stopwatch' : 'ti
 
 function tmrSetMode(mode) {      // 보는 탭만 바꾼다 (돌아가던 것은 그대로 계속 돈다)
   tmrMode = mode === 'stopwatch' ? 'stopwatch' : 'timer';
+  tmrPickClose();
   if (store.timer) store.timer.mode = tmrMode;
   renderTimer();
+}
+
+// 시간 직접 설정: 큰 시간 글자를 누르면 선택기(시간 : 분)가 열린다. 할 일 탭의 선택기와 같은 모양(− 값 + 버튼, 휠, 확인/취소).
+// 분은 5분 단위로 오르내리고(미세 조정은 −1/+1/+5 버튼), 시간은 0~10, 전체는 1분~10시간이다. 진행 중인 타이머는 건드리지 않는다.
+const tk = { h: 0, m: 25 };
+function tmrPickRender() { setText($('tkH'), String(tk.h)); setText($('tkM'), pad2(tk.m)); }
+function tmrPickOpen() {
+  if (tmrMode !== 'timer' || tmrActiveOf('timer')) return;
+  const min = tmrMinutes();
+  tk.h = Math.floor(min / 60); tk.m = min % 60;
+  tmrPickRender();
+  $('timerLayer').classList.add('picking');
+}
+function tmrPickClose() { const l = $('timerLayer'); if (l) l.classList.remove('picking'); }
+function tmrPickStep(which, dir) {
+  if (which === 'h') tk.h = (tk.h + dir + 11) % 11;
+  else tk.m = ((dir > 0 ? Math.floor(tk.m / 5) + 1 : Math.ceil(tk.m / 5) - 1) * 5 + 60) % 60;
+  if (tk.h >= 10) tk.m = 0;      // 최대 10시간
+  tmrPickRender();
+}
+function tmrPickOk() {
+  store.timer.minutes = clampN(tk.h * 60 + tk.m, 1, 600, 5);
+  saveStoreSoon();
+  tmrReset('timer');
+  tmrPickClose();
 }
 
 function tmrReset(mode) {
@@ -234,6 +260,7 @@ function renderTimer() {
   const timerMode = tmrMode === 'timer';
   setText($('tmTime'), fmtClock(timerMode ? tmrS.timer.remaining : tmrS.stopwatch.elapsed));
   $('timerLayer').dataset.m = tmrMode;
+  $('timerLayer').dataset.act = tmrActiveOf('timer') ? '1' : '0';
   for (const b of $$('#tmModes button')) {
     b.classList.toggle('on', b.dataset.m === tmrMode);
     b.classList.toggle('run', b.dataset.m !== tmrMode && tmrRunning(b.dataset.m));      // 다른 탭에서 돌고 있다는 작은 점
@@ -256,6 +283,17 @@ function initTimer() {
   $('tmStart').addEventListener('click', () => tmrStartPause());
   $('tmReset').addEventListener('click', () => tmrReset());
   $('tmLap').addEventListener('click', () => tmrLap());
+  $('tmTime').addEventListener('click', tmrPickOpen);
+  for (const st of $$('#tmPick .stepper')) {
+    for (const b of st.querySelectorAll('button')) b.addEventListener('click', () => tmrPickStep(st.dataset.t, Number(b.dataset.d)));
+    st.addEventListener('wheel', (e) => { e.preventDefault(); e.stopPropagation(); tmrPickStep(st.dataset.t, e.deltaY < 0 ? 1 : -1); }, { passive: false });      // 휠: 위로 올리면 커진다
+  }
+  $('tkOk').addEventListener('click', tmrPickOk);
+  $('tkCancel').addEventListener('click', tmrPickClose);
+  $('tmPick').addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { e.stopPropagation(); tmrPickClose(); }
+    else if (e.key === 'Enter') { e.preventDefault(); tmrPickOk(); }
+  });
   for (const b of $$('#tmModes button')) b.addEventListener('click', () => tmrSetMode(b.dataset.m));
   for (const b of $$('#tmAdj [data-d]')) b.addEventListener('click', () => tmrAdjust(Number(b.dataset.d)));
   langHooks.push(renderTimer);

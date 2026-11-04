@@ -30,9 +30,11 @@ PY_DEFAULTS = {
     "hkLyrics": "Ctrl+Alt+L",   # 가사 켜기/끄기
     "winNotify": False,         # 윈도우 알림이 오면 보조 노치(작은 동그라미)로 알린다 (알림 내용은 읽지 않는다). 기본은 꺼짐
     "winNotifyIgnore": "",      # 윈도우 알림을 동그라미로 알리지 않을 앱 이름(쉼표로 구분, 부분 일치, 예: chrome, discord)
-    "hkCapture": "Ctrl+Alt+P",  # 캡처 모드: 리퀴드 글래스 '전체'에서 노치를 스크린샷에 보이게 한다 (켜고 끄는 단축키)
+    "soundType": "chime",       # 알림음 종류: chime | bell | marimba | soft | custom(내 .wav 파일)
+    "soundVolume": 70,          # 알림음 크기(%): 윈도우 음량과 별개로 소리 자체의 크기
+    "soundLength": "normal",    # 알림음 길이: short | normal | long (합성음만)
+    "soundFile": "",            # soundType 이 custom 일 때 쓰는 .wav 파일 경로
     "captureNotch": "auto",     # 스크린샷·영상 녹화에서 노치(리퀴드 글래스 '전체'일 때만 의미): hide(가리기: 캡처에 안 찍힘) | auto(평소엔 가리고, 캡처 도구가 켜지면 그동안만 찍힘) | show(표시: 항상 찍힘, 뒤 화면은 정지 화면)
-    "captureSeconds": 15,       # 캡처 모드를 켜 두는 시간(초): 15 | 60 | 300 | 0(끌 때까지. 최대 4시간). 영상 녹화는 길게 켜 두어야 한다
     "clipboardOn": False,       # 클립보드 기록 (민감한 내용이 있을 수 있어 기본은 꺼짐)
     "calendarUrl": "",          # 캘린더(.ics) 주소 또는 파일 경로
     "calendarRemindMin": 10,    # 일정 시작 몇 분 전에 알릴지
@@ -133,7 +135,7 @@ class Prefs:
                 merged["fullscreenMode"] = "show"        # 예전 설정(전체화면 양보 끔)을 새 방식으로 옮긴다
             if merged.get("fullscreenMode") not in ("yield", "hide", "hidepeek", "show"):
                 merged["fullscreenMode"] = "yield"
-            for hk in ("hkToggle", "hkSettings", "hkMixer", "hkLyrics", "hkCapture", "calendarUrl", "pluginsEnabled"):
+            for hk in ("hkToggle", "hkSettings", "hkMixer", "hkLyrics", "calendarUrl", "pluginsEnabled", "soundFile"):
                 merged[hk] = str(merged.get(hk) or "")[:MAX_STRING]
             try:
                 merged["calendarRemindMin"] = max(1, min(120, int(merged.get("calendarRemindMin", 10))))
@@ -141,8 +143,14 @@ class Prefs:
                 merged["calendarRemindMin"] = 10
             if merged.get("captureNotch") not in ("hide", "auto", "show"):
                 merged["captureNotch"] = "auto"
-            if merged.get("captureSeconds") not in (15, 60, 300, 0):
-                merged["captureSeconds"] = 15
+            if merged.get("soundType") not in ("chime", "bell", "marimba", "soft", "custom"):
+                merged["soundType"] = "chime"
+            if merged.get("soundLength") not in ("short", "normal", "long"):
+                merged["soundLength"] = "normal"
+            try:
+                merged["soundVolume"] = max(10, min(100, int(round(float(merged.get("soundVolume", 70))))))
+            except Exception:
+                merged["soundVolume"] = 70
             if merged.get("appFilterMode") not in ("off", "allow", "block"):
                 merged["appFilterMode"] = "off"
             merged["appFilterList"] = str(merged.get("appFilterList") or "")[:MAX_STRING]

@@ -26,7 +26,7 @@ const icon = (name) => `<svg viewBox="0 0 24 24">${ICONS[name] || ''}</svg>`;
 
 const STR = {
   ko: { search: '설정 검색', searchTitle: '검색 결과', noResults: '일치하는 설정이 없어요', ver: '버전', reset: '기본값으로', copied: '완료',
-        removed: (n) => `가사 캐시 ${n}개를 지웠어요`, sent: '테스트 알림을 보냈어요', armed: '정말 초기화할까요?', resetDone: '모든 설정을 초기화했어요',
+        removed: (n) => `가사 캐시 ${n}개를 지웠어요`, sent: '테스트 알림을 보냈어요', soundBad: '이 파일은 쓸 수 없어요 (.wav, 10MB·30초 이내)', armed: '정말 초기화할까요?', resetDone: '모든 설정을 초기화했어요',
         restarting: '다시 시작합니다…', failed: '실패했어요', on: '사용 가능', off: '사용 불가',
         eqTitle: '이퀄라이저', eqDesc: '이어버드의 소리 성향을 골라요. 이어버드에 직접 적용되는 설정이라 삼성 Galaxy Buds 앱과 같아요.', eqNormal: '일반', eqBass: '베이스 부스트', eqSoft: '소프트', eqDynamic: '다이내믹', eqClear: '클리어', eqTreble: '트레블 부스트', eqFailed: '적용하지 못했어요', eqInUse: '다른 앱이 이어버드를 쓰고 있어요 (Galaxy Buds 앱을 닫아 주세요)', eqNoDevice: '이어버드가 연결돼 있지 않거나 제어를 쓸 수 없어요',
         eqCustom: '사용자 설정', eqCustomHint: '9개 대역의 소리를 직접 조절해요. 슬라이더를 놓으면 이어버드에 바로 적용돼요.', eqReset: '모두 0으로', eqLow: '저음', eqHigh: '고음', eqBand: '대역', advTitle: '고급', advOne: '한쪽만 끼고도 소음 제어', advOneDesc: '한쪽 이어버드만 착용해도 노이즈 캔슬링이 자동으로 꺼지지 않게 해요.', advUnknown: '(이 모델에서는 아직 확인하지 못해 바꿀 수 없어요)',
@@ -38,7 +38,7 @@ const STR = {
         tabsHint: '위/아래 버튼으로 순서를 바꾸고, 스위치로 탭을 넣거나 뺍니다. 노치에서 휠이나 점을 눌러 넘기는 순서가 이대로 바뀌어요.', tabsReset: '탭 구성 초기화',
         tabNote_clip: '“클립보드·일정” 설정에서 기록을 켜야 보여요', tabNote_agenda: '캘린더 주소를 넣어야 보여요', tabNote_buds: '이어버드가 연결됐을 때만 보여요', tabNote_plugins: '켜 둔 플러그인이 있어야 보여요',
         tabLast: '탭이 하나는 보여야 해요', pluginFolder: '플러그인 폴더 열기', pluginAdd: '추가', pluginRemove: '제거', pluginsAdded: '추가한 플러그인', pluginsAvailable: '추가할 수 있는 플러그인', pluginsNone: '아직 추가한 플러그인이 없어요. 아래에서 필요한 것을 추가하면 노치에 “플러그인” 탭이 나타나요.', pluginsAllAdded: '모든 플러그인을 추가했어요', pluginReload: '다시 읽기', pluginUser: '내가 만든 플러그인', pluginActions: (n) => `동작 ${n}개`,
-        capOn: '캡처 모드 켜짐 (다시 누르면 꺼요)', capOff: '캡처 모드 꺼짐', capNone: '이미 캡처할 수 있어요',
+        
         pluginHeroT: '플러그인', pluginHeroD: '노치에 나만의 도구 모음을 붙여요. 필요한 것만 추가하면 “플러그인” 탭에 나란히 나타나고, 추가하지 않은 플러그인은 아무 일도 하지 않아요.', pluginsCount: (n) => `${n}개 사용 중`,
         pluginInUse: '사용 중', pluginMoveL: '앞으로', pluginMoveR: '뒤로', pluginMore: (n) => `+${n}`, pluginCreateT: '나만의 플러그인 만들기', pluginCreateD: '프로그램 실행, 주소 열기, 글 복사, 키 보내기를 JSON 파일 하나로 묶을 수 있어요(버튼은 플러그인마다 최대 6개). 예제를 설치해서 고쳐 쓰는 게 가장 빨라요.',
         pluginInstallEx: '예제 설치', pluginExDone: '예제를 plugins 폴더에 만들었어요 (my-tools.json)', pluginExHave: '예제가 이미 있어요 — 그대로 두었어요', pluginLive: '연결됨',
@@ -48,7 +48,7 @@ const STR = {
         calOk: (n) => `일정 ${n}개를 불러왔어요 (앞으로 7일)`, calFail: '캘린더를 읽지 못했어요. 주소를 확인해 주세요',
         hkOk: '사용 중', hkInvalid: '조합 형식이 올바르지 않아요 (예: Ctrl+Alt+N)', hkConflict: '다른 프로그램이 이미 쓰는 조합이에요', hkOff: '꺼짐' },
   en: { search: 'Search settings', searchTitle: 'Search results', noResults: 'No matching settings', ver: 'Version', reset: 'Reset to default', copied: 'Done',
-        removed: (n) => `Cleared ${n} cached lyric file(s)`, sent: 'Sent a test alert', armed: 'Really reset?', resetDone: 'All settings were reset',
+        removed: (n) => `Cleared ${n} cached lyric file(s)`, sent: 'Sent a test alert', soundBad: 'This file cannot be used (.wav, up to 10 MB and 30 s)', armed: 'Really reset?', resetDone: 'All settings were reset',
         restarting: 'Restarting…', failed: 'Failed', on: 'Available', off: 'Unavailable',
         eqTitle: 'Equalizer', eqDesc: 'Pick the sound profile. It is applied to the earbuds themselves, same as in the Samsung Galaxy Buds app.', eqNormal: 'Normal', eqBass: 'Bass boost', eqSoft: 'Soft', eqDynamic: 'Dynamic', eqClear: 'Clear', eqTreble: 'Treble boost', eqFailed: 'Could not apply', eqInUse: 'Another app is using the earbuds (close the Galaxy Buds app)', eqNoDevice: 'Earbuds are not connected or control is unavailable',
         eqCustom: 'Custom', eqCustomHint: 'Shape the sound in nine bands. Letting go of a slider applies it to the earbuds right away.', eqReset: 'Reset to 0', eqLow: 'Low', eqHigh: 'High', eqBand: 'Band', advTitle: 'Advanced', advOne: 'Noise controls with one earbud', advOneDesc: 'Keeps noise canceling on when only one earbud is worn.', advUnknown: '(Not verified on this model yet, so it cannot be changed.)',
@@ -60,7 +60,7 @@ const STR = {
         tabsHint: 'Use the arrows to reorder and the switches to add or remove tabs. The notch pages follow this order.', tabsReset: 'Reset tabs',
         tabNote_clip: 'Turn on clipboard history in “Clipboard & Agenda” to show it', tabNote_agenda: 'Add a calendar address to show it', tabNote_buds: 'Shown only while earbuds are connected', tabNote_plugins: 'Needs at least one enabled plugin',
         tabLast: 'At least one tab must stay visible', pluginFolder: 'Open plugin folder', pluginAdd: 'Add', pluginRemove: 'Remove', pluginsAdded: 'Added plugins', pluginsAvailable: 'Available plugins', pluginsNone: 'No plugins added yet. Add one below and a “Plugins” tab appears on the notch.', pluginsAllAdded: 'All plugins are added', pluginReload: 'Reload', pluginUser: 'My plugin', pluginActions: (n) => `${n} actions`,
-        capOn: 'Capture mode on (press again to turn it off)', capOff: 'Capture mode off', capNone: 'Already capturable',
+        
         pluginHeroT: 'Plugins', pluginHeroD: 'Attach your own tool sets to the notch. Add only what you need and they line up in the “Plugins” tab; plugins you have not added do nothing.', pluginsCount: (n) => `${n} in use`,
         pluginInUse: 'In use', pluginMoveL: 'Move earlier', pluginMoveR: 'Move later', pluginMore: (n) => `+${n}`, pluginCreateT: 'Make your own plugin', pluginCreateD: 'Bundle running a program, opening an address, copying text and sending keys into one JSON file (up to 6 buttons per plugin). Installing the example and editing it is the quickest way.',
         pluginInstallEx: 'Install example', pluginExDone: 'Example created in the plugins folder (my-tools.json)', pluginExHave: 'The example already exists — left untouched', pluginLive: 'Live',
@@ -159,7 +159,7 @@ function commit(item, value) {
     for (const k of Object.keys(p)) { D.settings[k] = p[k]; queuePatch('settings', k, p[k], true); }
   } else {
     setPath(D[item.path], item.key, value);
-    queuePatch(item.path, item.key, value, item.type === 'toggle' || item.type === 'seg' || item.type === 'button');
+    queuePatch(item.path, item.key, value, item.type === 'toggle' || item.type === 'seg' || item.type === 'monmap' || item.type === 'button');
   }
   if (item.special === 'animPreset' || LOCAL_KEYS.test(item.key || '')) applyLocal();      // 설정 창 자신의 언어·애니메이션 값이 아니면 건드리지 않는다(루트 변수를 쓰면 문서 전체가 다시 계산된다)
   updateAll();
@@ -261,6 +261,61 @@ function makeRow(item, opts) {
     };
     if (window.ResizeObserver) { const ro = new ResizeObserver(() => { if (seg.dataset.placed === '1') placeSeg(seg); }); ro.observe(seg); }      // 글꼴·창 크기 때문에 버튼 폭이 달라지면 강조 막대를 다시 맞춘다
     row._seg = seg;
+  } else if (item.type === 'monmap') {
+    // 모니터 선택: 연결된 모니터를 윈도우 디스플레이 설정처럼 실제 배치대로 그려 놓고 눌러서 고른다(번호는 윈도우 식별 번호).
+    // 노치가 뜨는 모니터에는 위쪽에 작은 노치 표시가 붙는다. 아래 '주 모니터' 버튼은 언제나 주 모니터를 따라간다(기본, 값 0).
+    const box = document.createElement('div');
+    box.className = 'monmap';
+    const stage = document.createElement('div');
+    stage.className = 'mm-stage';
+    const auto = document.createElement('button');
+    auto.type = 'button'; auto.className = 'mm-auto';
+    auto.addEventListener('click', () => commit(item, 0));
+    box.append(stage, auto);
+    ctl.appendChild(box);
+    let mmSig = '';
+    updateCtl = () => {
+      const ms = MONITORS.monitors || [];
+      const cur = Number(valueOf(item)) || 0;
+      // 노치가 뜨는 모니터: 고른 번호(연결돼 있을 때), 아니면 주 모니터. 파이썬의 답을 기다리지 않고 고르는 즉시 표시가 옮겨 간다.
+      const pri = ms.find((m) => m.primary);
+      const eff = cur > 0 && ms.some((m) => m.number === cur) ? cur : (pri ? pri.number : MONITORS.current);
+      const sig = JSON.stringify([ms.map((m) => [m.number, m.left, m.top, m.width, m.height, m.primary]), cur, eff, LANG]);
+      if (sig === mmSig) return;
+      mmSig = sig;
+      const at = lx('주 모니터', 'Primary monitor', '主显示器', 'メインモニター');
+      if (auto.textContent !== at) auto.textContent = at;
+      auto.classList.toggle('on', cur === 0);
+      auto.setAttribute('aria-pressed', cur === 0 ? 'true' : 'false');
+      stage.textContent = '';
+      stage.classList.toggle('empty', !ms.length);
+      if (!ms.length) { stage.textContent = lx('모니터 목록을 읽지 못했어요.', 'Could not read the monitor list.', '无法读取显示器列表。', 'モニターの一覧を読み取れませんでした。'); return; }
+      const W = 340, PAD = 12;
+      const minL = Math.min(...ms.map((m) => m.left)), minT = Math.min(...ms.map((m) => m.top));
+      const maxR = Math.max(...ms.map((m) => m.left + m.width)), maxB = Math.max(...ms.map((m) => m.top + m.height));
+      const bw = maxR - minL, bh = maxB - minT;
+      const H = Math.round(Math.max(96, Math.min(190, (W - 2 * PAD) * bh / bw + 2 * PAD)));      // 배치의 가로세로 비율에 맞춰 높이를 조절한다(세로로 쌓으면 길어지고, 울트라와이드는 낮아진다)
+      stage.style.height = `${H}px`;
+      const sc = Math.min((W - 2 * PAD) / bw, (H - 2 * PAD) / bh);
+      const ox = (W - (maxR - minL) * sc) / 2, oy = (H - (maxB - minT) * sc) / 2;
+      for (const m of ms) {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'mm-tile' + (m.number === eff ? ' on' : '');
+        const w = Math.max(24, (m.width * sc) - 4), h = Math.max(18, (m.height * sc) - 4);
+        b.style.cssText = `left:${(ox + (m.left - minL) * sc + 2).toFixed(1)}px;top:${(oy + (m.top - minT) * sc + 2).toFixed(1)}px;width:${w.toFixed(1)}px;height:${h.toFixed(1)}px`;
+        b.title = `${m.number}: ${m.width}×${m.height}${m.primary ? lx(' (주 모니터)', ' (primary)', '（主显示器）', '（メイン）') : ''}`;
+        b.setAttribute('aria-pressed', m.number === eff ? 'true' : 'false');
+        const num = document.createElement('b');
+        num.textContent = String(m.number);
+        num.style.fontSize = `${Math.max(11, Math.min(24, Math.min(h, w) * 0.4)).toFixed(0)}px`;
+        b.appendChild(num);
+        if (w > 66 && h > 46) { const r = document.createElement('small'); r.textContent = `${m.width}×${m.height}`; b.appendChild(r); }
+        if (m.primary) { const p = document.createElement('i'); p.className = 'mm-pri'; b.appendChild(p); }
+        if (m.number === eff) { const n = document.createElement('i'); n.className = 'mm-notch'; b.appendChild(n); }
+        b.addEventListener('click', () => commit(item, m.number));
+        stage.appendChild(b);
+      }
+    };
   } else if (item.type === 'text') {
     const inp = document.createElement('input');
     inp.type = 'text'; inp.className = 'txt' + (item.wide ? ' wide' : ''); inp.maxLength = 160; inp.spellcheck = false; inp.autocomplete = 'off';
@@ -353,8 +408,14 @@ function runAction(item, btn) {
   const done = (msg) => { btn.classList.add('done'); setTimeout(() => btn.classList.remove('done'), 1200); if (msg) toast(msg); };
   switch (item.action) {
     case 'restart': toast(S('restarting')); setTimeout(() => api && api.restart_app && api.restart_app(), 250); break;
-    case 'captureMode': if (api) api.capture_toggle().then((r) => done(r && r.off ? S('capOff') : (r && r.active ? S('capOn') : S('capNone')))); break;
     case 'clearCache': if (api) api.clear_lyrics_cache().then((r) => done(S('removed')(r ? r.removed : 0))); break;
+    case 'testChime': if (api && api.chime) { const st = D.settings; api.chime('pomo', { type: st.soundType, volume: st.soundVolume, length: st.soundLength, file: st.soundFile }); done(); } break;
+    case 'pickSound':
+      if (api && api.pick_sound_file) api.pick_sound_file().then((r) => {
+        if (r && r.status === 'ok') { setPath(D.settings, 'soundFile', r.path); queuePatch('settings', 'soundFile', r.path, true); updateAll(); done(); }
+        else if (r && r.status === 'invalid') toast(S('soundBad'));
+      });
+      break;
     case 'testNotify': if (api) api.test_notify().then(() => done(S('sent'))); break;
     case 'clipClear': if (api) api.clip_clear().then(() => done(S('cleared'))); break;
     case 'calendarTest':
@@ -431,9 +492,10 @@ const COMPONENTS = {
       sub.textContent = `${S('btConnected')} · ${S('btControl')}: ${b.control ? S('on') : S('off')}`;
       const lab = { left: S('btLeft'), right: S('btRight'), case: S('btCase') };
       rings.innerHTML = ['left', 'right', 'case'].filter((k) => b.battery && b.battery[k] != null).map((k) => {
+        const off = b.placement && (b.placement[k] === 0 || b.placement[k] === 4);
         const v = b.battery[k];
         const c = v < 20 ? 'var(--danger)' : v < 50 ? '#ffc25a' : 'var(--ok)';
-        return `<div class="bring"><div class="wrap"><div class="ring" style="--v:${v};--c:${c}"></div><span class="val">${v}</span></div><span>${lab[k]}</span></div>`;
+        return `<div class="bring${off ? ' off' : ''}"><div class="wrap"><div class="ring" style="--v:${v};--c:${c}"></div><span class="val">${v}</span></div><span>${lab[k]}</span></div>`;
       }).join('');
     };
     let timer = null;

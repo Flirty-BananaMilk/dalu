@@ -689,6 +689,10 @@ function renderBuds(grow) {
     val.classList.toggle('na', na);
     ring.dataset.lv = na ? '' : batteryLevel(lv);
     el.classList.toggle('charging', !!(s.charging && s.charging[el.dataset.pos]));
+    const pl = s.placement ? s.placement[el.dataset.pos] : undefined;      // 연결 끊김(0) / 닫힌 케이스(4)인 버드는 옛 값이라 흐리게 보여 준다
+    const off = pl === 0 || pl === 4;
+    el.classList.toggle('off', off);
+    el.title = off ? t('budsOff') : '';
     setText(val, na ? '--' : String(lv));
     if (!grow) ring.style.setProperty('--p', na ? '0' : String(lv));
   }
@@ -712,7 +716,7 @@ function updateBuds(snap) {
   const was = budsConnected();
   budsSnap = snap || budsSnap;
   // 폴링마다 오지만 값이 바뀔 때만 화면을 갱신한다
-  const key = JSON.stringify([budsSnap.available, budsSnap.connected, budsSnap.name, budsSnap.battery, budsSnap.control, budsSnap.charging]);
+  const key = JSON.stringify([budsSnap.available, budsSnap.connected, budsSnap.name, budsSnap.battery, budsSnap.control, budsSnap.charging, budsSnap.placement]);
   if (key === budsKey) return;
   budsKey = key;
   const now = budsConnected();
@@ -833,10 +837,6 @@ function handleSysEvent(e) {
       break;
     case 'win_notify':
       if (typeof satNotify === 'function') satNotify(e.apps);      // 윈도우 알림이 왔다: 보조 노치(동그라미)로 알린다
-      break;
-    case 'capture_mode':
-      if (e.off) notify({ icon: 'monitor', tone: 'blue', title: t('captureOff'), sub: t('captureOffSub'), ms: 2600 });
-      else notify({ icon: 'monitor', tone: 'blue', title: t(e.on ? 'captureOn' : 'captureNone'), sub: e.on ? (e.hold ? t('captureHoldSub') : t('captureOnSub', { n: e.seconds })) : t('captureNoneSub'), ms: 3000 });
       break;
     case 'buds_gone':
       notify({ icon: 'headphones', title: t('budsGone'), ms: 2600 });

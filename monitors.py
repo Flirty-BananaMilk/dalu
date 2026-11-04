@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 # Copyright (c) 2026 Flirty_BananaMilk — 상업적 이용 금지, 자세한 내용은 LICENSE
-"""모니터 목록과 선택. 윈도우의 '디스플레이 식별 번호'(설정 > 디스플레이 > 식별)는 GDI 장치 이름 \\\\.\\DISPLAYn 의 n 과 같다.
+"""모니터 목록과 선택. 번호는 윈도우 설정 > 디스플레이 > 식별의 번호와 같다: 연결된 모니터를 GDI 장치 이름(\\\\.\\DISPLAYn)의 n 순서대로 1부터 센 값이다.
+(장치 이름의 n 은 모니터를 뺐다 꽂으면 1, 2, 5 처럼 건너뛰지만, 식별 번호는 늘 1, 2, 3 이다. 장치 이름의 n 은 'gdi' 로 따로 들고 있다.)
 
 좌표는 이 프로세스가 창을 옮길 때 쓰는 좌표계(물리 픽셀, 가상 화면 기준)다. 주 모니터가 아닌 곳은 left/top 이 음수일 수 있다.
 """
@@ -35,7 +36,7 @@ def monitor_dpi(hmon):
 
 
 def list_monitors():
-    """연결된 모니터: [{number, device, left, top, width, height, primary, dpi}] (번호 순)."""
+    """연결된 모니터: [{number, gdi, device, left, top, width, height, primary, dpi}] (식별 번호 순). number = 윈도우 식별 번호, gdi = 장치 이름 DISPLAYn 의 n."""
     user32 = ctypes.windll.user32
     found = []
     proc_t = ctypes.WINFUNCTYPE(ctypes.c_int, wintypes.HMONITOR, wintypes.HDC, ctypes.POINTER(wintypes.RECT), wintypes.LPARAM)
@@ -51,8 +52,11 @@ def list_monitors():
 
     user32.EnumDisplayMonitors(None, None, proc_t(cb), 0)
     for i, m in enumerate(found):
-        m["number"] = number_of(m["device"], i + 1)
-    return sorted(found, key=lambda m: m["number"])
+        m["gdi"] = number_of(m["device"], 10 ** 6 + i)
+    found.sort(key=lambda m: (m["gdi"], m["device"]))
+    for i, m in enumerate(found):
+        m["number"] = i + 1      # 윈도우의 식별 번호(1, 2, 3 ...)
+    return found
 
 
 def pick_monitor(monitors, wanted):

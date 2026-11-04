@@ -196,9 +196,20 @@
   <div class="ly l-timer" id="timerLayer" data-m="timer" data-run="0">
     <div class="glow glow-timer"></div>
     <div class="a tmmodes" id="tmModes"><i class="tmhl" id="tmHl"></i><button data-m="timer" data-i18n="timerMode">-</button><button data-m="stopwatch" data-i18n="stopwatchMode">-</button></div>
-    <div class="a tmtime" id="tmTime">05:00</div>
+    <div class="a tmtime" id="tmTime" data-i18n-title="tmrSetTime">05:00</div>
     <div class="a tmadj" id="tmAdj">
       <button class="pill" data-d="-1">−1</button><button class="pill" data-d="1">+1</button><button class="pill" data-d="5">+5</button>
+    </div>
+    <div class="a tmpick" id="tmPick">
+      <div class="row mid">
+        <div class="tkcol"><div class="stepper" data-t="h"><button type="button" data-d="-1"><svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg></button><span class="val" id="tkH">0</span><button type="button" data-d="1"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button></div><span class="tkunit" data-i18n="unitHour">h</span></div>
+        <span class="colon">:</span>
+        <div class="tkcol"><div class="stepper" data-t="m"><button type="button" data-d="-1"><svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg></button><span class="val" id="tkM">25</span><button type="button" data-d="1"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button></div><span class="tkunit" data-i18n="unitMin">min</span></div>
+      </div>
+      <div class="row end">
+        <button type="button" class="pill" id="tkCancel" data-i18n="cancel">-</button>
+        <button type="button" class="pill primary" id="tkOk" data-i18n="done">-</button>
+      </div>
     </div>
     <div class="a tmlaps" id="tmLaps"><div class="lapempty" id="lapEmpty"></div><div class="laplist" id="lapList"></div></div>
     <div class="a tmbtns">

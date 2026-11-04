@@ -47,7 +47,7 @@ function matchAnimPreset(s) {
 // 시스템 이벤트 종류 -> 알림 설정 키 (notify.<키>)
 const NOTIFY_KEY_OF_EVENT = {
   volume: 'volume', brightness: 'brightness', caps: 'caps', num: 'num', scroll: 'scroll', lang: 'lang', power: 'power', battery_low: 'battery_low',
-  net: 'net', buds: 'buds', buds_gone: 'buds', buds_low: 'buds_low', buds_alert: 'buds_alert', audio_device: 'audio_device', capture_mode: 'capture_mode',
+  net: 'net', buds: 'buds', buds_gone: 'buds', buds_low: 'buds_low', buds_alert: 'buds_alert', audio_device: 'audio_device',
 };
 
 // 알림을 보여 줄지. 모르는 종류는 보여 준다(새 알림이 생겨도 설정 때문에 조용히 사라지지 않게).
