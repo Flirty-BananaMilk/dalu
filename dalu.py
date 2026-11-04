@@ -130,7 +130,7 @@ WS_EX_TRANSPARENT = 0x00000020
 WS_EX_LAYERED = 0x00080000
 LWA_ALPHA = 0x00000002
 
-APP_VERSION = "1.0.0"   # 배포 버전(MAJOR.MINOR.PATCH). 올릴 때는 CHANGELOG.md 에 같은 버전의 항목을 먼저 쓴다 (installer/build_release.py 가 확인)
+APP_VERSION = "1.0.1"   # 배포 버전(MAJOR.MINOR.PATCH). 올릴 때는 CHANGELOG.md 에 같은 버전의 항목을 먼저 쓴다 (installer/build_release.py 가 확인)
 SETTINGS_W = 980
 SETTINGS_H = 680
 

@@ -207,7 +207,7 @@ input { font-family: inherit; user-select: text; -webkit-user-select: text; }
   opacity: 1;
   transform: none;
   pointer-events: auto;
-  transition: opacity 0.34s ease 0.16s, transform 0.6s var(--spring) 0.12s;
+  transition: opacity 0.34s ease 0.16s, transform 0.6s var(--spring) 0.12s, margin-top 0.62s var(--spring), margin-bottom 0.62s var(--spring);      /* margin-*: 알림 띠가 뜨고 질 때 모든 페이지의 내용이 앨범 그림·노치 높이와 같은 스프링으로 내려갔다 올라온다(여기서 빠지면 내용만 뚝 움직인다) */
 }
 
 .a { position: absolute; }
@@ -531,7 +531,7 @@ body.dragging-files .glow-shelf { background: linear-gradient(90deg, rgba(45, 14
 .island[data-s="music"] .dots, .island[data-s="lyrics"] .dots, .island[data-s="pomo"] .dots,
 .island[data-s="water"] .dots, .island[data-s="shelf"] .dots, .island[data-s="todo"] .dots, .island[data-s="buds"] .dots,
 .island[data-s="timer"] .dots, .island[data-s="clip"] .dots, .island[data-s="agenda"] .dots, .island[data-s="launcher"] .dots, .island[data-s="plugins"] .dots {
-  opacity: 1; pointer-events: auto; transition: opacity 0.32s ease 0.2s;
+  opacity: 1; pointer-events: auto; transition: opacity 0.32s ease 0.2s, margin-top 0.62s var(--spring);
 }
 .dots i {
   width: 3.6px; height: 3.6px; border-radius: 2px;
@@ -556,7 +556,7 @@ body.dragging-files .glow-shelf { background: linear-gradient(90deg, rgba(45, 14
 .island[data-s="music"] .btn-pin, .island[data-s="lyrics"] .btn-pin, .island[data-s="pomo"] .btn-pin,
 .island[data-s="water"] .btn-pin, .island[data-s="shelf"] .btn-pin, .island[data-s="todo"] .btn-pin, .island[data-s="buds"] .btn-pin,
 .island[data-s="timer"] .btn-pin, .island[data-s="clip"] .btn-pin, .island[data-s="agenda"] .btn-pin, .island[data-s="launcher"] .btn-pin, .island[data-s="plugins"] .btn-pin {
-  opacity: 1; pointer-events: auto; transition: background 0.15s ease, opacity 0.32s ease 0.2s;
+  opacity: 1; pointer-events: auto; transition: background 0.15s ease, opacity 0.32s ease 0.2s, margin-top 0.62s var(--spring);
 }
 .btn-pin:hover { background: rgba(255, 255, 255, 0.14); }
 .btn-pin svg { width: 13px; height: 13px; fill: var(--dim); rotate: 40deg; transition: fill 0.2s ease, rotate 0.4s var(--spring-hard); }
@@ -838,7 +838,6 @@ body.dragging-files .szone { border-color: rgba(255, 255, 255, 0.85); background
   opacity: 0; pointer-events: none; z-index: 4; transition: opacity 0.25s ease, transform 0.35s var(--spring);
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-.island.toasting .dots { opacity: 0 !important; transition: opacity 0.12s ease !important; }
 
 /* ---------- 컨텍스트 메뉴 ---------- */
 .context-menu {

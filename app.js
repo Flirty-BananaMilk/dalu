@@ -513,6 +513,14 @@ function slideLayers(fromName, toName, dir) {
        { duration: 680, delay: 90, easing: SPRING });
 }
 
+// 페이지 전환 '페이드': 들어오는 레이어가 제자리에서 서서히 나타난다.
+// (레이어는 display:none 에서 켜지므로 CSS opacity 전환은 실행되지 않는다 — 스크립트 애니메이션으로 건다. 나가는 쪽은 CSS 가 먼저 0.16s 에 걸쳐 사라진다)
+function fadeInLayer(toName) {
+  const el = document.querySelector('.l-' + toName);
+  cancelScriptAnimations(el);
+  anim(el, [{ opacity: 0 }, { opacity: 1 }], { duration: 420, delay: 90, easing: 'ease-out', fill: 'backwards' });
+}
+
 // 가사를 켤 때 보이는 줄들이 위에서부터 차례로 들어온다 (리스트 위치가 잡힌 뒤의 보이는 줄만)
 function staggerLyrics() {
   requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -562,6 +570,7 @@ function updateView() {
 
   if (prev !== null && isPageView(next) && layerOf(next) !== layerOf(prev)) {
     if (isPageView(prev) && PREF.pageAnim === 'slide') slideLayers(layerOf(prev), layerOf(next), pageDir);
+    else if (isPageView(prev)) fadeInLayer(layerOf(next));
     if (PREF.entrance && typeof enterAnim === 'function') enterAnim(layerOf(next));
   }
   if (next === 'lyrics' && prev !== 'lyrics') staggerLyrics();
@@ -638,7 +647,7 @@ function popShow(opts) {
     popOn = true;
     island.dataset.pop = '1';
     island.style.setProperty('--pp', `${POP_H}px`);
-    island.classList.add('toasting');            // 알림이 있는 동안 페이지 점은 숨긴다
+    island.classList.add('toasting');            // (점·아이콘 독은 알림 중에도 그대로 보인다)
     scheduleRegion();                            // 커질 때는 바로 영역을 넓힌다
   }
   if (!live) {
@@ -1757,7 +1766,7 @@ function togglePin() {
     btnPin.classList.remove('active');
     setText($('menuPinText'), t('menuPin'));
     showToast(t('autoHide'));
-    triggerCollapse();
+    if (!island.matches(':hover')) triggerCollapse();      // 마우스가 노치 위에 있으면 접지 않는다: 노치를 벗어날 때(mouseleave) 자동으로 접힌다
   }
 }
 
