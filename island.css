@@ -474,7 +474,7 @@ input { font-family: inherit; user-select: text; -webkit-user-select: text; }
 }
 .island.playing[data-s="music"] .ambient::before,
 .island.playing[data-s="lyrics"] .ambient::before { animation-play-state: running; }
-.l-player .ambient { opacity: min(1, calc(0.5 * var(--glow-str, 1))); transition: opacity 0.8s ease; }
+.l-player .ambient { opacity: min(1, calc(0.5 * var(--glow-str, 1))); transition: opacity 0.8s ease, margin-top 0.62s var(--spring); }      /* margin-top: 알림 띠가 뜨고 질 때 빛이 내용과 같은 스프링으로 따라가야 한다(빠지면 띠 높이만큼 빛이 튀어서 까만 띠가 보인다) */
 .l-player[data-mode="lyrics"] .ambient { opacity: min(1, calc(0.9 * var(--glow-str, 1))); }
 @keyframes drift {
   from { transform: translate3d(-3%, 2%, 0) scale(1.05); }
@@ -487,7 +487,7 @@ input { font-family: inherit; user-select: text; -webkit-user-select: text; }
 .glow-water { background: radial-gradient(252px 126px at calc(50% - 160px) 98px, rgba(45, 140, 255, 0.24), transparent 72%); }
 .glow-buds { background: radial-gradient(252px 140px at calc(50% + 147px) 70px, rgba(95, 176, 255, 0.2), transparent 72%); }
 .glow-todo { background: radial-gradient(252px 126px at calc(50% + 160px) 56px, rgba(51, 224, 122, 0.14), transparent 72%); }
-.glow-shelf { background: radial-gradient(448px 189px at 50% 172px, rgba(255, 255, 255, 0.07), transparent 70%); transition: background 0.4s ease; }
+.glow-shelf { background: radial-gradient(448px 189px at 50% 172px, rgba(255, 255, 255, 0.07), transparent 70%); transition: background 0.4s ease, margin-top 0.62s var(--spring); }
 body.dragging-files .glow-shelf { background: linear-gradient(90deg, rgba(45, 140, 255, 0.35), rgba(123, 75, 255, 0.35)) center / 560px 100% no-repeat; }   /* 선반 크기(560px) 만큼만 */
 
 .ttl { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
@@ -943,7 +943,7 @@ html[data-theme="tint"] .island {
 .pbtn.okflash { background: rgba(51, 224, 122, 0.35); }
 /* ---------- 플러그인 페이지: 왼쪽에 고른 플러그인(색 구슬·이름·실시간 상태), 오른쪽에 동작 타일, 아래에 플러그인 독 ---------- */
 .l-plugins { --pc: #8aa0ff; }
-.glow-plug { background: radial-gradient(190px 120px at 92px 46px, color-mix(in srgb, var(--pc) 34%, transparent), transparent 72%); transition: background 0.5s ease; }
+.glow-plug { background: radial-gradient(190px 120px at 92px 46px, color-mix(in srgb, var(--pc) 34%, transparent), transparent 72%); transition: background 0.5s ease, margin-top 0.62s var(--spring); }
 .l-plugins:not(.has) .glow-plug { opacity: 0; }
 .phero { left: 24px; top: 22px; width: 132px; height: 70px; }
 .l-plugins:not(.has) .phero, .l-plugins:not(.has) .pchips, .l-plugins:not(.has) .pgrid { display: none; }
@@ -1058,6 +1058,7 @@ html[data-glass="full"][data-desk="1"][data-theme="glass"] .glassbody {
   transition: opacity 0.22s ease, translate 0.4s var(--spring); display: flex; align-items: center; }
 .island[data-bg="1"] .mini-bg { opacity: 1; translate: 0 0; transition-delay: 0.12s, 0.12s; }
 .island.compact .mini-bg { display: none; }
+.island.bg-closing .mini-bg { opacity: 0 !important; transition: opacity 0.1s ease !important; }      /* 닫히기 전에 먼저 사라진다(노치가 줄어들 때 글자가 반쯤 잘려 보이지 않게) */
 .mini-bg.scrolling { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%); }
 .mini-bg-line { font-size: calc(11px * var(--lyric-scale, 1)); font-weight: 600; white-space: nowrap; color: var(--inactive); display: inline-block; will-change: transform; letter-spacing: -0.1px; }
 .mini-bg-line .mini-word { --glow: 0 0 4px rgba(255, 255, 255, 0.2); }

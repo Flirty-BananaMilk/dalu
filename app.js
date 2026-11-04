@@ -644,6 +644,7 @@ function popShow(opts) {
   meter.classList.toggle('on', hasMeter);
   if (hasMeter) meter.firstElementChild.style.width = `${Math.round(Math.max(0, Math.min(1, opts.meter)) * 100)}%`;
   if (!popOn) {
+    clearTimeout(popShrinkTimer); popShrinkTimer = null;
     popOn = true;
     island.dataset.pop = '1';
     island.style.setProperty('--pp', `${POP_H}px`);
@@ -657,16 +658,22 @@ function popShow(opts) {
   clearTimeout(popTimer);
   popTimer = setTimeout(popHide, opts.ms || peekMs(1700));
 }
+let popShrinkTimer = null;
 function popHide() {
   clearTimeout(popTimer);
   popTimer = null;
   if (!popOn) return;
   popOn = false;
   popKey = '';
-  island.dataset.pop = '0';
-  island.style.setProperty('--pp', '0px');
-  island.classList.remove('toasting');
-  scheduleRegion();                              // 줄어들 땐 애니메이션이 끝난 뒤에 영역을 줄인다
+  island.dataset.pop = '0';                      // 띠의 글자가 먼저 사라지고(0.14s)
+  clearTimeout(popShrinkTimer);
+  popShrinkTimer = setTimeout(() => {            // 그 뒤에 노치가 줄고 내용이 올라온다(같이 줄이면 아직 보이는 글자가 줄어드는 노치에 잘려 보인다)
+    popShrinkTimer = null;
+    if (popOn) return;
+    island.style.setProperty('--pp', '0px');
+    island.classList.remove('toasting');
+    scheduleRegion();                            // 줄어들 땐 애니메이션이 끝난 뒤에 영역을 줄인다
+  }, 120);
 }
 
 // 안전장치: 알림 띠의 상태(popOn / --pp / 타이머)가 어긋난 채 남지 않게 1초마다 맞춘다.
@@ -1246,11 +1253,29 @@ function findMiniBg(nowSec) {
   return -1;
 }
 
+let miniBgCloseTimer = null;
 function setMiniBgOpen(on) {
+  if (on) {
+    // 닫히는 중에 다시 열리면(다음 bg 줄이 이어질 때) 닫기를 취소한다
+    clearTimeout(miniBgCloseTimer); miniBgCloseTimer = null;
+    island.classList.remove('bg-closing');
+  }
   const cur = island.dataset.bg === '1';
   if (cur === on) return;
-  if (on) island.dataset.bg = '1'; else delete island.dataset.bg;
-  scheduleRegion(on);
+  if (on) {
+    island.dataset.bg = '1';
+    scheduleRegion(true);
+    return;
+  }
+  // 닫을 때: 줄이 먼저 사라지게 한 뒤(.bg-closing, 0.1s) 노치를 줄인다. 같이 줄이면 아직 보이는 글자가 줄어드는 아래 가장자리에 반쯤 잘려 보인다.
+  if (miniBgCloseTimer) return;
+  island.classList.add('bg-closing');
+  miniBgCloseTimer = setTimeout(() => {
+    miniBgCloseTimer = null;
+    island.classList.remove('bg-closing');
+    delete island.dataset.bg;
+    scheduleRegion(false);
+  }, 120);
 }
 
 function renderMiniBg(nowSec, enabled) {
