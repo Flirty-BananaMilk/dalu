@@ -26,13 +26,33 @@ PY_DEFAULTS = {
     "hotkeysOn": True,          # 전역 단축키
     "hkToggle": "Ctrl+Alt+N",   # 노치 펼침/접힘(고정)
     "hkSettings": "Ctrl+Alt+S", # 설정 창
-    "hkMixer": "Ctrl+Alt+V",    # 볼륨 믹서
     "hkLyrics": "Ctrl+Alt+L",   # 가사 켜기/끄기
     "winNotify": False,         # 윈도우 알림이 오면 보조 노치(작은 동그라미)로 알린다 (알림 내용은 읽지 않는다). 기본은 꺼짐
+    "linkOn": False,            # Dalu Link(폰 앱) 연결을 쓴다: 켤 때만 이 PC 가 같은 네트워크의 폰 연결을 받는다
+    "linkRelayOn": False,       # 모바일 데이터 등 같은 네트워크가 아닌 폰도 중계 서버(암호화된 길)로 연결한다
+    "linkRelay": "",            # (쓰지 않음: 예전 버전이 저장한 값이 있어도 읽기만 한다) 중계 서버는 기본 서버만 쓴다. 내용은 폰과 PC 사이에서 끝까지 암호화돼 서버는 읽지 못한다
+    "linkClipPush": True,       # 이 PC 에서 복사한 글을 연결된 폰의 클립보드로도 보낸다(텍스트만, 비밀번호 관리자 '제외' 표시가 있으면 보내지 않음)
+    "linkClipPull": True,       # 폰이 보낸 클립보드 글을 이 PC 의 클립보드에 넣는다
+    "linkFileDir": "",          # 폰에서 받은 파일을 저장할 폴더(비우면 내 다운로드\Dalu)
+    "linkRemote": False,        # 폰 앱에서 이 PC 를 조작(재생·볼륨·잠금·화면 끄기·절전)하는 것을 허용한다(기본 꺼짐)
+    "phoneNotifyOff": "",        # 노치에 띄우지 않을 폰 앱(패키지 이름을 쉼표로): 표시 방식이 '모두'일 때
+    "phoneNotifyMode": "all",    # 폰 알림 표시 방식: all(모든 앱, 위에서 끈 앱만 뺀다) | picked(아래 '고른 앱'만)
+    "phoneNotifyOn": "",         # 표시 방식이 '고른 앱만'일 때 띄울 폰 앱(패키지 이름을 쉼표로)
+    "phoneMedia": False,         # 폰에서 재생 중인 미디어(유튜브 뮤직·스포티파이 …)를 노치의 음악 플레이어에 보여 준다
+    "linkMirror": False,         # PC 에서 폰 화면 보기(휴대폰 탭의 '화면 보기'): 폰에서 허용해야 시작된다. 기본 꺼짐
+    "linkMirrorControl": False,  # 화면을 보면서 폰 조작(탭·드래그·글자)도 허용한다(위가 켜져 있을 때만). 기본 꺼짐
+    "phoneButtons": "",          # 휴대폰 탭 버튼의 순서·구성(쉼표로 이은 이름): 비우면 기본. 노치에서 버튼을 길게 눌러 끌면 저장된다
+    "powerButtons": "",          # 전원 탭 버튼의 순서
+    "sysButtons": "",            # 시스템 탭 켜기/끄기 버튼(와이파이·블루투스·마이크)의 순서
+    "phoneNotifyQuiet": False,   # 소리·진동이 없는(중요도 낮은) 폰 알림은 띄우지 않는다
+    "linkNewPhoto": True,       # 폰에 새 사진·동영상이 생기면 노치로 알린다
+    "linkFileAuto": True,       # 폰이 보낸 파일을 묻지 않고 받는다(연결된 내 폰만 보낼 수 있다)
+    "phoneCallMedia": "duck",   # 전화가 오거나 통화 중일 때 PC 소리: off(그대로) | duck(볼륨을 20% 로 줄임) | pause(재생 중이면 멈춤). 끝나면 되돌린다
+    "phoneNotify": True,        # 폰(휴대폰과 연결)의 알림을 노치에 띄운다: 알림 내용을 이 PC 안에서만 보여 준다(저장·전송 없음)
     "winNotifyIgnore": "",      # 윈도우 알림을 동그라미로 알리지 않을 앱 이름(쉼표로 구분, 부분 일치, 예: chrome, discord)
-    "soundType": "chime",       # 알림음 종류: chime | bell | marimba | soft | custom(내 .wav 파일)
-    "soundVolume": 70,          # 알림음 크기(%): 윈도우 음량과 별개로 소리 자체의 크기
-    "soundLength": "normal",    # 알림음 길이: short | normal | long (합성음만)
+    "soundType": "system",      # 알림음 종류: system(윈도우 알림음) | custom(내 .wav 파일)
+    "soundSystem": "Windows Proximity Notification.wav",   # soundType 이 system 일 때 쓰는 윈도우 알림음(C:\Windows\Media 의 파일 이름)
+    "soundVolume": 80,          # 알림음 크기(%): 윈도우 음량과 별개로 소리 자체의 크기(100% 는 깨지지 않는 한도에서 가장 크게, 200% 까지는 리미터로 더 크게)
     "soundFile": "",            # soundType 이 custom 일 때 쓰는 .wav 파일 경로
     "captureNotch": "auto",     # 스크린샷·영상 녹화에서 노치(리퀴드 글래스 '전체'일 때만 의미): hide(가리기: 캡처에 안 찍힘) | auto(평소엔 가리고, 캡처 도구가 켜지면 그동안만 찍힘) | show(표시: 항상 찍힘, 뒤 화면은 정지 화면)
     "clipboardOn": False,       # 클립보드 기록 (민감한 내용이 있을 수 있어 기본은 꺼짐)
@@ -40,6 +60,11 @@ PY_DEFAULTS = {
     "calendarRemindMin": 10,    # 일정 시작 몇 분 전에 알릴지
     "budsWatch": True,          # 이어버드 제어 연결을 유지해 충전 상태·경고(땀/얼룩으로 충전 중지)를 받는다
     "budsLowPct": 20,           # 이어버드 배터리 부족 알림 기준(%)
+    "btDevices": True,          # 갤럭시 버즈 말고 연결된 무선 음향 기기(헤드셋·스피커 등)의 배터리를 윈도우에서 읽어 보여 준다
+    "weatherCity": "", "weatherLat": 0.0, "weatherLon": 0.0, "weatherUnit": "c",     # 날씨: 도시를 고른 사람이 그 도시 좌표(소수 둘째 자리)를 Open-Meteo 로 보낸다(PRIVACY.md)
+    "weatherLocate": True,      # 내 위치(윈도우 위치 서비스)의 날씨를 보여 준다. 위치를 읽지 못하면 위에서 고른 도시를 쓴다(PRIVACY.md)
+    "updateCheck": True,        # 앱을 켤 때와 6시간마다 공개 웹사이트의 version.json 하나를 읽어 새 버전이 나왔는지 알려 준다(설치 파일은 사용자가 누를 때만 받는다)
+    "airpodsScan": False,       # 에어팟이 연결돼 있을 때 주변 블루투스 광고 신호를 들어 왼쪽/오른쪽/케이스 배터리를 읽는다(기본 꺼짐)
     "upNext": True,             # Cider 대기열의 다음 곡을 읽는다
     "appFilterMode": "off",      # 다른 앱 미디어 필터: off | allow | block
     "appFilterList": "",        # 쉼표로 구분한 앱 이름(부분 일치, 예: spotify, chrome)
@@ -79,7 +104,33 @@ def clean_launcher(items):
         if len(out) >= 24:
             break
     return out
+def clean_dday(items):
+    """D-day 목록 검증: 최대 40개, 이름이 있고 날짜(YYYY-MM-DD)가 올바른 것만, 이름은 30자까지. done = 완료 표시, cal = 일정에서 별로 표시한 것."""
+    import datetime
+    out, seen = [], set()
+    for i, raw in enumerate(items if isinstance(items, list) else []):
+        if not isinstance(raw, dict):
+            continue
+        name = " ".join(str(raw.get("name") or "").split())[:30]
+        date = str(raw.get("date") or "").strip()[:10]
+        try:
+            datetime.date.fromisoformat(date)
+        except ValueError:
+            continue
+        if not name:
+            continue
+        iid = "".join(ch for ch in str(raw.get("id") or "") if ch.isalnum())[:16] or f"d{i}"
+        while iid in seen:
+            iid += "x"
+        seen.add(iid)
+        out.append({"id": iid, "name": name, "date": date, "done": bool(raw.get("done")), "cal": bool(raw.get("cal"))})
+        if len(out) >= 40:
+            break
+    return out
+
+
 MAX_STRING = 200
+LONG_KEYS = {"phoneNotifyOff": 30000, "phoneNotifyOn": 30000}      # 폰 앱 목록(패키지 이름 쉼표 목록)은 길 수 있다: 이 키들만 더 긴 글을 허용한다
 
 
 def deep_merge(base, patch):
@@ -112,8 +163,12 @@ def clean_patch(patch):
 
     for sec in PATCH_SECTIONS:
         v = patch.get(sec)
-        if isinstance(v, dict) and ok(v):
-            out[sec] = v
+        if not isinstance(v, dict):
+            continue
+        long_vals = {k: x for k, x in v.items() if sec == "settings" and k in LONG_KEYS and isinstance(x, str) and len(x) <= LONG_KEYS[k]}
+        rest = {k: x for k, x in v.items() if k not in long_vals}
+        if ok(rest):
+            out[sec] = dict(rest, **long_vals)
     return out
 
 
@@ -135,7 +190,7 @@ class Prefs:
                 merged["fullscreenMode"] = "show"        # 예전 설정(전체화면 양보 끔)을 새 방식으로 옮긴다
             if merged.get("fullscreenMode") not in ("yield", "hide", "hidepeek", "show"):
                 merged["fullscreenMode"] = "yield"
-            for hk in ("hkToggle", "hkSettings", "hkMixer", "hkLyrics", "calendarUrl", "pluginsEnabled", "soundFile"):
+            for hk in ("hkToggle", "hkSettings", "hkLyrics", "calendarUrl", "pluginsEnabled", "soundFile"):
                 merged[hk] = str(merged.get(hk) or "")[:MAX_STRING]
             try:
                 merged["calendarRemindMin"] = max(1, min(120, int(merged.get("calendarRemindMin", 10))))
@@ -143,14 +198,14 @@ class Prefs:
                 merged["calendarRemindMin"] = 10
             if merged.get("captureNotch") not in ("hide", "auto", "show"):
                 merged["captureNotch"] = "auto"
-            if merged.get("soundType") not in ("chime", "bell", "marimba", "soft", "custom"):
-                merged["soundType"] = "chime"
-            if merged.get("soundLength") not in ("short", "normal", "long"):
-                merged["soundLength"] = "normal"
+            if merged.get("soundType") not in ("system", "custom"):      # 예전에 고른 합성음(차임·벨·마림바·부드럽게)은 윈도우 소리로 바뀐다
+                merged["soundType"] = "system"
+            if not isinstance(merged.get("soundSystem"), str) or not merged.get("soundSystem") or len(merged["soundSystem"]) > 120:
+                merged["soundSystem"] = "Windows Proximity Notification.wav"
             try:
-                merged["soundVolume"] = max(10, min(100, int(round(float(merged.get("soundVolume", 70))))))
+                merged["soundVolume"] = max(10, min(200, int(round(float(merged.get("soundVolume", 80))))))
             except Exception:
-                merged["soundVolume"] = 70
+                merged["soundVolume"] = 80
             if merged.get("appFilterMode") not in ("off", "allow", "block"):
                 merged["appFilterMode"] = "off"
             merged["appFilterList"] = str(merged.get("appFilterList") or "")[:MAX_STRING]

@@ -47,7 +47,10 @@ if (-not $got) {
 
 if (-not $Quiet) {
     $r = [System.Windows.MessageBox]::Show((T "$AppName 를 제거할까요?" "Uninstall ${AppName}?" "要卸载 $AppName 吗？" "$AppName をアンインストールしますか？"), $AppName, 'YesNo', 'Question')
-    if ($r -ne 'Yes') { exit 0 }
+    if ($r -ne 'Yes') {
+        if ($FromTemp) { Start-Process cmd.exe -ArgumentList ('/c ping -n 3 127.0.0.1 >nul & del /f /q "' + $PSCommandPath + '"') -WindowStyle Hidden }          # 임시 복사본을 남기지 않는다
+        exit 0
+    }
     if (-not $RemoveData) {
         $r2 = [System.Windows.MessageBox]::Show((T "설정, 할 일, 가사 캐시 같은 내 데이터도 함께 지울까요?`n(아니요를 고르면 데이터는 남겨 두어 나중에 다시 설치해도 그대로 쓸 수 있어요.)" "Also delete your data (settings, to-dos, lyric cache)?`n(Choose No to keep it for a future reinstall.)" "是否同时删除你的数据（设置、待办、歌词缓存）？`n（选择`“否`”会保留数据，以后重新安装时可继续使用。）" "設定・タスク・歌詞キャッシュなどのデータも一緒に削除しますか？`n（「いいえ」を選ぶとデータは残り、再インストールしてもそのまま使えます。）"), $AppName, 'YesNo', 'Question')
         if ($r2 -eq 'Yes') { $RemoveData = $true }

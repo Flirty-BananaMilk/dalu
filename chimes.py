@@ -12,7 +12,7 @@ import struct
 import wave
 
 RATE = 44100
-TYPES = ("chime", "bell", "marimba", "soft")
+TYPES = ("chime", "bell", "marimba", "soft")                # 합성하는 음색. (설정의 종류에는 이 밖에 system = 윈도우 알림음, custom = 내 파일이 있고 chimes.play 로 오지 않는다)
 LENGTHS = {"short": 0.7, "normal": 1.0, "long": 1.7}
 DEFAULT_TYPE, DEFAULT_LENGTH, DEFAULT_VOLUME = "chime", "normal", 70
 
@@ -135,10 +135,39 @@ def custom_info(path):
         return {"ok": False, "why": repr(e)}
 
 
+NORM_PEAK = 0.9          # 알림음 크기 100% 에서 소리의 가장 큰 부분이 이 비율(전체의 90%)까지 오게 키운다
+MAX_NORM_GAIN = 12.0     # 너무 작게 녹음된 파일도 최대 12배(약 21dB)까지만 키운다
+MAX_VOLUME = 200         # 설정 슬라이더의 최대(%). 100% 를 넘으면 부드럽게 눌러 주는 리미터로 더 크게 들리게 한다
+
+
+def gain_for(peak, volume):
+    """peak: 파일의 가장 큰 표본(0~1, 전체 크기 기준), volume: 설정(%) -> 곱할 배율.
+    100% 는 '깨지지 않는 한도 안에서 가장 크게'(peak 를 NORM_PEAK 로), 그 아래는 그 비율만큼, 위는 더 크게(리미터)."""
+    v = max(0, min(MAX_VOLUME, float(volume))) / 100.0
+    base = 1.0 if peak <= 0 else max(0.05, min(MAX_NORM_GAIN, NORM_PEAK / peak))
+    return base * v
+
+
+def scale_samples(samples, gain, full):
+    """표본(정수 목록)에 배율을 곱한다. 전체 크기의 90% 를 넘는 부분만 tanh 로 부드럽게 눌러 깨지는 소리를 막는다(그 아래는 그대로)."""
+    import math
+    knee = full * NORM_PEAK
+    room = full - knee
+    out = []
+    for x in samples:
+        y = x * gain
+        ay = abs(y)
+        if ay > knee:
+            y = math.copysign(knee + room * math.tanh((ay - knee) / room), y)
+        out.append(int(max(-full, min(full, y))))
+    return out
+
+
 def custom_bytes(path, volume=DEFAULT_VOLUME):
-    """내 파일을 재생용 WAV 로. 16비트·8비트 PCM 은 음량(0~100%)만큼 소리를 줄여 준다(100% 는 원래 크기). 그 밖의 형식은 그대로 쓴다."""
+    """내 파일을 재생용 WAV 로. 16비트·8비트 PCM 은 크기를 맞춰 준다: 100% 에서 가장 큰 부분이 전체의 90% 까지 오도록 키우고(윈도우 알림음은 원래 많이 작다),
+    그 아래는 비율만큼 줄이고, 100% 를 넘으면(최대 200%) 부드러운 리미터로 더 키운다. 그 밖의 형식은 그대로 쓴다."""
     import os
-    v = max(0, min(100, int(volume)))
+    v = max(0, min(MAX_VOLUME, int(volume)))
     key = ("custom", path, os.path.getmtime(path), v)
     hit = _cache.get(key)
     if hit is not None:
@@ -149,14 +178,16 @@ def custom_bytes(path, volume=DEFAULT_VOLUME):
         with wave.open(io.BytesIO(raw), "rb") as w:
             params = w.getparams()
             frames = w.readframes(w.getnframes())
-        if v < 100 and params.comptype == "NONE" and params.sampwidth in (1, 2):
-            g = v / 100.0
+        if params.comptype == "NONE" and params.sampwidth in (1, 2):
             if params.sampwidth == 2:
                 a = array.array("h"); a.frombytes(frames)
-                a = array.array("h", [int(x * g) for x in a])
+                peak = (max(abs(x) for x in a) / 32768.0) if len(a) else 0
+                a = array.array("h", scale_samples(a, gain_for(peak, v), 32767))
                 frames = a.tobytes()
             else:      # 8비트는 128 이 무음
-                frames = bytes(int(128 + (b - 128) * g) for b in frames)
+                peak = (max(abs(b - 128) for b in frames) / 128.0) if frames else 0
+                g = gain_for(peak, v)
+                frames = bytes(128 + x for x in scale_samples([b - 128 for b in frames], g, 127))
             bio = io.BytesIO()
             with wave.open(bio, "wb") as o:
                 o.setparams(params)
@@ -177,6 +208,52 @@ def play_custom(path, volume=DEFAULT_VOLUME):
     if not info["ok"]:
         raise ValueError(info["why"])
     winsound.PlaySound(custom_bytes(path, volume), winsound.SND_MEMORY)
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# 윈도우 알림음: 이 PC 의 C:\Windows\Media 에 이미 있는 .wav 를 재생만 한다(복사하지 않는다). 설정에서 이름으로 고른다.
+# ---------------------------------------------------------------------------------------------------------------
+DEFAULT_SYSTEM = "Windows Proximity Notification.wav"
+# 목록 앞쪽에 올릴 소리(알림에 어울리는 것). 나머지는 이름순.
+SYSTEM_FIRST = ["Windows Notify System Generic.wav", "Windows Notify.wav", "Windows Notify Messaging.wav", "Windows Notify Email.wav", "Windows Notify Calendar.wav",
+                "Windows Proximity Notification.wav", "Windows Ding.wav", "Windows Message Nudge.wav", "chimes.wav", "ding.wav", "notify.wav", "tada.wav"]
+
+
+def _media_dir():
+    import os
+    return os.path.join(os.environ.get("SystemRoot") or r"C:\Windows", "Media")
+
+
+def system_sounds():
+    """이 PC 의 윈도우 알림음 목록(파일 이름). 쓸 수 있는 것(.wav, 10MB·30초 이내)만."""
+    import os
+    d = _media_dir()
+    try:
+        names = [n for n in os.listdir(d) if n.lower().endswith(".wav") and os.path.isfile(os.path.join(d, n))]
+    except OSError:
+        return []
+    ok = [n for n in names if custom_info(os.path.join(d, n))["ok"]]
+    first = [n for n in SYSTEM_FIRST if n in ok]
+    rest = sorted((n for n in ok if n not in first), key=str.lower)
+    return first + rest
+
+
+def system_path(name):
+    """윈도우 알림음 이름 -> 전체 경로. 폴더 이름이 섞이거나(../) 없는 파일이면 None (설정 값이 이상해도 다른 폴더를 읽지 않는다)."""
+    import os
+    n = str(name or "")
+    if not n or n != os.path.basename(n) or not n.lower().endswith(".wav"):
+        return None
+    p = os.path.join(_media_dir(), n)
+    return p if os.path.isfile(p) else None
+
+
+def play_system(name, volume=DEFAULT_VOLUME):
+    """고른 윈도우 알림음을 재생한다(막힘: 스레드에서). 없거나 쓸 수 없으면 예외 -> 부른 쪽이 기본 차임으로 대신한다."""
+    p = system_path(name)
+    if not p:
+        raise ValueError("missing")
+    play_custom(p, volume)
 
 
 def play(kind, sound_type=DEFAULT_TYPE, length=DEFAULT_LENGTH, volume=DEFAULT_VOLUME):

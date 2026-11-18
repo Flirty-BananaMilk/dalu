@@ -218,7 +218,7 @@ class MediaSessionService:
         if mgr is None:
             return None
         try:
-            for s in mgr.get_sessions():
+            for s in _sessions_playing_first(mgr):
                 if match.lower() in (s.source_app_user_model_id or "").lower():
                     info = s.get_playback_info()
                     return {"playing": info.playback_status == PlaybackStatus.PLAYING,
@@ -233,7 +233,7 @@ class MediaSessionService:
         if mgr is None:
             return None
         try:
-            for s in mgr.get_sessions():
+            for s in _sessions_playing_first(mgr):
                 if match.lower() in (s.source_app_user_model_id or "").lower():
                     return s.source_app_user_model_id
         except Exception:
@@ -266,6 +266,7 @@ class MediaSessionService:
                     self._log(f"smtc poll error: {msg}")
                     last_err = msg
                 manager = None
+                self._manager = None          # 오류 뒤에는 옛 매니저를 쓰지 않는다
             await asyncio.sleep(POLL_BOOST_SEC if time.monotonic() < self._boost_until else POLL_SEC)
 
     async def _poll_once(self, manager):
@@ -276,7 +277,8 @@ class MediaSessionService:
                 continue
             playing = s.get_playback_info().playback_status == PlaybackStatus.PLAYING
             entries.append((app_id, playing))
-            sessions[app_id] = s
+            if app_id not in sessions or playing:
+                sessions[app_id] = s          # 같은 앱의 세션이 여럿이면 재생 중인 것을 쓴다(뒤의 것이 앞의 것을 덮어쓰지 않게)
         chosen = pick_session(entries, self._app_id)
         if chosen is None:
             self._session = self._app_id = self._key = None
@@ -287,6 +289,10 @@ class MediaSessionService:
         self._session, self._app_id = session, chosen
 
         props = await session.try_get_media_properties_async()
+        if props is None:          # 앱이 끝나는 순간 등: 곡 정보를 못 읽었다
+            with self._lock:
+                self._snap = None
+            return
         title, artist, album = props.title or "", props.artist or "", props.album_title or ""
         if not (title or artist):
             with self._lock:
@@ -327,6 +333,7 @@ class MediaSessionService:
 
     @staticmethod
     async def _read_thumbnail(ref):
+        stream = reader = None
         try:
             stream = await ref.open_read_async()
             size = int(stream.size)
@@ -339,12 +346,19 @@ class MediaSessionService:
             return _to_data_uri(bytes(data))
         except Exception:
             return ""
+        finally:
+            for h in (reader, stream):          # 곡이 바뀔 때마다 WinRT 스트림이 쌓이지 않게 닫는다
+                try:
+                    if h is not None:
+                        h.close()
+                except Exception:
+                    pass
 
     async def _control_app(self, match, action, arg):
         mgr = self._manager
         if mgr is None:
             return False
-        for s in mgr.get_sessions():
+        for s in _sessions_playing_first(mgr):
             if match.lower() in (s.source_app_user_model_id or "").lower():
                 return await self._do(s, action, arg)
         return False
@@ -372,3 +386,16 @@ class MediaSessionService:
         if action == "shuffle" and arg is not None:
             return await s.try_change_shuffle_active_async(bool(arg))
         return False
+
+
+def _sessions_playing_first(mgr):
+    """같은 앱의 세션이 여럿이면 재생 중인 것을 먼저 쓴다(첫 번째 세션이 멈춘 창이라 제어·상태가 엉뚱한 곳으로 가던 것)."""
+    out = []
+    for s in mgr.get_sessions():
+        try:
+            playing = s.get_playback_info().playback_status == PlaybackStatus.PLAYING
+        except Exception:
+            playing = False
+        out.append((0 if playing else 1, s))
+    out.sort(key=lambda x: x[0])
+    return [s for _, s in out]

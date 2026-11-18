@@ -34,6 +34,12 @@ def read_scroll():
     return bool(user32.GetKeyState(0x91) & 1)   # VK_SCROLL
 
 
+def read_insert():
+    """(지금 눌려 있음, 지난 확인 이후 눌린 적 있음). 윈도우는 삽입/덮어쓰기 상태를 알려 주지 않아서(앱마다 따로 기억한다) 눌림만 본다."""
+    st = user32.GetAsyncKeyState(0x2D)      # VK_INSERT (Num Lock 이 꺼진 숫자패드 0 도 같은 키)
+    return (bool(st & 0x8000), bool(st & 0x0001))
+
+
 # 미디어 키(재생/일시정지, 다음, 이전, 정지). 키 입력을 가로채지 않고(전역 훅 없이) 눌렸는지만 본다.
 MEDIA_VKS = {0xB3: 'play_pause', 0xB0: 'next', 0xB1: 'prev', 0xB2: 'stop'}
 
@@ -336,6 +342,7 @@ def default_readers():
         'caps': read_caps,
         'num': read_num,
         'scroll': read_scroll,
+        'insert': read_insert,
         'mediakeys': read_media_keys,
         'lang': read_kb_layout,
         'audio': lambda with_name=False: read_audio(with_name),
@@ -354,7 +361,7 @@ class SysMonitor:
     """
 
     # 항목별 점검 주기(초)
-    PERIODS = {'caps': 0.15, 'num': 0.15, 'scroll': 0.15, 'mediakeys': 0.0, 'lang': 0.4, 'volume': 0.15, 'device': 1.5, 'brightness': 1.0,
+    PERIODS = {'caps': 0.15, 'num': 0.15, 'scroll': 0.15, 'insert': 0.05, 'mediakeys': 0.0, 'lang': 0.4, 'volume': 0.15, 'device': 1.5, 'brightness': 1.0,
                'power': 2.0, 'online': 2.0, 'fullscreen': 0.5, 'game': 1.0}
     BATTERY_LOW = 20
     BATTERY_RECOVER = 25
@@ -423,6 +430,17 @@ class SysMonitor:
                 v = r[key]()
                 if v is not None and self._changed(key, bool(v)):
                     self._push({'type': key, 'on': bool(v)})
+
+        if 'insert' in r and self._due('insert', now):          # Insert 키: 누르는 순간 한 번(꾹 눌러도 한 번)
+            down, pressed = r['insert']() or (False, False)
+            was = 'insert' in self._mk_down
+            # 새로 눌림: 눌려 있지 않다가 눌렸거나, 이미 눌려 있던 키를 떼고 확인 주기 안에 다시 눌렀다(down 은 꺼졌는데 '눌린 적 있음'만 남은 경우)
+            if (down and not was) or (not down and pressed):
+                self._push({'type': 'insert_key'})
+            if down:
+                self._mk_down.add('insert')
+            else:
+                self._mk_down.discard('insert')
 
         if 'mediakeys' in r and self._due('mediakeys', now):
             keys = r['mediakeys']() or {}

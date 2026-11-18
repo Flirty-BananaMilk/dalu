@@ -21,3 +21,10 @@ site_src/wallpapers/
 
 # 홍보 영상 제작물(노래 파일 등 저작권 있는 소스가 들어 있어서 저장소에 올리지 않는다)
 promo/
+
+# 만든 사람의 서비스 키(설치 파일에만 들어가고 저장소에는 올리지 않는다)
+service_keys.json
+dalu_api_keys.txt
+
+# 폰 앱 설치 파일(dalu-link 프로젝트에서 빌드해 복사한다): 바이너리는 저장소에 넣지 않고 설치 파일에만 넣는다
+dalu-link.apk

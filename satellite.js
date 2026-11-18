@@ -15,11 +15,23 @@ const SAT_SETTLE_MS = 800;           // 큰 노치가 완전히 줄어든 뒤(�
 const SAT_SECOND_MS = 1500;          // 오른쪽이 나온 뒤 왼쪽이 나오기까지 (오른쪽이 나오고 큰 노치가 흔들리는 시간 1.5초)
 const SAT_GOO_OFF_MS = 1500;         // 들어간 뒤 필터 레이어를 끄기까지 (들어가는 전환 0.95초 + 겉면이 사라지는 지연 1초 중 큰 쪽 + 여유)
 const satScale = (ms) => (typeof PREF !== 'undefined' && PREF.animOff ? 30 : ms / ((typeof PREF !== 'undefined' && PREF.rate) || 1));
+let satLastXf = 0;
 let satLastView = null;
 let satReadyAt = 0;
 let satReadyTimer = null;
 
-const SAT_PRIORITY = { notif: 4, pomo: 3, timer: 2, stopwatch: 1, clock: 0 };
+// 새 정보 항목(D-day·날씨·성능)은 시계보다 앞선다: 많이 켜면 시계 같은 뒤 순서가 밀려난다(설정 > 모양·동작 > 작은 노치에 띄울 정보에 경고가 있다)
+const SAT_PRIORITY = { notif: 4, pomo: 3, timer: 2, stopwatch: 1, dday: 0.7, 'phone-file': 4.5, 'phone-miss': 0.8, weather: 0.6, 'perf-cpu': 0.5, 'perf-gpu': 0.45, 'perf-mem': 0.4, 'perf-net': 0.3, 'phone-batt': 0.35, clock: 0 };
+const SAT_TEXT_KINDS = ['perf', 'weather', 'dday', 'phone'];          // 링 없이 글자만 있는 항목
+function satExtraItems() {
+  const out = [];
+  if (typeof ddaySatItems === 'function') out.push(...ddaySatItems());
+  if (typeof weatherSatItems === 'function') out.push(...weatherSatItems());
+  if (typeof perfSatItems === 'function') out.push(...perfSatItems());
+  if (typeof phoneSatItems === 'function') out.push(...phoneSatItems());
+  if (typeof phoneFileSatItems === 'function') out.push(...phoneFileSatItems());          // 파일을 주고받는 동안 진행률
+  return out;
+}
 // 윈도우 알림: 알림이 오면 왼쪽 자리에 작은 '동그라미'(종 + 빨간 점)가 뜬다 (내용은 보여 주지 않고, 왔다는 것만).
 // 사라지지 않고 유지되다가, 동그라미를 누르거나 윈도우 알림 센터를 열거나 윈도우에서 알림을 다 처리하면 사라진다. 여러 개면 숫자.
 const satNotif = { count: 0 };
@@ -117,15 +129,19 @@ const SAT_RING_COLOR = { pomo: 'var(--red)', 'pomo-break': 'var(--green)', timer
 // 지금 보여 줄 후보: 우선순위 순(포모도로 > 타이머 > 스톱워치 > 시계), 최대 네 개
 function satCandidates(v, settled) {
   const list = [];
+  // 전화가 오거나 통화 중: 원래 띄워져 있던 작은 노치들 대신 받기 / 거절 / 끊기 버튼이 된다(보조 노치 설정과 상관없이)
+  const callItems = typeof phoneCallSatItems === 'function' ? phoneCallSatItems() : [];
+  if (callItems.length && satCollapsedView(v) && settled) return callItems;
   if (satNotifActive() && (v === 'mini' || v === 'idle' || v === 'pet') && settled) {
     list.push({ id: 'notif', kind: 'notif', page: 'music', running: false, text: '', pct: 100, count: satNotif.count });
   }
-  if (!satOn() || v !== 'mini' || !settled) return list;
+  if (!satOn() || !satCollapsedView(v) || !settled) return list;          // 음악이 없을 때(시계/눈 화면)도 타이머·정보 알약은 나온다
   list.push(...timerItems());
-  if (satMode() === 'full' && !(compactMode && store.settings.compactClock !== false) && typeof lastClockHtml === 'string' && lastClockHtml) {
+  list.push(...satExtraItems());
+  if (v === 'mini' && satMode() === 'full' && !(compactMode && store.settings.compactClock !== false) && typeof lastClockHtml === 'string' && lastClockHtml) {          // 시계 알약은 음악 화면에서만(시계 화면은 큰 노치가 이미 시계를 보여 준다)
     list.push({ id: 'clock', kind: 'clock', page: 'music', running: false, text: '', html: lastClockHtml, pct: 100 });
   }
-  return list.sort((a, b) => SAT_PRIORITY[a.id] - SAT_PRIORITY[b.id] < 0 ? 1 : -1);
+  return list.sort((a, b) => (SAT_PRIORITY[b.id] || 0) - (SAT_PRIORITY[a.id] || 0));          // 우선순위 숫자가 큰 것부터(같으면 순서를 바꾸지 않는다)
 }
 
 // 보조 노치는 두 개(오른쪽, 왼쪽)이고, 하나에 정보를 최대 두 개까지 담는다(두 개일 때는 폭이 넓어진다).
@@ -142,7 +158,7 @@ const SAT_PAD_W = 24;        // 보조 노치 좌우 여백 합
 const SAT_DIV_W = 15;        // 두 정보 사이(구분선 포함)
 const SAT_CHAR_W = 7.4;      // 숫자 한 글자 폭
 function satInnerWidth(item, textLen, ampm) {
-  return (item.kind === 'clock' ? 6 : 20) + textLen * SAT_CHAR_W + (ampm ? 10 : 0);
+  return (item.kind === 'clock' || SAT_TEXT_KINDS.includes(item.kind) ? 6 : 20) + textLen * SAT_CHAR_W + (ampm ? 10 : 0);
 }
 
 // .sat-in 안에 정보 칸 두 개(+ 구분선)를 만든다. 첫 칸은 원래 있던 링/아이콘/글자를 그대로 쓴다.
@@ -175,17 +191,28 @@ function satFillCell(cell, item) {
     badge.classList.toggle('dot', isNotif && !(item.count > 1));
   }
   label.style.display = isNotif ? 'none' : '';          // 비어 있는 글자 칸도 간격(gap)을 차지해서 종이 가운데에서 밀렸다
-  const isTimer = item.kind !== 'clock' && !isNotif;
+  const isText = SAT_TEXT_KINDS.includes(item.kind);
+  const isTimer = item.kind !== 'clock' && !isNotif && !isText;
   const isSw = item.kind === 'stopwatch';
   ring.style.display = isTimer && !isSw ? 'block' : 'none';
   sw.style.display = isSw ? 'block' : 'none';
   if (isTimer && !isSw) { ring.style.setProperty('--c', SAT_RING_COLOR[item.kind] || 'var(--red)'); ring.style.setProperty('--p', item.pct.toFixed(2)); }
   if (isNotif) label.textContent = '';
-  else if (isTimer) label.textContent = item.text; else label.innerHTML = item.html;
+  else if ((item.parts || item.icon) && isText) {          // 'D-Day | 이름' 처럼 칸 안에서 가는 세로 막대로 나누고, 날씨는 앞에 날씨 아이콘을 붙인다
+    label.textContent = '';
+    if (item.icon && typeof uiIconSvg === 'function') {
+      const ic = document.createElement('span'); ic.className = 'sat-ic ' + String(item.icon).replace(/[^a-z]/g, ''); ic.innerHTML = uiIconSvg(item.icon, 14) || '';
+      label.appendChild(ic);
+    }
+    (item.parts || [item.text]).forEach((p, i) => {
+      if (i) { const b = document.createElement('span'); b.className = 'sat-bar'; label.appendChild(b); }
+      const sp = document.createElement('span'); sp.textContent = p; label.appendChild(sp);
+    });
+  } else if (isTimer || isText) label.textContent = item.text; else label.innerHTML = item.html;
   cell.dataset.kind = item.kind;
   cell.dataset.run = item.running ? '1' : '0';
   const txt = label.textContent || '';
-  return { len: txt.length, ampm: /AM|PM/.test(txt) };
+  return { len: txt.length + (item.parts ? 1 : 0), ampm: /AM|PM/.test(txt) };
 }
 
 // 접힌 상태의 뷰: 음악이 있으면 mini, 없으면 idle(시계)/pet. 어느 쪽이든 큰 노치가 다 줄어든 뒤에야 보조 노치가 나온다
@@ -197,7 +224,13 @@ function renderSat(nextView) {
   const v = nextView || view;
   document.documentElement.dataset.sat = satOn() ? '1' : '0';
   const now = performance.now();
-  if (v !== satLastView) { satLastView = v; satReadyAt = satCollapsedView(v) ? now + satScale(SAT_SETTLE_MS) : 0; }      // 접히는 도중에는 아직 나오지 않는다 (음악이 없는 idle/pet 도 마찬가지: 예전에는 mini 만 기다려서, 알림 동그라미가 큰 노치가 다 줄어들기 전에 떠 물줄기가 끊겨 보였다)
+  const xf = (typeof phoneXferMiniOn === 'function' && phoneXferMiniOn()) ? 1 : 0;
+  if (v !== satLastView || xf !== satLastXf) {
+    // 접힌 뷰끼리 바뀌는 것(파일 전송 화면이 켜지고 꺼지며 idle <-> mini 가 되는 경우)은 보조 노치를 숨기지 않는다
+    const stayCollapsed = (xf || satLastXf) && satCollapsedView(satLastView) && satCollapsedView(v);
+    satLastView = v; satLastXf = xf;
+    satReadyAt = satCollapsedView(v) && !stayCollapsed && !(typeof phoneCallSatItems === 'function' && phoneCallSatItems().length) ? now + satScale(SAT_SETTLE_MS) : 0;
+  }      // 전화가 올 때는 기다리지 않는다      // 접히는 도중에는 아직 나오지 않는다 (음악이 없는 idle/pet 도 마찬가지: 예전에는 mini 만 기다려서, 알림 동그라미가 큰 노치가 다 줄어들기 전에 떠 물줄기가 끊겨 보였다)
   const settled = now >= satReadyAt;
   const g = geometryFor(v);          // 곧 바뀔 뷰의 크기로 (바뀌기 전의 옛 너비로 위치를 잡으면 물방울이 엉뚱한 쪽에서 나온다)
   const h = g.h > 40 ? 28 : Math.max(22, g.h - 4);          // 큰 노치가 에코 줄 때문에 늘어나도 물방울은 한 줄 높이
@@ -234,26 +267,45 @@ function renderSat(nextView) {
   if (anyChanged) scheduleRegion(true);
 }
 
+// 보조 노치가 자리 잡은 채 폭만 바뀔 때(예: D-day 가 빠져 두 칸 -> 한 칸): 폭은 튕기지 않는 곡선으로 줄이고(좁아질 때 아래로 튕겨 글자 끝이 잘리던 것),
+// 글자는 폭이 다 바뀐 뒤에 스며든다(넓어질 때 아직 좁은 알약 안에서 글자 양끝이 잘려 보이던 것). 애니메이션을 끈 경우에는 건드리지 않는다.
+function satResizeFx(slot, e) {
+  if (typeof PREF !== 'undefined' && PREF.animOff) return;
+  const els = [e.layer, e.wrap, e.sat];
+  clearTimeout(slot.resizeTimer);
+  els.forEach((x) => { if (x) { x.classList.remove('rsin'); x.classList.add('rs'); } });
+  slot.resizeTimer = setTimeout(() => {
+    els.forEach((x) => { if (x) { x.classList.remove('rs'); x.classList.add('rsin'); } });
+    slot.resizeTimer = setTimeout(() => els.forEach((x) => x && x.classList.remove('rsin')), satScale(400));
+  }, satScale(480));
+}
+
 // 한 자리(보조 노치 하나)를 그린다. items: 담을 정보 0~2개. 모양이 바뀌었으면 true
 function satRenderSlot(slot, items, v, g, h) {
   const e = satEls(slot);
   if (!e.sat) return false;
   satEnsureCells(e.sat);
   const show = items.length > 0;
-  const key = [h, (v === 'mini' || v === 'idle' || v === 'pet') ? g.w : 0].concat(items.map((it) => [it.kind, it.text, it.html || '', it.running, it.count || 0].join(':'))).join('|');
+  const key = [h, (v === 'mini' || v === 'idle' || v === 'pet') ? g.w : 0].concat(items.map((it) => [it.kind, it.text, it.html || '', it.running, it.count || 0, it.tone || ''].join(':'))).join('|');
   if (key === slot.key) return false;
   slot.key = key;
   if (show) {
     const cells = e.sat.querySelectorAll('.sat-item');
     const div = e.sat.querySelector('.sat-div');
     let w = SAT_PAD_W;
-    items.forEach((it, i) => { const m = satFillCell(cells[i], it); cells[i].style.display = 'flex'; w += satInnerWidth(it, m.len, m.ampm); });
+    let measured = 0, estimated = 0;
+    items.forEach((it, i) => { const m = satFillCell(cells[i], it); cells[i].style.display = 'flex'; estimated += satInnerWidth(it, m.len, m.ampm); measured += cells[i].offsetWidth; });
+    // 글자 폭은 어림(글자 수 x 7.4px)이 아니라 실제로 잰 값을 쓴다: 어림값은 실제보다 넓어서(특히 스톱워치+시계) 양쪽 여백이 남았다. 아직 레이아웃이 없어 잴 수 없으면(0) 어림값.
+    w += measured > 0 ? measured : estimated;
     if (items[0].kind === 'notif') w = h;          // 알림은 옆으로 긴 알약이 아니라 동그라미
+    const prevW = slot.width;
     for (let i = items.length; i < cells.length; i++) cells[i].style.display = 'none';
     div.style.display = items.length > 1 ? 'block' : 'none';
     if (items.length > 1) w += SAT_DIV_W;
     slot.width = Math.round(w);
+    if (slot.shown && prevW > 0 && Math.abs(prevW - slot.width) > 2) satResizeFx(slot, e);          // 자리 잡은 채 폭만 바뀔 때: 글자가 잘려 보이지 않게
     e.sat.dataset.kind = items[0].kind;
+    if (items[0].tone) e.sat.dataset.tone = items[0].tone; else delete e.sat.dataset.tone;
     e.sat.dataset.run = items[0].running ? '1' : '0';
     e.sat.dataset.n = String(items.length);
     // 폭은 이 자리의 레이어마다 따로 둔다 (두 자리가 서로 다른 폭을 가질 수 있다)
@@ -384,7 +436,26 @@ function satDroplet(kind, slot, sway) {
   if (!satRaf) satRaf = requestAnimationFrame(satStep);
 }
 
+// 큰 노치 옆면 마스크 확장(--goo-pad): 물줄기가 움직이는 동안(anim)은 -2px 로 즉시(구멍이 노치보다 양옆 2px 좁아 물줄기 뿌리가 노치 가장자리 밑으로 2px 겹친다: 0 이면 두 레이어의 가장자리가 만나는 자리에 머리카락 같은 틈과 모서리 쐐기가 보였다), 자리 잡으면 8px 로 0.3초에 걸쳐 천천히(모서리 그림자 보정)
+function gooPad(anim) {
+  const st = document.documentElement.style;
+  st.setProperty('--goo-dur', anim ? '0s' : '0.3s');
+  st.setProperty('--goo-pad', anim ? '-2px' : '8px');
+}
+
+// 큰 노치의 실루엣(.goo-body)은 물줄기가 '자리 잡은 접힌 노치'와 이어지는 동안에만 그린다.
+// 실루엣은 접힌 노치의 목표 폭(--island-w)으로 고정돼 있어서, 펼친 노치를 접는 중에는 진짜 노치가 스프링으로 목표보다 잠깐 좁아질 때(탄성 설정)
+// 양옆으로 2~3px 씩 검게 비어져 나왔다(보조 노치가 들어가던 중에 접으면 레이어가 아직 켜져 있어 그대로 보였다). 펼쳐져 있거나 아직 줄어드는 중이면 숨긴다.
+let satBodyLive = null;
+function satBodyOn(on) {
+  if (on === satBodyLive) return;
+  satBodyLive = on;
+  document.documentElement.classList.toggle('goo-live', on);
+}
+
 function satStep(now) {
+  gooPad(!!satAnims.size);
+  satBodyOn(satAnims.size > 0 && satCollapsedView(satLastView || view) && performance.now() >= satReadyAt);      // 물줄기가 이어지는 동안은 옆면을 비우지 않는다(뿌리가 끊기지 않게). 0 으로 가는 것은 즉시(전환 없이): 0.3초 전환이 걸리면 알약이 나오는 첫 순간에 마스크가 남아 물줄기 뿌리가 잘린다
   const res = new Map();
   let dx = 0;                                           // 큰 노치의 화면 기준 가로 이동량(오른쪽 +)
   for (const [slot, a] of satAnims) {
@@ -438,6 +509,8 @@ function satStep(now) {
   }
   if (satAnims.size) { satRaf = requestAnimationFrame(satStep); return; }
   satRaf = 0;
+  gooPad(false);
+  satBodyOn(false);
   island.style.translate = '';
   island.style.removeProperty('--rim-hr'); island.style.removeProperty('--rim-hl'); island.style.removeProperty('--rim-side');
   for (const slot of satSlots) {
@@ -478,9 +551,15 @@ function initSatellite() {
       e.stopPropagation();
       const cell = e.target.closest && e.target.closest('.sat-item');
       const id = slot.items[cell && cell.classList.contains('second') ? 1 : 0] || slot.id;      // 정보가 둘이면 누른 쪽의 페이지
+      if (id === 'phone-call-answer') { if (typeof phoneCallAct === 'function') phoneCallAct('answer'); return; }          // 받기 / 끊기: 노치를 펼치지 않고 바로
+      if (id === 'phone-call-end') { if (typeof phoneCallAct === 'function') phoneCallAct('end'); return; }
       if (id === 'notif') { satNotifOpen(); return; }      // 알림 동그라미: 누르면 윈도우 알림 센터가 열리고 동그라미는 사라진다
       if (typeof triggerExpand === 'function') triggerExpand();
       if (id === 'timer' || id === 'stopwatch') { tmrSetMode(id); setPage('timer'); }
+      else if (/^perf/.test(id)) setPage('perf');
+      else if (/^phone/.test(id)) setPage('phone');
+      else if (id === 'weather') setPage('weather');
+      else if (id === 'dday') setPage('agenda');
       else setPage(id === 'pomo' ? 'pomo' : 'music');
     });
   }

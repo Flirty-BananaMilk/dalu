@@ -115,7 +115,7 @@ def strip_dev_debug(sp):
         print("  배포본에서 pywebview 의 개발용 디버그 기록 코드를 뺐습니다")
 
 
-BINARY_EXT = (".dll", ".pyd", ".exe", ".png", ".gif", ".ico", ".jpg", ".zip", ".pak", ".dat", ".lib", ".so", ".mo", ".whl")
+BINARY_EXT = (".dll", ".pyd", ".exe", ".png", ".gif", ".ico", ".jpg", ".zip", ".pak", ".dat", ".lib", ".so", ".mo", ".whl", ".apk")
 
 
 def assert_no_private(stage):
@@ -154,7 +154,8 @@ def build_stage():
     rt = STAGE / "runtime"
     rt.mkdir()
     # --- 파이썬 런타임
-    for f in ("python.exe", "pythonw.exe", "python310.dll", "python3.dll", "vcruntime140.dll", "vcruntime140_1.dll", "LICENSE.txt"):
+    pydll = "python%d%d.dll" % sys.version_info[:2]          # 빌드하는 파이썬 버전에 맞는 DLL(3.10 이 아니어도 빠지지 않게)
+    for f in ("python.exe", "pythonw.exe", pydll, "python3.dll", "vcruntime140.dll", "vcruntime140_1.dll", "LICENSE.txt"):
         if (base / f).exists():
             shutil.copy2(base / f, rt / f)
     clean_copy_tree(base / "DLLs", rt / "DLLs", skip_file=lambda n: n.lower().startswith(SKIP_DLL) or n.lower().endswith((".ico", ".cat")))
@@ -180,7 +181,11 @@ def build_stage():
     for p in ROOT.iterdir():
         if p.is_file() and p.suffix in APP_EXT:
             shutil.copy2(p, app / p.name)
+    apk = ROOT / "dalu-link.apk"          # 폰 앱(Dalu Link) 설치 파일: 설정에서 같은 와이파이의 폰에 내려 준다(없으면 그 기능만 빠진다)
+    if apk.is_file():
+        shutil.copy2(apk, app / apk.name)
     clean_copy_tree(ROOT / "plugin_examples", app / "plugin_examples")
+    bundle_service_keys(app)
     for doc in ("README.md", "CHANGELOG.md", "LICENSE", "TRADEMARK.md", "SECURITY.md", "PRIVACY.md", "requirements.txt"):
         shutil.copy2(ROOT / doc, app / doc)
     # --- 설치/제거 스크립트, 아이콘, 안내
@@ -195,6 +200,25 @@ def build_stage():
     write_notices(STAGE / "THIRD_PARTY_NOTICES.txt", dists, base)
     assert_no_private(STAGE)
     return dists
+
+
+def bundle_service_keys(app):
+    """만든 사람의 PC 홈 폴더 메모장(dalu_api_keys.txt)에 적힌 OpenAQ / 에어코리아 키를 설치 파일의 app/service_keys.json 으로 넣는다(저장소에는 없다). 키 값은 출력하지 않는다."""
+    import json as _json
+    sys.path.insert(0, str(ROOT))
+    import servicekeys
+    note = Path.home() / "dalu_api_keys.txt"
+    got = {}
+    if os.environ.get("DALU_NO_SERVICE_KEYS"):          # 검사 사이트(VirusTotal)에 올릴 때처럼 키가 새면 안 되는 빌드: 키 없이 만든다
+        print("  서비스 키: DALU_NO_SERVICE_KEYS 가 켜져 있어 넣지 않았습니다(키 없는 빌드)")
+        return
+    if note.is_file():
+        got = servicekeys.parse_notepad(note.read_text(encoding="utf-8", errors="replace"))
+    if not got:
+        print("  서비스 키: 메모장이 없거나 비어 있어 넣지 않았습니다(날씨의 미세먼지는 예측 모델 값, '추정')")
+        return
+    (app / "service_keys.json").write_text(_json.dumps({n: got.get(n, "") for n in servicekeys.NAMES}, ensure_ascii=False), encoding="utf-8")
+    print("  서비스 키를 넣었습니다:", ", ".join(sorted(got)))
 
 
 def write_notices(path, dists, base):
@@ -251,7 +275,7 @@ def make_setup(ver, portable_zip):
     target = OUT / f"Dalu-{ver}-Setup.exe"
     if target.exists():
         target.unlink()
-    cmd = [CSC, "/nologo", "/target:winexe", f"/out:{target}", f"/win32icon:{work / 'dalu.ico'}", f"/win32manifest:{work / 'Setup.manifest'}", f"/resource:{work / 'payload.zip'},payload.zip",
+    cmd = [CSC, "/nologo", "/optimize+", "/debug-", "/target:winexe", f"/out:{target}", f"/win32icon:{work / 'dalu.ico'}", f"/win32manifest:{work / 'Setup.manifest'}", f"/resource:{work / 'payload.zip'},payload.zip",
            "/reference:System.IO.Compression.FileSystem.dll", "/reference:System.IO.Compression.dll", "/reference:System.Windows.Forms.dll", "/reference:System.Drawing.dll", str(work / "SetupStub.cs")]
     r = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
     if not target.exists():

@@ -46,7 +46,7 @@ function matchAnimPreset(s) {
 
 // 시스템 이벤트 종류 -> 알림 설정 키 (notify.<키>)
 const NOTIFY_KEY_OF_EVENT = {
-  volume: 'volume', brightness: 'brightness', caps: 'caps', num: 'num', scroll: 'scroll', lang: 'lang', power: 'power', battery_low: 'battery_low',
+  volume: 'volume', brightness: 'brightness', caps: 'caps', num: 'num', scroll: 'scroll', insert_key: 'insert', lang: 'lang', power: 'power', battery_low: 'battery_low',
   net: 'net', buds: 'buds', buds_gone: 'buds', buds_low: 'buds_low', buds_alert: 'buds_alert', audio_device: 'audio_device',
 };
 
@@ -86,7 +86,7 @@ function nestedPatch(dotted, value) {
 
 // ---------------------------------------------------------------- 탭(페이지) 구성
 // 노치 페이지의 기본 순서. 설정 tabOrder(쉼표 문자열)로 순서를, tabHidden 으로 숨길 탭을 정한다.
-const TAB_IDS = ['music', 'pomo', 'timer', 'water', 'shelf', 'todo', 'clip', 'agenda', 'launcher', 'plugins', 'buds'];
+const TAB_IDS = ['music', 'pomo', 'timer', 'water', 'shelf', 'todo', 'clip', 'agenda', 'launcher', 'sys', 'power', 'perf', 'weather', 'phone', 'plugins', 'buds'];
 const DEFAULT_TAB_ORDER = TAB_IDS.join(',');
 
 function parseTabOrder(str) {

@@ -81,8 +81,11 @@ const LG = (() => {
     if (!supported) return null;
     w = Math.max(8, Math.ceil(w / 2) * 2); h = Math.max(8, Math.ceil(h / 2) * 2);
     const r = Math.min(o.radius == null ? Math.min(w, h) / 2 : o.radius, w / 2, h / 2);
-    const bezel = Math.min(o.bezel || Math.min(w, h) * 0.45, Math.min(w, h) / 2);
-    const scale = o.scale == null ? 18 : o.scale;
+    const wantBezel = o.bezel || Math.min(w, h) * 0.45;
+    const bezel = Math.min(wantBezel, Math.min(w, h) / 2);
+    let scale = o.scale == null ? 18 : o.scale;
+    // 굴절 폭이 요소 크기 때문에 줄어든 경우에만, 굴절 세기가 그 폭의 scaleRatio 배를 넘지 않게 한다(작은 요소가 자기 밖의 투명한 곳을 끌어 오지 않게). 충분히 큰 요소는 설정값 그대로.
+    if (o.scaleRatio && bezel < wantBezel) scale = Math.min(scale, bezel * o.scaleRatio);
     const disp = o.dispersion == null ? 0.06 : o.dispersion;
     const power = o.power || 2.2;
     const key = [w, h, Math.round(r), Math.round(bezel), scale, disp, power].join('x');
@@ -147,7 +150,7 @@ const LG = (() => {
     apply();
     if (!watched.has(el) && window.ResizeObserver) {
       let t = null;
-      const ro = new ResizeObserver(() => { clearTimeout(t); t = setTimeout(apply, 60); });     // 애니메이션 중에는 잠잠해진 뒤 한 번만
+      const ro = new ResizeObserver(() => { clearTimeout(el._lgT); el._lgT = setTimeout(apply, 60); });     // 애니메이션 중에는 잠잠해진 뒤 한 번만
       ro.observe(el);
       watched.set(el, ro);
     }
@@ -178,6 +181,7 @@ const LG = (() => {
   function refresh(el) { const f = appliers.get(el); if (f) f(); }
   function unlens(el) {
     const ro = watched.get(el); if (ro) { ro.disconnect(); watched.delete(el); }
+    clearTimeout(el._lgT);          // 예약돼 있던 다시 그리기가 끈 뒤에 필터를 되붙이지 않게
     appliers.delete(el);
     el.style.backdropFilter = ''; el.style.webkitBackdropFilter = '';
     el.classList.remove('lg');

@@ -310,6 +310,15 @@ def fetch_apple_music(queries, album, duration, http=None, parse=None):
 PROVIDERS = (("Apple Music", fetch_apple_music), ("NetEase", fetch_netease), ("LRCLIB", fetch_lrclib))     # 같은 품질이면 앞쪽을 쓴다
 
 
+_PLACEHOLDER_RE = re.compile(r"纯音乐|純音樂|没有填词|沒有填詞|暂无歌词|暫無歌詞|无歌词|無歌詞|请欣赏|請欣賞|歌词正在制作|^\W*instrumental\W*$|歌詞なし|歌詞はありません", re.I)
+
+
+def is_placeholder(lyrics):
+    """가사가 아니라 '순음악(가사 없음)'을 알리는 안내 문구인가(NetEase 는 연주곡에 '纯音乐，请欣赏' 한 줄을 돌려준다). 이런 것은 가사로 보여 주지 않는다."""
+    lines = (lyrics or {}).get("lines") or []
+    return 0 < len(lines) <= 3 and all(_PLACEHOLDER_RE.search(str(l.get("text", ""))) for l in lines)
+
+
 def quality(lyrics):
     if not lyrics:
         return -1
@@ -355,6 +364,8 @@ def fetch_lyrics(title, artist, album="", duration=0.0, timeout=9.0, cache_dir=N
     log = log or (lambda m: None)
     info = {"not_found": False, "errors": [], "cached": False}
     status, cached = cache_load(title, artist, cache_dir)
+    if status == "hit" and is_placeholder(cached):          # 예전 버전이 저장해 둔 '纯音乐' 안내 문구: 버리고 다시 찾는다
+        status = "miss"
     if status == "hit":
         info.update(cached=True, source=cached.get("source"))
         return cached, info
@@ -399,6 +410,8 @@ def fetch_lyrics(title, artist, album="", duration=0.0, timeout=9.0, cache_dir=N
             info["errors"].append(f"{name}: {val}")
             continue
         answered += 1
+        if is_placeholder(val):                                # 연주곡 안내 문구: 가사가 없다고 답한 것으로 센다
+            continue
         if quality(val) > quality(best):
             best = val
     if best:

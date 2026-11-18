@@ -7,6 +7,7 @@
 """
 import calendar as _cal
 import re
+import threading
 import time
 import urllib.request
 from datetime import date, datetime, timedelta, timezone
@@ -48,7 +49,23 @@ def parse_prop(line):
 
 
 def unescape(s):
-    return (s or "").replace("\\n", "\n").replace("\\N", "\n").replace("\\,", ",").replace("\\;", ";").replace("\\\\", "\\")
+    """ICS 글자 이스케이프를 푼다. 앞에서부터 한 글자씩 읽어서, 역슬래시 두 개 뒤의 n 이 줄바꿈으로 바뀌지 않는다."""
+    out, i, s = [], 0, (s or "")
+    while i < len(s):
+        c = s[i]
+        if c == "\\" and i + 1 < len(s):
+            n = s[i + 1]
+            if n in "nN":
+                out.append("\n")
+            elif n in ",;\\":
+                out.append(n)
+            else:
+                out.append(c + n)
+            i += 2
+        else:
+            out.append(c)
+            i += 1
+    return "".join(out)
 
 
 def _local_tz():
@@ -110,23 +127,34 @@ def _nth_weekday(y, m, wd, n):
         return None
 
 
+def _safe_expand(start, rule, until_limit):
+    """깨진 반복 규칙 하나가 일정 전체를 죽이지 않게: 그 일정의 반복만 건너뛴다."""
+    try:
+        yield from expand(start, rule, until_limit)
+    except Exception:
+        return
+
+
 def expand(start, rule, until_limit, tz_aware=True):
     """start(aware datetime)부터 until_limit(aware datetime)까지의 시작 시각들을 순서대로 만든다.
     벽시계 시간(start 의 시간대 기준)으로 계산해서 서머타임이 있어도 같은 시각을 유지한다."""
     freq = rule.get("FREQ")
-    interval = max(1, int(rule.get("INTERVAL", "1") or 1))
+    iv = str(rule.get("INTERVAL", "1") or "1")
+    interval = max(1, int(iv)) if iv.isdigit() else 1          # 'INTERVAL=abc' 같은 깨진 값은 1 로 본다
     count = int(rule["COUNT"]) if rule.get("COUNT", "").isdigit() else None
     until = None
     if rule.get("UNTIL"):
         u, _ = parse_dt(rule["UNTIL"], {}, start.tzinfo)
         until = u
+        if u is not None and len(re.sub(r"\D", "", rule["UNTIL"])) == 8:
+            until = u + timedelta(days=1) - timedelta(seconds=1)          # 날짜만 있는 UNTIL 은 그날 끝까지(시각이 있는 일정의 마지막 날이 빠지지 않게)
     bydays = []
     for tok in [t for t in rule.get("BYDAY", "").split(",") if t]:
         m = re.match(r"^([+-]?\d+)?(MO|TU|WE|TH|FR|SA|SU)$", tok)
         if m:
             bydays.append((int(m.group(1)) if m.group(1) else 0, _DAYS.index(m.group(2))))
     bymonthday = [int(x) for x in rule.get("BYMONTHDAY", "").split(",") if re.match(r"^-?\d+$", x)]
-    bymonth = [int(x) for x in rule.get("BYMONTH", "").split(",") if x.isdigit()]
+    bymonth = [int(x) for x in rule.get("BYMONTH", "").split(",") if x.isdigit() and 1 <= int(x) <= 12]
     t0 = start.timetz()
     tz = start.tzinfo
     base = start.date()
@@ -289,7 +317,7 @@ def upcoming(text, now=None, days=14, since=None):
             continue
         if e.get("rrule"):
             ex = {d for d in e["exdates"]}
-            for occ in expand(s, e["rrule"], horizon):
+            for occ in _safe_expand(s, e["rrule"], horizon):
                 if occ in ex or (e.get("uid"), occ) in overrides:
                     continue
                 add(e.get("title"), occ, occ + dur, all_day, e.get("location"))
@@ -349,22 +377,31 @@ class CalendarSource:
         self._at = 0.0
         self._text = ""
         self.error = ""
+        self._mu = threading.Lock()
 
     def set_source(self, src):
-        if (src or "") != self._src:
-            self._src, self._at, self._text, self.error = src or "", 0.0, "", ""
+        with self._mu:
+            if (src or "") != self._src:
+                self._src, self._at, self._text, self.error = src or "", 0.0, "", ""
 
     def refresh(self, force=False):
-        if not self._src:
-            return False
-        if not force and time.time() - self._at < self.ttl and self._text:
-            return False
+        with self._mu:
+            src = self._src
+            if not src:
+                return False
+            if not force and time.time() - self._at < self.ttl and self._text:
+                return False
         try:
-            self._text = self._fetch(self._src)
-            self.error = ""
+            text, err = self._fetch(src), ""          # 가져오는 동안은 락을 잡지 않는다(오래 걸릴 수 있다)
         except Exception as e:
-            self.error = type(e).__name__
-        self._at = time.time()
+            text, err = None, type(e).__name__
+        with self._mu:
+            if self._src != src:
+                return False          # 가져오는 사이에 주소가 바뀌었다: 옛 주소의 응답은 버린다
+            if text is not None:
+                self._text = text
+            self.error = err
+            self._at = time.time()
         return True
 
     def events(self, now=None, days=14, since=None):

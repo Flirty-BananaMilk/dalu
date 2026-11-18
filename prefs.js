@@ -47,6 +47,8 @@ function applyPrefs() {
   if (typeof updateClock === 'function') updateClock();
   if (typeof miniIdx !== 'undefined') miniIdx = -1;                 // 단어 하이라이트 방식이 바뀌면 줄을 다시 만든다
   if (typeof listIdx !== 'undefined') { try { buildList(hasLyricLines() ? state.lyrics.lines : null); } catch (e) { /* 아직 가사 없음 */ } }
+  if (typeof renderWater === 'function') { try { renderWater(); } catch (e) { /* 아직 준비 안 됨 */ } }          // 물·할 일 탭의 '꺼짐' 문구가 설정 변경을 바로 따라가게
+  if (typeof renderTodos === 'function') { try { renderTodos(); } catch (e) { /* 아직 준비 안 됨 */ } }
 }
 
 // 속도: CSS 전환(transition)은 시작될 때 재생 배율을 바꿔 빠르게/느리게 한다 (WAAPI 는 anim() 이 시간을 나눈다)
@@ -95,6 +97,7 @@ function applyPrefPatch(patch) {
 function afterPrefsChanged(before, patch) {
   const s = store.settings;
   applyPrefs();
+  if (typeof reorderApplyAll === 'function') reorderApplyAll();          // 설정에서 버튼 순서를 되돌렸다면 시스템·전원 탭에 바로 적용한다
   if (s.lang !== before.lang) { lang = normLang(s.lang); applyLang(); }
   if (s.compact !== before.compact) { compactMode = !!s.compact; island.classList.toggle('compact', compactMode); miniIdx = -1; scheduleRegion(); }
   updateLyricsButtons();

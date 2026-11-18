@@ -11,6 +11,7 @@ import json
 import os
 import re
 import shutil
+import sys
 from html import escape
 from pathlib import Path
 
@@ -461,6 +462,24 @@ def convert_assets():
                 im.save(ASSETS / f"wp-{k}.webp", "WEBP", quality=58 if k == "dusk" else 66, method=6)
 
 
+def write_version(out=None):
+    """docs/version.json: 앱이 하루에 한 번 읽는 '최신 버전' 파일(updatecheck.py). 버전은 dalu.py 의 APP_VERSION.
+    이 파일을 올리면 그보다 낮은 버전을 쓰는 사람들에게 새 버전 알림이 간다: itch 에 새 설치 파일을 올린 **뒤에** 만들어 올린다."""
+    m = re.search(r'^APP_VERSION\s*=\s*"(\d+\.\d+\.\d+)"', (ROOT / "dalu.py").read_text(encoding="utf-8"), re.M)
+    if not m:
+        raise SystemExit("APP_VERSION 을 dalu.py 에서 찾지 못했습니다")
+    ver = m.group(1)
+    data = {"version": ver, "url": ITCH}
+    setup = ROOT / "dist" / f"Dalu-{ver}-Setup.exe"
+    if setup.exists():       # 앱 안 업데이트가 받을 파일: GitHub 릴리스에 같은 이름으로 올린 Setup.exe 의 해시와 크기(이 파일 그대로 올려야 한다)
+        import hashlib
+        data["download"] = {"url": f"https://github.com/Flirty-BananaMilk/dalu/releases/download/v{ver}/{setup.name}",
+                            "sha256": hashlib.sha256(setup.read_bytes()).hexdigest(), "size": setup.stat().st_size}
+    out = Path(out) if out else OUT / "version.json"
+    out.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    return ver
+
+
 def main():
     from PIL import Image
     ASSETS.mkdir(parents=True, exist_ok=True)
@@ -484,4 +503,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if sys.argv[1:] == ["version"]:       # 사이트는 그대로 두고 version.json 만 새로 쓴다(새 버전을 itch 에 올린 뒤)
+        print("version.json ->", write_version())
+    else:
+        main()
+        write_version()

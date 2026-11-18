@@ -101,6 +101,63 @@ def open_center(build=None, info=None, send=None):
     return True
 
 
+def center_rect_on(work, size):
+    """알림 센터(폭 w, 높이 h)를 모니터의 작업 영역 work(left, top, right, bottom)의 오른쪽 끝에 붙이고, 높이는 그 작업 영역을 넘지 않게 한다.
+    반환: (x, y, w, h). 윈도우는 알림 센터를 작업 표시줄 쪽 가장자리(오른쪽)에 위에서 아래까지 채워 띄운다."""
+    left, top, right, bottom = work
+    w, h = size
+    h = min(h, bottom - top)
+    w = min(w, right - left)
+    return right - w, top, w, h
+
+
+def move_center_to(number, timeout=1.5, log=None):
+    """방금 연 알림 센터를 윈도우 식별 번호 number 의 모니터로 옮긴다. 윈도우의 Win+N 은 마우스·앞 창과 상관없이 늘 주 모니터에 열어서,
+    노치를 다른 모니터에 띄운 경우 거기서 누른 알림 동그라미의 알림 센터가 엉뚱한 모니터에 뜨던 것을 고친다.
+    이 스레드만 모니터별 물리 좌표 모드로 바꿔 계산하고 끝나면 되돌린다(앱은 시스템 DPI 인식이라 모니터마다 배율이 다르면 좌표가 어긋난다).
+    반환: 옮겼으면 True."""
+    log = log or (lambda *_: None)
+    try:
+        import monitors as _mon
+        u = ctypes.WinDLL("user32", use_last_error=True)
+        u.SetThreadDpiAwarenessContext.restype = ctypes.c_void_p
+        u.SetThreadDpiAwarenessContext.argtypes = [ctypes.c_void_p]
+        old = u.SetThreadDpiAwarenessContext(ctypes.c_void_p(-4))      # DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2
+        try:
+            deadline = time.time() + timeout
+            hwnd = 0
+            while time.time() < deadline:                              # 알림 센터가 뜰 때까지 잠깐 기다린다
+                if center_open():
+                    hwnd = u.GetForegroundWindow()
+                    break
+                time.sleep(0.05)
+            if not hwnd:
+                return False
+            mons = _mon.list_monitors()
+            tm = next((m for m in mons if m["number"] == number), None)
+            if tm is None or tm.get("primary"):
+                return False
+            class _MI(ctypes.Structure):
+                _fields_ = [("cbSize", wintypes.DWORD), ("rcMonitor", wintypes.RECT), ("rcWork", wintypes.RECT), ("dwFlags", wintypes.DWORD)]
+            hm = u.MonitorFromPoint(wintypes.POINT(int(tm["left"]) + 5, int(tm["top"]) + 5), 2)
+            mi = _MI(); mi.cbSize = ctypes.sizeof(_MI)
+            if not u.GetMonitorInfoW(hm, ctypes.byref(mi)):
+                return False
+            r = wintypes.RECT()
+            if not u.GetWindowRect(hwnd, ctypes.byref(r)):
+                return False
+            work = (mi.rcWork.left, mi.rcWork.top, mi.rcWork.right, mi.rcWork.bottom)
+            x, y, w, h = center_rect_on(work, (r.right - r.left, r.bottom - r.top))
+            ok = bool(u.SetWindowPos(hwnd, 0, x, y, w, h, 0x0004 | 0x0010))      # SWP_NOZORDER | SWP_NOACTIVATE
+            log(f"notification center moved to monitor {number}: {(x, y, w, h)} ok={ok}")
+            return ok
+        finally:
+            u.SetThreadDpiAwarenessContext(ctypes.c_void_p(old))
+    except Exception as e:
+        log(f"move_center_to failed: {e!r}")
+        return False
+
+
 def is_ignored(app_name, ignore_list):
     """앱 이름이 무시 목록(쉼표로 구분, 대소문자 무시, 부분 일치)에 걸리는가."""
     name = str(app_name or "").lower()
@@ -188,7 +245,7 @@ class NotificationWatch:
             if self._store_path:
                 tmp = self._store_path + ".tmp"
                 with open(tmp, "w", encoding="utf-8") as f:
-                    json.dump(self.apps, f, ensure_ascii=False)
+                    json.dump(dict(self.apps), f, ensure_ascii=False)          # 사본을 쓴다(알림 스레드가 목록에 앱을 더하는 중에도 안전하게)
                 os.replace(tmp, self._store_path)
         except Exception as e:
             self._log(f"winnotif: could not save the app list: {e!r}")

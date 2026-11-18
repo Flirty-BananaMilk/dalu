@@ -9,6 +9,7 @@ const $ = (id) => document.getElementById(id);
 const getApi = () => (window.pywebview && window.pywebview.api) || null;
 
 const ICONS = {
+  phone: '<rect x="7" y="2.5" width="10" height="19" rx="2.4"/><path d="M11 18.5h2"/>',
   sliders: '<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
   music: '<path d="M9 18V6l10-2v12"/><circle cx="7" cy="18" r="2.5"/><circle cx="17" cy="16" r="2.5"/>',
   bell: '<path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
@@ -21,11 +22,15 @@ const ICONS = {
   puzzle: '<path d="M10 4h4v3a2 2 0 1 1 3 1.7V12h-3.3a2 2 0 1 0-3.4 0H7V8.7A2 2 0 1 1 10 7z"/><path d="M7 12v4h10v-4"/>',
   clip: '<rect x="6" y="4" width="12" height="17" rx="2.5"/><path d="M9 4V3h6v1M9 11h6M9 15h4"/>',
   reset: '<path d="M4 12a8 8 0 1 0 2.6-5.9M4 4v4.2h4.2"/>',
+  gauge: '<path d="M4.5 16a8 8 0 1 1 15 0"/><path d="M12 15.5l3.6-4.6"/><circle cx="12" cy="15.5" r="1.4"/>',
 };
 const icon = (name) => `<svg viewBox="0 0 24 24">${ICONS[name] || ''}</svg>`;
 
 const STR = {
-  ko: { search: '설정 검색', searchTitle: '검색 결과', noResults: '일치하는 설정이 없어요', ver: '버전', reset: '기본값으로', copied: '완료',
+  ko: { lkTitle: '폰 앱 (Dalu Link)', lkNone: '연결된 폰이 없어요', lkConnected: '연결됨: {n}', lkBatt: '배터리 {p}%', lkCharging: '충전 중', lkOff: '먼저 위의 “폰 앱으로 연결” 스위치를 켜 주세요', lkStep1: '1. 폰에 앱 설치', lkStep1d: '폰이 이 PC와 같은 와이파이에 있어야 해요. 버튼을 누르고 폰 카메라로 QR을 찍으면 앱을 받을 수 있어요. 설치할 때 “출처를 알 수 없는 앱” 허용이 필요할 수 있어요.', lkStep2: '2. 폰과 연결', lkStep2d: '폰에서 Dalu Link를 열고 “QR로 PC와 연결”을 눌러 이 QR을 비춰 주세요. 알림 접근 허용과 배터리 최적화 제외도 앱 안에서 안내해요.', lkShowInstall: '설치 QR 보기', lkShowPair: '연결 QR 보기', lkOpenFor: '{m}분 동안만 열려 있어요', lkExpires: '{s}초 뒤 만료돼요', lkExpired: '만료됐어요. 다시 눌러 주세요', lkNoApk: '이 Dalu에는 폰 앱 파일이 들어 있지 않아요', lkNoNet: '같은 네트워크 주소를 찾지 못했어요', lkErr: '열지 못했어요', lkForget: '연결 해제', lkFirewall: '처음 켤 때 Windows 방화벽이 물으면 “개인 네트워크”를 허용해 주세요. 폰과 PC가 같은 와이파이일 때만 연결돼요. 알림 내용은 폰과 이 PC 사이에서만 오가고 저장하지 않아요. 연결이 안 되면: 학교·학원·회사 와이파이는 같은 와이파이여도 기기끼리의 접속을 막는 경우가 있어요. 그럴 땐 폰의 핫스팟을 켜고 PC를 그 핫스팟에 연결한 뒤 다시 해 보세요. 모바일 데이터에서도 쓰려면 위의 “모바일 데이터에서도 연결(중계 서버)”을 켜세요(앱 설치용 QR 은 그래도 같은 와이파이에서만 받을 수 있어요).', lkJustConnected: '폰이 연결됐어요', lkServerErr: '연결을 받을 수 없어요(포트가 막혀 있을 수 있어요)', lkRelay_off: '중계 서버: 꺼짐', lkRelay_connecting: '중계 서버에 연결하는 중…', lkRelay_online: '중계 서버에 연결됨 · 모바일 데이터의 폰도 연결할 수 있어요', lkRelay_offline: '중계 서버에 닿지 않아요(인터넷과 주소를 확인하세요). 계속 다시 시도해요', lkRelay_error: '중계 서버를 쓸 수 없어요(필요한 구성 요소가 없어요)', lkRelayNeedUrl: '중계 서버 주소를 입력해 주세요(wss:// 로 쓸 수 있는 주소만 돼요)', lkRelayQr: '이 QR에는 중계 서버 정보가 들어 있어요(모바일 데이터에서도 연결돼요)', wxTitle: '날씨', wxPrivacy: 'Open-Meteo(무료 날씨 서비스)에서 받아요. 도시를 고르기 전에는 아무것도 보내지 않고, 고른 뒤에는 그 도시의 위도·경도(약 1km 로 뭉뚱그림)만 보내요. 계정이 필요 없고 내 위치를 자동으로 알아내지 않아요. 미세먼지는 관측소 값이 아니라 모델 추정값이에요.', wxCityTitle: '도시', wxPick: '선택', ddTitle: '내 D-day', ddDone2: '완료', ddHint: '일정 탭에서 일정 옆 별 버튼을 눌러도 D-day 로 추가돼요.', ddDoneTag: '완료함', ddRestore: '되돌리기', ddDel: '삭제', swWarnMany: '켠 항목이 많아요. 작은 노치는 최대 네 칸이라 시계·타이머 같은 다른 보조 노치가 밀려서 안 보일 수 있어요.', swWarnOff: '보조 노치가 꺼져 있어요. “모양·동작 > 보조 노치”를 켜야 여기서 고른 항목이 보여요.', wxSearchPh: '도시 이름 (예: 서울, Tokyo)', wxSearchBtn: '검색', wxSearching: '찾는 중…', wxNoResult: '찾지 못했어요', wxClearCity: '지우기', wxCityNone: '고른 도시가 없어요', wxCityNow: '지금: {c}', wxSearchFail: '검색하지 못했어요', ddName: '이름', ddAdd: '추가', ddFull: 'D-day 는 40개까지예요', ddEmpty: '직접 만든 D-day 가 없어요', ddSaved: '저장했어요', search: '설정 검색', searchTitle: '검색 결과', noResults: '일치하는 설정이 없어요', ver: '버전', reset: '기본값으로', copied: '완료',
+        aUpdate: '업데이트', updAvail: (v) => `${v} 받을 수 있어요`, updNew: (v) => `새 버전 ${v}이 있어요. 다운로드 페이지를 열었어요`, updLatest: '최신 버전이에요', updFail: '확인하지 못했어요 (인터넷 연결을 확인해 주세요)',
+        updReady: (v) => `새 버전 ${v}이 있어요. 아래 "지금 업데이트"를 눌러 주세요`, updProgress: (p) => `받는 중 ${p}%`, updInstalling: '설치 중…', updNoDirect: '앱 안에서 받을 수 없는 버전이라 다운로드 페이지를 열었어요',
+        updErrVerify: '받은 파일이 올바르지 않아 멈췄어요. 다운로드 페이지에서 직접 받아 주세요', updErrNet: '받지 못했어요 (인터넷 연결을 확인해 주세요)', updErrRun: '설치 프로그램을 실행하지 못했어요. 백신이 막았을 수 있어요', updErrStuck: '설치가 시작되지 않았어요. 다운로드 페이지에서 직접 받아 주세요',
         removed: (n) => `가사 캐시 ${n}개를 지웠어요`, sent: '테스트 알림을 보냈어요', soundBad: '이 파일은 쓸 수 없어요 (.wav, 10MB·30초 이내)', armed: '정말 초기화할까요?', resetDone: '모든 설정을 초기화했어요',
         restarting: '다시 시작합니다…', failed: '실패했어요', on: '사용 가능', off: '사용 불가',
         eqTitle: '이퀄라이저', eqDesc: '이어버드의 소리 성향을 골라요. 이어버드에 직접 적용되는 설정이라 삼성 Galaxy Buds 앱과 같아요.', eqNormal: '일반', eqBass: '베이스 부스트', eqSoft: '소프트', eqDynamic: '다이내믹', eqClear: '클리어', eqTreble: '트레블 부스트', eqFailed: '적용하지 못했어요', eqInUse: '다른 앱이 이어버드를 쓰고 있어요 (Galaxy Buds 앱을 닫아 주세요)', eqNoDevice: '이어버드가 연결돼 있지 않거나 제어를 쓸 수 없어요',
@@ -35,7 +40,7 @@ const STR = {
         pvTitle: '지금 설정으로 움직여 보기', pvPlay: '다시 재생', pvNote: '클릭하면 <b>접힘 → 미니 → 펼침</b> 순서로 노치가 움직여요. 아래 값을 바꾸면 바로 다시 재생돼요.',
         aVersion: '버전', aPython: 'Python', aWebview: 'pywebview', aData: '데이터 폴더', aMedia: '다른 앱 미디어(SMTC)', aViz: '비주얼라이저', aBuds: '이어버드',
         yes: '사용 가능', no: '사용 불가',
-        tabsHint: '위/아래 버튼으로 순서를 바꾸고, 스위치로 탭을 넣거나 뺍니다. 노치에서 휠이나 점을 눌러 넘기는 순서가 이대로 바뀌어요.', tabsReset: '탭 구성 초기화',
+        tabsHint: '위/아래 버튼으로 순서를 바꾸고, 스위치로 탭을 넣거나 뺍니다.', tabsReset: '탭 구성 초기화',
         tabNote_clip: '“클립보드·일정” 설정에서 기록을 켜야 보여요', tabNote_agenda: '캘린더 주소를 넣어야 보여요', tabNote_buds: '이어버드가 연결됐을 때만 보여요', tabNote_plugins: '켜 둔 플러그인이 있어야 보여요',
         tabLast: '탭이 하나는 보여야 해요', pluginFolder: '플러그인 폴더 열기', pluginAdd: '추가', pluginRemove: '제거', pluginsAdded: '추가한 플러그인', pluginsAvailable: '추가할 수 있는 플러그인', pluginsNone: '아직 추가한 플러그인이 없어요. 아래에서 필요한 것을 추가하면 노치에 “플러그인” 탭이 나타나요.', pluginsAllAdded: '모든 플러그인을 추가했어요', pluginReload: '다시 읽기', pluginUser: '내가 만든 플러그인', pluginActions: (n) => `동작 ${n}개`,
         
@@ -47,7 +52,10 @@ const STR = {
         exported: '설정을 저장했어요', imported: (n) => `설정 ${n}개를 가져왔어요`, importFail: '가져오지 못했어요: 올바른 설정 파일이 아니에요', cleared: '기록을 지웠어요',
         calOk: (n) => `일정 ${n}개를 불러왔어요 (앞으로 7일)`, calFail: '캘린더를 읽지 못했어요. 주소를 확인해 주세요',
         hkOk: '사용 중', hkInvalid: '조합 형식이 올바르지 않아요 (예: Ctrl+Alt+N)', hkConflict: '다른 프로그램이 이미 쓰는 조합이에요', hkOff: '꺼짐' },
-  en: { search: 'Search settings', searchTitle: 'Search results', noResults: 'No matching settings', ver: 'Version', reset: 'Reset to default', copied: 'Done',
+  en: { lkTitle: 'Phone app (Dalu Link)', lkNone: 'No phone connected', lkConnected: 'Connected: {n}', lkBatt: 'Battery {p}%', lkCharging: 'charging', lkOff: 'Turn on “Connect with the phone app” above first', lkStep1: '1. Install the app on the phone', lkStep1d: 'The phone must be on the same Wi-Fi as this PC. Press the button and scan the QR with the phone camera to get the app. You may need to allow “unknown sources” to install it.', lkStep2: '2. Connect the phone', lkStep2d: 'Open Dalu Link on the phone, tap “Connect to PC with QR” and scan this QR. The app also guides you through the notification access and battery settings.', lkShowInstall: 'Show install QR', lkShowPair: 'Show connect QR', lkOpenFor: 'Open for {m} minutes only', lkExpires: 'Expires in {s} s', lkExpired: 'Expired. Press again', lkNoApk: 'This Dalu does not contain the phone app file', lkNoNet: 'Could not find a network address', lkErr: 'Could not open it', lkForget: 'Disconnect', lkFirewall: 'If Windows Firewall asks the first time, allow “Private networks”. It only connects when the phone and PC are on the same Wi-Fi. Notification content only travels between the phone and this PC and is never stored. If it does not connect: school, academy or office Wi-Fi may block devices from reaching each other even on the same network. Turn on the phone\'s hotspot, connect the PC to it and try again. To use it on mobile data, turn on “Also connect over mobile data (relay server)” above (the install QR still needs the same Wi-Fi).', lkJustConnected: 'Phone connected', lkServerErr: 'Cannot accept connections (a port may be blocked)', lkRelay_off: 'Relay server: off', lkRelay_connecting: 'Connecting to the relay server…', lkRelay_online: 'Connected to the relay server · phones on mobile data can connect too', lkRelay_offline: 'Cannot reach the relay server (check the internet and the address). Retrying', lkRelay_error: 'The relay server cannot be used (a required component is missing)', lkRelayNeedUrl: 'Enter the relay server address (only addresses that work over wss:// are accepted)', lkRelayQr: 'This QR includes the relay server (it also connects over mobile data)', wxTitle: 'Weather', wxPrivacy: 'Comes from Open-Meteo, a free weather service. Nothing is sent until you pick a city; after that only that city\'s latitude and longitude (rounded to about 1 km) are sent. No account, and your location is never detected automatically. Air quality is a modelled estimate, not a station reading.', wxCityTitle: 'City', wxPick: 'Choose', ddTitle: 'My D-days', ddDone2: 'Done', ddHint: 'You can also star an event in the Agenda tab to add it here.', ddDoneTag: 'Done', ddRestore: 'Restore', ddDel: 'Delete', swWarnMany: 'You turned on a lot. The small notch has four slots at most, so other pills such as the clock or timers may be pushed out.', swWarnOff: 'The small notch is off. Turn it on under “Look & Behavior > Satellite pill” to see these.', wxSearchPh: 'City name (e.g. Seoul, Tokyo)', wxSearchBtn: 'Search', wxSearching: 'Searching…', wxNoResult: 'Nothing found', wxClearCity: 'Clear', wxCityNone: 'No city chosen', wxCityNow: 'Now: {c}', wxSearchFail: 'Search failed', ddName: 'Name', ddAdd: 'Add', ddFull: 'Up to 40 D-days', ddEmpty: 'No D-days of your own yet', ddSaved: 'Saved', search: 'Search settings', searchTitle: 'Search results', noResults: 'No matching settings', ver: 'Version', reset: 'Reset to default', copied: 'Done',
+        aUpdate: 'Update', updAvail: (v) => `${v} is available`, updNew: (v) => `Version ${v} is out. Opened the download page`, updLatest: 'You are up to date', updFail: 'Could not check (please check your internet connection)',
+        updReady: (v) => `Version ${v} is out. Press "Update now" below`, updProgress: (p) => `Downloading ${p}%`, updInstalling: 'Installing…', updNoDirect: 'This version cannot be downloaded inside the app, so the download page was opened',
+        updErrVerify: 'The downloaded file did not match, so it was stopped. Please download it from the page', updErrNet: 'Download failed (please check your internet connection)', updErrRun: 'Could not start the installer. Antivirus may have blocked it', updErrStuck: 'The installer did not start. Please download it from the page',
         removed: (n) => `Cleared ${n} cached lyric file(s)`, sent: 'Sent a test alert', soundBad: 'This file cannot be used (.wav, up to 10 MB and 30 s)', armed: 'Really reset?', resetDone: 'All settings were reset',
         restarting: 'Restarting…', failed: 'Failed', on: 'Available', off: 'Unavailable',
         eqTitle: 'Equalizer', eqDesc: 'Pick the sound profile. It is applied to the earbuds themselves, same as in the Samsung Galaxy Buds app.', eqNormal: 'Normal', eqBass: 'Bass boost', eqSoft: 'Soft', eqDynamic: 'Dynamic', eqClear: 'Clear', eqTreble: 'Treble boost', eqFailed: 'Could not apply', eqInUse: 'Another app is using the earbuds (close the Galaxy Buds app)', eqNoDevice: 'Earbuds are not connected or control is unavailable',
@@ -57,7 +65,7 @@ const STR = {
         pvTitle: 'Try your current settings', pvPlay: 'Replay', pvNote: 'Click to move the notch through <b>collapsed → mini → expanded</b>. It replays when you change a value below.',
         aVersion: 'Version', aPython: 'Python', aWebview: 'pywebview', aData: 'Data folder', aMedia: 'Other-app media (SMTC)', aViz: 'Visualizer', aBuds: 'Earbuds',
         yes: 'Available', no: 'Unavailable',
-        tabsHint: 'Use the arrows to reorder and the switches to add or remove tabs. The notch pages follow this order.', tabsReset: 'Reset tabs',
+        tabsHint: 'Use the arrows to reorder and the switches to add or remove tabs.', tabsReset: 'Reset tabs',
         tabNote_clip: 'Turn on clipboard history in “Clipboard & Agenda” to show it', tabNote_agenda: 'Add a calendar address to show it', tabNote_buds: 'Shown only while earbuds are connected', tabNote_plugins: 'Needs at least one enabled plugin',
         tabLast: 'At least one tab must stay visible', pluginFolder: 'Open plugin folder', pluginAdd: 'Add', pluginRemove: 'Remove', pluginsAdded: 'Added plugins', pluginsAvailable: 'Available plugins', pluginsNone: 'No plugins added yet. Add one below and a “Plugins” tab appears on the notch.', pluginsAllAdded: 'All plugins are added', pluginReload: 'Reload', pluginUser: 'My plugin', pluginActions: (n) => `${n} actions`,
         
@@ -72,6 +80,69 @@ const STR = {
 };
 
 // ---------------------------------------------------------------- 상태
+Object.assign(STR.ko, {
+  wxPrivacy: 'Open-Meteo(무료 날씨 서비스)에서 받아요. 위치도 도시도 없으면 아무것도 보내지 않고, 보내는 것은 약 1km 로 뭉뚱그린 좌표뿐이에요. 계정은 필요 없어요.',
+  wxTitle: '데이터 출처와 개인정보', wxCityTitle: '도시 고르기', wxLocTitle: '위치 서비스 상태', wxLocCheck: '다시 확인', wxLocChecking: '확인하는 중…',
+  wxLoc_ok: '이 PC의 위치를 읽을 수 있어요.', wxLoc_denied: '윈도우 위치 서비스가 꺼져 있거나 이 앱이 막혀 있어요. 윈도우 설정 › 개인 정보 및 보안 › 위치에서 켜 주세요.',
+  wxLoc_unavailable: '이 PC에서는 위치 기능을 쓸 수 없어요. 고른 도시로 보여 줘요.', wxLoc_error: '위치를 읽지 못했어요. 잠시 뒤에 다시 확인해 보세요.', wxLoc_timeout: '위치를 읽지 못했어요. 잠시 뒤에 다시 확인해 보세요.', wxLoc_unknown: '아직 확인하지 않았어요.',
+  swWarnMany: '2개 이상 켜면 작은 노치(최대 4칸)에서 시계·타이머 같은 다른 항목이 밀려날 수 있어요. 최대 3개까지 고를 수 있어요.',
+  satMax: '작은 노치에는 정보를 최대 3개까지만 띄울 수 있어요. 다른 항목을 먼저 꺼 주세요.',
+  tabOffMsg: '“{t}” 탭이 꺼져 있어요. 모양·동작 › 탭 구성에서 먼저 켜 주세요.',
+  tabOffNote: '“{t}” 탭이 꺼져 있어서 이 설정은 쓸 수 없어요. 모양·동작 › 탭 구성에서 켜면 다시 쓸 수 있어요.',
+});
+Object.assign(STR.en, {
+  wxPrivacy: 'Comes from Open-Meteo, a free weather service. With no location and no city nothing is sent; only coordinates rounded to about 1 km are. No account needed.',
+  wxTitle: 'Data source & privacy', wxCityTitle: 'Pick a city', wxLocTitle: 'Location service', wxLocCheck: 'Check again', wxLocChecking: 'Checking…',
+  wxLoc_ok: 'This PC\'s location can be read.', wxLoc_denied: 'The Windows location service is off or this app is blocked. Turn it on under Windows Settings › Privacy & security › Location.',
+  wxLoc_unavailable: 'Location is not available on this PC. The city you picked is used.', wxLoc_error: 'Could not read the location. Try again in a moment.', wxLoc_timeout: 'Could not read the location. Try again in a moment.', wxLoc_unknown: 'Not checked yet.',
+  swWarnMany: 'With two or more on, other pills such as the clock or timers may be pushed out (the small notch has four slots). You can choose up to 3.',
+  satMax: 'The small notch can show at most 3 info items. Turn another one off first.',
+  tabOffMsg: 'The “{t}” tab is off. Turn it on under Look & Behavior › Tabs first.',
+  tabOffNote: 'The “{t}” tab is off, so these settings are unavailable. Turn it on under Look & Behavior › Tabs.',
+});
+// 짧게 줄인 안내 문구와, 페이지 이름이 '모양'으로 바뀐 데 맞춘 문구(위의 값을 덮어쓴다)
+Object.assign(STR.ko, {
+  winMin: '최소화', winClose: '닫기',
+  lkStep1d: '폰이 PC와 같은 와이파이에 있어야 해요. 버튼을 누르고 폰 카메라로 QR을 찍으세요.',
+  lkStep2d: '폰에서 Dalu Link를 열고 “QR로 PC와 연결”을 눌러 이 QR을 비춰 주세요.',
+  lkFirewall: 'Windows 방화벽이 물으면 “개인 네트워크”를 허용해 주세요. 학교·회사처럼 기기끼리의 접속을 막는 와이파이에서는 폰 핫스팟이나 위의 중계 서버를 쓰세요.',
+  swWarnOff: '보조 노치가 꺼져 있어요. “모양 > 보조 노치”를 켜야 여기서 고른 항목이 보여요.',
+  tabOffMsg: '“{t}” 탭이 꺼져 있어요. 모양 › 탭 구성에서 먼저 켜 주세요.',
+  tabOffNote: '“{t}” 탭이 꺼져 있어서 이 설정은 쓸 수 없어요. 모양 › 탭 구성에서 켜면 다시 쓸 수 있어요.',
+});
+Object.assign(STR.en, {
+  winMin: 'Minimize', winClose: 'Close',
+  lkStep1d: 'The phone must be on the same Wi-Fi as this PC. Press the button and scan the QR with the phone camera.',
+  lkStep2d: 'Open Dalu Link on the phone, tap “Connect to PC with QR” and scan this QR.',
+  lkFirewall: 'If Windows Firewall asks, allow “Private networks”. On Wi-Fi that blocks devices from reaching each other (school, office), use the phone\'s hotspot or the relay server above.',
+  swWarnOff: 'The small notch is off. Turn it on under “Appearance > Satellite pill” to see these.',
+  tabOffMsg: 'The “{t}” tab is off. Turn it on under Appearance › Tabs first.',
+  tabOffNote: 'The “{t}” tab is off, so these settings are unavailable. Turn it on under Appearance › Tabs.',
+});
+Object.assign(STR.ko, {
+  lkApp: '폰 앱 {v}',
+  lkAppOk: '최신 버전이에요',
+  lkAppNew: '폰 앱 새 버전 {v}',
+  lkAppNewD: '폰에서 Dalu Link를 열고 ‘업데이트’를 누르세요',
+  lkAppOld: '폰 앱이 오래된 버전이에요',
+  lkAppOldD: '아래 “설치 QR 보기”로 새 버전({v})을 한 번 설치해 주세요',
+  lkAppNotify: '폰에 알리기',
+  lkAppNotified: '폰에 알렸어요',
+  lkAppNotifyFail: '알리지 못했어요',
+});
+Object.assign(STR.en, {
+  lkApp: 'Phone app {v}',
+  lkAppOk: 'Up to date',
+  lkAppNew: 'Phone app update {v}',
+  lkAppNewD: 'Open Dalu Link on the phone and tap Update',
+  lkAppOld: 'The phone app is out of date',
+  lkAppOldD: 'Install the new version ({v}) once with “Show install QR” below',
+  lkAppNotify: 'Notify the phone',
+  lkAppNotified: 'Phone notified',
+  lkAppNotifyFail: 'Could not notify',
+});
+Object.assign(STR.ko, { rbDone: '버튼 위치를 기본값으로 되돌렸어요' });
+Object.assign(STR.en, { rbDone: 'Button positions were reset' });
 const DEFAULTS = schemaDefaults();
 const clone = (o) => JSON.parse(JSON.stringify(o));
 let D = clone(DEFAULTS);                 // 지금 값 (기본값 위에 저장된 값을 덮은 것)
@@ -101,9 +172,22 @@ function mergeInto(base, extra) {
 
 function valueOf(item) {
   if (item.special === 'autostart') return AUTOSTART;
+  if (item.special === 'notchStyle') return D.settings.slimNotch ? 'slim' : (D.settings.compact ? 'compact' : 'normal');
   if (item.special === 'animPreset') return matchAnimPreset(D.settings);
   return getPath(D[item.path], item.key, item.def);
 }
+// 설정이 막히는 이유: ① 그 설정이 속한 탭이 꺼져 있다 ② 작은 노치 정보는 최대 3개
+const SAT_KEYS = ['satDday', 'satWeather', 'satPerfCpu', 'satPerfMem', 'satPerfGpu', 'satPerfNet', 'satPhoneBatt', 'satPhoneMissed'];
+const SAT_MAX = 3;
+const satCount = () => SAT_KEYS.filter((k) => D.settings[k]).length;
+const tabIsOff = (tab) => !!tab && parseTabHidden(D.settings.tabHidden).includes(tab);
+const tabName = (tab) => (TAB_META[tab] ? tr(TAB_META[tab][1]) : tab);
+function blockOf(item) {
+  if (item.tab && tabIsOff(item.tab)) return { kind: 'tab', tab: item.tab };
+  if (item.group === 'satwidget' && !valueOf(item) && satCount() >= SAT_MAX) return { kind: 'max' };
+  return null;
+}
+const blockMsg = (b) => (b.kind === 'tab' ? S('tabOffMsg').replace('{t}', tabName(b.tab)) : S('satMax'));
 const isChanged = (item) => item.def !== undefined && valueOf(item) !== item.def;
 const isEnabled = (item) => (item.enabledIf ? !!item.enabledIf(D) : true);
 
@@ -153,13 +237,20 @@ function commit(item, value) {
     }
     return;
   }
+  if (item.special === 'notchStyle') {
+    const slim = value === 'slim', compact = value === 'compact';
+    D.settings.slimNotch = slim; D.settings.compact = compact;
+    queuePatch('settings', 'slimNotch', slim, true); queuePatch('settings', 'compact', compact, true);
+    updateAll();
+    return;
+  }
   if (item.special === 'animPreset') {
     const p = ANIM_PRESETS[value];
     if (!p) return;
     for (const k of Object.keys(p)) { D.settings[k] = p[k]; queuePatch('settings', k, p[k], true); }
   } else {
     setPath(D[item.path], item.key, value);
-    queuePatch(item.path, item.key, value, item.type === 'toggle' || item.type === 'seg' || item.type === 'monmap' || item.type === 'button');
+    queuePatch(item.path, item.key, value, item.type === 'toggle' || item.type === 'seg' || item.type === 'tiles' || item.type === 'select' || item.type === 'monmap' || item.type === 'posmap' || item.type === 'button');
   }
   if (item.special === 'animPreset' || LOCAL_KEYS.test(item.key || '')) applyLocal();      // 설정 창 자신의 언어·애니메이션 값이 아니면 건드리지 않는다(루트 변수를 쓰면 문서 전체가 다시 계산된다)
   updateAll();
@@ -173,6 +264,9 @@ function applyLocal() {
   const s = D.settings;
   LANG = normLang(s.lang);
   document.documentElement.lang = HTML_LANG[LANG];
+  const bMin = document.getElementById('btnMin'), bClose = document.getElementById('btnClose');          // 창 버튼의 읽어 주는 이름(화면 낭독기)도 언어를 따른다
+  if (bMin) bMin.setAttribute('aria-label', S('winMin'));
+  if (bClose) bClose.setAttribute('aria-label', S('winClose'));
   const cw = springCurves(100), cn = springCurves(s.bounce);        // 설정 창 자신은 기본 탄성, 미리보기(.demo)만 노치 설정을 따른다
   const root = document.documentElement;
   root.style.setProperty('--spring', cw.soft);
@@ -194,7 +288,7 @@ const nAnimOff = () => !!D.settings.animOff;
 // ---------------------------------------------------------------- 행 만들기
 function makeRow(item, opts) {
   const row = document.createElement('div');
-  row.className = 'row' + (item.indent ? ' indent' : '');
+  row.className = 'row' + (item.indent ? ' indent' : '') + (item.type === 'text' && item.wide && item.desc ? ' stack' : '');
   row.dataset.id = item.id;
   const text = document.createElement('div');
   text.className = 'row-text';
@@ -209,6 +303,8 @@ function makeRow(item, opts) {
   const ctl = document.createElement('div');
   ctl.className = 'row-ctl';
   row.append(text, ctl);
+  // 막힌 줄(탭이 꺼져 있음 등)을 누르면 조작 대신 이유를 알려 준다(캡처 단계라 스위치 등의 클릭보다 먼저 받는다)
+  row.addEventListener('click', (e) => { if (row._block) { e.preventDefault(); e.stopPropagation(); toast(blockMsg(row._block)); } }, true);
 
   let updateCtl = () => {};
   if (item.type === 'toggle') {
@@ -316,12 +412,127 @@ function makeRow(item, opts) {
         stage.appendChild(b);
       }
     };
+  } else if (item.type === 'posmap') {
+    // 노치 가로 위치: 노치가 뜨는 모니터를 실제 비율로 그리고, 위쪽 가장자리에 다섯 자리를 보여 준다. 자리는 monitors.py 의 notch_center_x 와 같은 식으로 계산한다
+    // (모니터 높이 기준 16:9 폭을 5등분, 펼친 노치가 화면 안에 들어오도록 안쪽으로 당김). 모니터 모양이 바뀌면 자리도 바뀐다.
+    const box = document.createElement('div');
+    box.className = 'posmap';
+    const stage = document.createElement('div');
+    stage.className = 'pm-stage';
+    const cap = document.createElement('div');
+    cap.className = 'pm-cap';
+    box.append(stage, cap);
+    ctl.appendChild(box);
+    let pmSig = '';
+    const half = 290;                                                  // monitors.py EXPANDED_HALF_CSS
+    updateCtl = () => {
+      const ms = MONITORS.monitors || [];
+      const mon = Number(valueOf({ path: 'settings', key: 'monitor' })) || 0;
+      const pri = ms.find((m) => m.primary);
+      const eff = mon > 0 && ms.some((m) => m.number === mon) ? mon : (pri ? pri.number : MONITORS.current);
+      const m = ms.find((x) => x.number === eff) || { number: eff || 1, left: 0, top: 0, width: 1920, height: 1080, dpi: 96 };
+      const cur = Math.max(-2, Math.min(2, Math.round(Number(valueOf(item)) || 0)));
+      const ui = Math.max(0.8, Math.min(2, (Number(valueOf({ path: 'settings', key: 'uiScale' })) || 100) / 100));
+      const sig = JSON.stringify([m.number, m.width, m.height, m.dpi, ui, cur, LANG]);
+      if (sig === pmSig) return;
+      pmSig = sig;
+      const W = 340, PAD = 14, MAXH = 150;
+      const sc = Math.min((W - 2 * PAD) / m.width, (MAXH - 2 * PAD) / m.height);
+      const sw = m.width * sc, sh = m.height * sc;
+      stage.style.height = `${Math.round(sh + 2 * PAD)}px`;
+      stage.textContent = '';
+      const screen = document.createElement('div');
+      screen.className = 'pm-screen';
+      screen.style.cssText = `left:${((W - sw) / 2).toFixed(1)}px;top:${PAD}px;width:${sw.toFixed(1)}px;height:${sh.toFixed(1)}px`;
+      const lab = document.createElement('span');
+      lab.className = 'pm-lab';
+      lab.textContent = `${m.number} · ${m.width}×${m.height}`;
+      screen.appendChild(lab);
+      stage.appendChild(screen);
+      // 자리(물리 픽셀): notch_center_x 와 같은 계산
+      const refW = Math.min(m.width, m.height * 16 / 9);
+      const margin = half * (m.dpi || 96) / 96 * ui;
+      const room = m.width / 2 - margin;
+      const step = room < 0 ? 0 : Math.min(refW / 5, room / 2);           // monitors.py notch_center_x 와 같은 식: 다섯 자리는 같은 간격
+      const centers = [-2, -1, 0, 1, 2].map((p) => m.width / 2 + p * step);
+      const stepPx = step * sc;                                            // 이웃 자리까지의 간격(그림 px)
+      const notchW = Math.max(16, Math.min(44, W * 0.12, stepPx > 0 ? stepPx * 0.8 : 44));      // 접힌 노치 표시의 폭: 그림판 폭의 12 %(약 41px, 최대 44px), 이웃 자리와 붙지 않게 간격의 80 % 까지만
+      const slotLabels = (item.options || []);
+      [-2, -1, 0, 1, 2].forEach((p, i) => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'pm-slot' + (p === cur ? ' on' : '');
+        b.style.cssText = `left:${((W - sw) / 2 + centers[i] * sc - notchW / 2).toFixed(1)}px;top:${PAD}px;width:${notchW.toFixed(1)}px`;
+        const o = slotLabels.find((x) => x.v === p);
+        b.title = o ? tr(o.label) : String(p);
+        b.setAttribute('aria-pressed', p === cur ? 'true' : 'false');
+        b.addEventListener('click', () => commit(item, p));
+        stage.appendChild(b);
+      });
+      const co = slotLabels.find((x) => x.v === cur);
+      cap.textContent = co ? tr(co.label) : '';
+    };
   } else if (item.type === 'text') {
     const inp = document.createElement('input');
-    inp.type = 'text'; inp.className = 'txt' + (item.wide ? ' wide' : ''); inp.maxLength = 160; inp.spellcheck = false; inp.autocomplete = 'off';
+    inp.type = item.secret ? 'password' : 'text'; inp.className = 'txt' + (item.wide ? ' wide' : ''); inp.maxLength = 160; inp.spellcheck = false; inp.autocomplete = 'off';
     inp.addEventListener('input', () => commit(item, inp.value));
     ctl.appendChild(inp);
     updateCtl = () => { inp.placeholder = tr(item.placeholder); if (document.activeElement !== inp) inp.value = String(valueOf(item) || ''); };
+  } else if (item.type === 'tiles') {
+    // 그림으로 고르기: 선택지마다 작은 노치 그림(pv)과 이름. 누르면 바로 적용된다.
+    const box = document.createElement('div');
+    box.className = 'tiles';
+    box.setAttribute('role', 'radiogroup');
+    const tiles = (item.options || []).map((o) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'tile'; b.dataset.v = String(o.v); b.setAttribute('role', 'radio');
+      const pv = document.createElement('span');
+      pv.className = 'pv pv-' + (o.pv || 'black');
+      const lb = document.createElement('span');
+      lb.className = 'tile-lab';
+      b.append(pv, lb);
+      b.addEventListener('click', () => commit(item, o.v));
+      box.appendChild(b);
+      return { o, b, lb };
+    });
+    ctl.appendChild(box);
+    updateCtl = () => {
+      const cur = valueOf(item);
+      for (const { o, b, lb } of tiles) {
+        const t = tr(o.label);
+        if (lb.textContent !== t) lb.textContent = t;
+        const on = o.v === cur;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-checked', on ? 'true' : 'false');
+      }
+    };
+  } else if (item.type === 'select') {
+    // 목록 선택: 항목은 파이썬이 알려 주는 윈도우 알림음 이름(고르면 바로 들려준다)
+    const sel = document.createElement('select');
+    sel.className = 'sel';
+    ctl.appendChild(sel);
+    let loaded = false, listSig = '';
+    const load = async () => {
+      const api = getApi();
+      let names = [];
+      try { if (api && api.list_system_sounds) names = await api.list_system_sounds(); } catch (e) { names = []; }
+      const cur = String(valueOf(item) || '');
+      if (cur && !names.includes(cur)) names = [cur].concat(names);
+      const sig = names.join('|');
+      if (sig !== listSig) {
+        listSig = sig;
+        sel.textContent = '';
+        for (const n of names) { const o = document.createElement('option'); o.value = n; o.textContent = n.replace(/\.wav$/i, ''); sel.appendChild(o); }
+      }
+      loaded = true;
+      sel.value = cur;
+    };
+    sel.addEventListener('change', () => {
+      commit(item, sel.value);
+      const api = getApi();
+      const st = D.settings;
+      if (api && api.chime && st.sound) api.chime('pomo', { type: 'system', volume: st.soundVolume, system: sel.value });
+    });
+    updateCtl = () => { if (!loaded) load(); else if (document.activeElement !== sel) sel.value = String(valueOf(item) || ''); };
   } else if (item.type === 'button') {
     const b = document.createElement('button');
     b.className = 'btn' + (item.danger ? ' danger' : '');
@@ -346,7 +557,10 @@ function makeRow(item, opts) {
     if (pageTag && pageTag.textContent !== opts.pageTitle) pageTag.textContent = opts.pageTitle;
     const rt = S('reset');
     if (reset.title !== rt) reset.title = rt;
-    row.classList.toggle('disabled', !isEnabled(item));
+    const blk = blockOf(item);
+    row._block = blk;
+    row.classList.toggle('blocked', !!blk);
+    row.classList.toggle('disabled', !isEnabled(item) || !!blk);
     row.classList.toggle('changed', isChanged(item) || (item.special === 'animPreset' && valueOf(item) !== 'normal'));
     updateCtl();
   };
@@ -383,7 +597,7 @@ function monitorDesc() {
   const wanted = Number(getPath(D.settings, 'monitor', 0));
   const missing = wanted > 0 && !ms.some((m) => m.number === wanted);
   const note = missing ? ` — ${lx(`${wanted}번 모니터가 연결돼 있지 않아 주 모니터에 띄웁니다.`, `monitor ${wanted} is not connected, using the primary one.`, `显示器 ${wanted} 未连接，将显示在主显示器上。`, `モニター ${wanted} が接続されていないため、メインモニターに表示します。`)}` : '';
-  return tr(L('번호는 윈도우 설정 › 디스플레이 › 식별의 번호와 같아요. ', 'Numbers match Windows Settings › Display › Identify. ')) + (LANG === 'zh' || LANG === 'ja' ? ' ' : '') + list + note;
+  return list + note;
 }
 
 // 세그먼트 하이라이트를 선택된 버튼 위치로 (스프링으로 이동)
@@ -408,8 +622,42 @@ function runAction(item, btn) {
   const done = (msg) => { btn.classList.add('done'); setTimeout(() => btn.classList.remove('done'), 1200); if (msg) toast(msg); };
   switch (item.action) {
     case 'restart': toast(S('restarting')); setTimeout(() => api && api.restart_app && api.restart_app(), 250); break;
+    case 'resetButtons':          // 시스템·전원·휴대폰 탭 버튼의 순서를 기본값으로(노치의 순서도 바로 바뀐다)
+      for (const k of ['phoneButtons', 'powerButtons', 'sysButtons']) { D.settings[k] = ''; queuePatch('settings', k, '', true); }
+      done(S('rbDone'));
+      break;
+    case 'checkUpdate':
+      if (api && api.check_update) api.check_update().then((r) => {
+        if (r && r.status === 'new') {
+          ABOUT = Object.assign({}, ABOUT, { update: { version: r.version, url: r.url, download: r.download || null } }); updateAll(); done();
+          if (r.download) toast(S('updReady')(r.version));              // 앱 안에서 받을 수 있다: 아래 '지금 업데이트'
+          else { toast(S('updNew')(r.version)); if (api.open_update_page) api.open_update_page(); }
+        }
+        else if (r && r.status === 'latest') { ABOUT = Object.assign({}, ABOUT, { update: null }); updateAll(); toast(S('updLatest')); done(); }
+        else toast(S('updFail'));
+      });
+      break;
+    case 'applyUpdate':
+      if (!api || !api.start_update) break;
+      api.start_update().then((r) => {
+        if (r && r.status === 'none') { if (api.open_update_page) api.open_update_page(); toast(S('updNoDirect')); return; }
+        if (!r || (r.status !== 'started' && r.status !== 'busy')) { toast(S('updErrNet')); return; }
+        const label = tr(item.btn), errKey = { hash: 'updErrVerify', size: 'updErrVerify', format: 'updErrVerify', host: 'updErrVerify', run: 'updErrRun', stuck: 'updErrStuck' };
+        btn._armed = true; btn.disabled = true;                          // 진행 중에는 글자를 우리가 바꾼다(updateAll 이 덮어쓰지 않게)
+        const end = () => { btn._armed = false; btn.disabled = false; btn.textContent = label; };
+        const tick = () => api.update_status().then((st) => {
+          if (!document.body.contains(btn)) return;
+          if (st && st.state === 'downloading') { btn.textContent = S('updProgress')(st.percent || 0); setTimeout(tick, 400); }
+          else if (st && st.state === 'installing') { btn.textContent = S('updInstalling'); setTimeout(tick, 1000); }
+          else if (st && st.state === 'error') { end(); toast(S(errKey[st.error] || 'updErrNet')); }
+          else end();
+        }, end);
+        tick();
+      });
+      break;
+    case 'openFileFolder': if (api && api.phone_file_folder) api.phone_file_folder().then(() => done()); break;
     case 'clearCache': if (api) api.clear_lyrics_cache().then((r) => done(S('removed')(r ? r.removed : 0))); break;
-    case 'testChime': if (api && api.chime) { const st = D.settings; api.chime('pomo', { type: st.soundType, volume: st.soundVolume, length: st.soundLength, file: st.soundFile }); done(); } break;
+    case 'testChime': if (api && api.chime) { const st = D.settings; api.chime('pomo', { type: st.soundType, volume: st.soundVolume, file: st.soundFile, system: st.soundSystem }); done(); } break;
     case 'pickSound':
       if (api && api.pick_sound_file) api.pick_sound_file().then((r) => {
         if (r && r.status === 'ok') { setPath(D.settings, 'soundFile', r.path); queuePatch('settings', 'soundFile', r.path, true); updateAll(); done(); }
@@ -518,7 +766,7 @@ const COMPONENTS = {
     const render = () => {
       const a = ABOUT || {};
       const yn = (v) => (v ? S('yes') : S('no'));
-      const rows = [[S('aVersion'), a.version || '-'], [S('aPython'), a.python || '-'], [S('aWebview'), a.webview || '-'],
+      const rows = [[S('aVersion'), a.version || '-'], ...(a.update && a.update.version ? [[S('aUpdate'), S('updAvail')(a.update.version)]] : []), [S('aPython'), a.python || '-'], [S('aWebview'), a.webview || '-'],
         [S('aMedia'), yn(a.smtc)], [S('aViz'), yn(a.viz)], [S('aBuds'), yn(a.buds)], [S('aData'), a.dataDir || '-']];
       box.innerHTML = rows.map(([k, v]) => `<div class="r"><span>${k}</span><span>${String(v).replace(/</g, '&lt;')}</span></div>`).join('');
     };
@@ -693,71 +941,12 @@ COMPONENTS.budsAdvanced = function () {
   return { el: box, update: render };
 };
 
-const MIXER_CACHE = { list: null };       // 화면이 다시 만들어져도(언어 바꿈, 탭 이동) 마지막으로 읽은 믹서 값을 바로 보여 준다
-COMPONENTS.mixer = function () {
-  const box = document.createElement('div');
-  box.className = 'card mixer';
-  const note = document.createElement('div');
-  note.className = 'row-desc mixnote';
-  const rows = new Map();                       // id -> { row, slider, out, mute }
-  let busy = 0;                                 // 사용자가 슬라이더를 만지는 동안은 읽어 온 값으로 덮어쓰지 않는다
-  const label = (a) => (a.id === 'master' ? tr(L('마스터 볼륨', 'Master volume')) : (a.system ? tr(L('시스템 소리', 'System sounds')) : a.name));
-  const make = (a) => {
-    const row = document.createElement('div');
-    row.className = 'mrow' + (a.id === 'master' ? ' master' : '');
-    row.innerHTML = '<span class="mname"></span><div class="slider"><input type="range" min="0" max="100" step="1"><output></output></div><button class="mmute" type="button"></button>';
-    const slider = row.querySelector('input'), out = row.querySelector('output'), mute = row.querySelector('.mmute');
-    const paint = (v) => { slider.style.setProperty('--fill', v + '%'); out.textContent = v + '%'; };
-    let t = null;
-    slider.addEventListener('input', () => {
-      const v = Number(slider.value); paint(v); busy = Date.now() + 1200;
-      clearTimeout(t); t = setTimeout(() => { const api = getApi(); if (api) api.mixer_set(a.id, v / 100, null); }, 40);
-    });
-    mute.addEventListener('click', () => {
-      const m = !mute.classList.contains('on'); mute.classList.toggle('on', m);
-      const api = getApi(); if (api) api.mixer_set(a.id, null, m);
-    });
-    box.appendChild(row);
-    const r = { row, slider, out, mute, paint };
-    rows.set(a.id, r);
-    return r;
-  };
-  const apply = (a) => {
-    const r = rows.get(a.id) || make(a);
-    r.row.querySelector('.mname').textContent = label(a);
-    r.row.classList.toggle('idle', a.id !== 'master' && !a.active);
-    r.mute.classList.toggle('on', !!a.muted);
-    r.mute.innerHTML = `<svg viewBox="0 0 24 24">${a.muted ? '<path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/>' : ICONS.volume}</svg>`;
-    if (Date.now() > busy) { const v = Math.round((a.volume ?? 1) * 100); r.slider.value = v; r.paint(v); }
-  };
-  const refresh = async () => {
-    const api = getApi();
-    if (!api || !api.mixer_get) return;
-    let d; try { d = await api.mixer_get(); } catch (e) { return; }
-    if (!d) return;
-    const list = [];
-    if (d.master) list.push({ id: 'master', volume: d.master.volume, muted: d.master.muted, active: true });
-    for (const a of d.apps || []) list.push(a);
-    MIXER_CACHE.list = list;
-    show(list);
-  };
-  const show = (list) => {
-    const keep = new Set(list.map((a) => a.id));
-    for (const [id, r] of rows) if (!keep.has(id)) { r.row.remove(); rows.delete(id); }
-    list.forEach((a, i) => { apply(a); const r = rows.get(a.id); if (box.children[i + 1] !== r.row) box.insertBefore(r.row, box.children[i + 1] || null); });
-    note.textContent = list.length > 1 ? '' : tr(L('지금 소리를 내는 앱이 없어요.', 'No app is playing sound right now.'));
-  };
-  box.appendChild(note);
-  if (MIXER_CACHE.list) show(MIXER_CACHE.list);
-  refresh();
-  const timer = setInterval(() => { if (!document.body.contains(box)) { clearInterval(timer); return; } refresh(); }, 1500);
-  return { el: box, update: () => { rows.forEach((r, id) => { /* 언어가 바뀌면 이름을 다시 그린다 */ }); refresh(); } };
-};
 const TAB_META = {
   music: ['music', { ko: '음악', en: 'Music' }], pomo: ['target', { ko: '집중 (포모도로)', en: 'Focus (Pomodoro)' }], timer: ['timer', { ko: '타이머·스톱워치', en: 'Timer & stopwatch' }],
   water: ['drop', { ko: '물 마시기', en: 'Water' }], shelf: ['folder', { ko: '파일 선반', en: 'File shelf' }], todo: ['checklist', { ko: '할 일', en: 'To-do' }],
-  clip: ['clipboard', { ko: '클립보드', en: 'Clipboard' }], agenda: ['calendar', { ko: '일정', en: 'Agenda' }], launcher: ['launch', { ko: '바로가기', en: 'Shortcuts' }],
+  clip: ['clipboard', { ko: '클립보드', en: 'Clipboard' }], agenda: ['calendar', { ko: '일정', en: 'Agenda' }], launcher: ['launch', { ko: '바로가기', en: 'Shortcuts' }], sys: ['sliders', { ko: '시스템 (밝기·볼륨·Wi-Fi)', en: 'System (brightness, volume, Wi-Fi)' }], power: ['power', { ko: '전원 (잠금·다시 시작·종료)', en: 'Power (lock, restart, shut down)' }], perf: ['gauge', { ko: '성능 (CPU·메모리·네트워크)', en: 'Performance (CPU, memory, network)' }], weather: ['cloudsun', { ko: '날씨', en: 'Weather' }],
   plugins: ['plug', { ko: '플러그인', en: 'Plugins' }], buds: ['headphones', { ko: '이어버드', en: 'Earbuds' }],
+  phone: ['phone', { ko: '휴대폰 (Dalu Link)', en: 'Phone (Dalu Link)' }],
 };
 const TAB_NOTE = { clip: 'tabNote_clip', agenda: 'tabNote_agenda', buds: 'tabNote_buds', plugins: 'tabNote_plugins' };
 
@@ -775,7 +964,7 @@ COMPONENTS.winApps = function () {
   let apps = WINAPPS_CACHE.apps;
   const render = () => {
     title.textContent = tr(L('알림을 보낸 앱', 'Apps that sent notifications'));
-    desc.textContent = tr(L('켜 둔 앱의 알림만 동그라미로 알려요. 끄면 그 앱의 알림은 알리지 않아요. 알림을 한 번이라도 보낸 앱이 여기에 나타나요.', 'Only apps that are on show the circle. Turn an app off to stop its notifications from showing. An app appears here once it has sent a notification.'));
+    desc.textContent = tr(L('알림을 한 번이라도 보낸 앱이 여기에 나타나요. 끄면 그 앱의 알림은 알리지 않아요.', 'Apps appear here once they have sent a notification. Turn one off to stop its notifications.'));
     list.textContent = '';
     if (!apps.length) {
       const e = document.createElement('div'); e.className = 'row-desc wa-empty'; e.textContent = tr(L('아직 알림을 보낸 앱이 없어요.', 'No app has sent a notification yet.')); list.appendChild(e);
@@ -808,6 +997,91 @@ COMPONENTS.winApps = function () {
   refresh();
   const timer = setInterval(() => { if (!document.body.contains(box)) { clearInterval(timer); return; } refresh(); }, 3000);
   return { el: box, update: () => { box.classList.toggle('disabled', !D.settings.winNotify); render(); } };
+};
+
+// 폰 앱별로 노치에 알림을 띄울지 고른다: 알림을 한 번이라도 보낸 앱이 목록에 나타난다(끄면 그 앱의 알림은 노치에 띄우지 않는다). 설정 'phoneNotifyOff'(패키지 이름 쉼표 목록)
+const PHONEAPPS_CACHE = { apps: [] };
+COMPONENTS.phoneApps = function () {
+  const box = document.createElement('div');
+  box.className = 'winapps';
+  box.innerHTML = '<div class="wa-head"><div class="row-title"></div><div class="row-desc"></div></div><div class="wa-list"></div>';
+  const title = box.querySelector('.row-title'), desc = box.querySelector('.row-desc'), list = box.querySelector('.wa-list');
+  let apps = PHONEAPPS_CACHE.apps;
+  let query = '', loading = false;
+  const bar = document.createElement('div');
+  box.insertBefore(bar, list);
+  const csv = (k) => String(D.settings[k] || '').split(',').map((x) => x.trim()).filter(Boolean);
+  const offList = () => csv('phoneNotifyOff');
+  const picked = () => D.settings.phoneNotifyMode === 'picked';
+  const shown = (pkg) => (picked() ? csv('phoneNotifyOn').includes(pkg) : !offList().includes(pkg));          // 켜짐 = 노치에 띄움
+  const put = (k, v) => { D.settings[k] = v; queuePatch('settings', k, v); };
+  const setShown = (pkgs, on) => {
+    const key = picked() ? 'phoneNotifyOn' : 'phoneNotifyOff';
+    let cur = csv(key);
+    for (const p of pkgs) {
+      const has = cur.includes(p);
+      const want = picked() ? on : !on;          // 고른 앱 목록은 '켠 앱', 끈 앱 목록은 '끈 앱'
+      if (want && !has) cur.push(p); else if (!want && has) cur = cur.filter((x) => x !== p);
+    }
+    put(key, cur.join(','));
+  };
+  const render = () => {
+    title.textContent = tr(L('노치에 띄울 앱', 'Apps shown in the notch'));
+    desc.textContent = tr(L('알림을 보낸 앱이 여기에 나타나요. 끄면 그 앱의 알림은 노치에 띄우지 않아요.', 'Apps show up here after they send a notification. Turn one off to hide its notifications in the notch.'));
+    list.textContent = '';
+    if (!bar.firstChild) {
+      bar.className = 'wa-bar';
+      bar.innerHTML = '<input type="text" class="txt wa-q" spellcheck="false" autocomplete="off"><button type="button" class="btn wa-all"></button><button type="button" class="btn wa-none"></button><button type="button" class="btn wa-load"></button>';
+      const qi = bar.querySelector('.wa-q');
+      qi.addEventListener('input', () => { query = qi.value.trim().toLowerCase(); render(); });
+      const vis = () => apps.filter((a) => !query || a.name.toLowerCase().includes(query) || a.pkg.toLowerCase().includes(query)).map((a) => a.pkg);
+      bar.querySelector('.wa-all').addEventListener('click', () => { setShown(vis(), true); updateAll(); });
+      bar.querySelector('.wa-none').addEventListener('click', () => { setShown(vis(), false); updateAll(); });
+      bar.querySelector('.wa-load').addEventListener('click', async () => {
+        const api = getApi(); if (!api || !api.phone_fetch_apps || loading) return;
+        loading = true; render();
+        let r = null; try { r = await api.phone_fetch_apps(); } catch (e) { r = null; }
+        loading = false;
+        if (r && r.ok) { apps = r.apps || []; PHONEAPPS_CACHE.apps = apps; toast(tr(L('폰의 앱 목록을 불러왔어요', 'Loaded the phone\'s app list')) + (r.added ? ' (+' + r.added + ')' : '')); }
+        else toast(tr(L('폰에서 앱 목록을 받지 못했어요. 폰이 연결돼 있는지 확인해 주세요.', 'Could not get the app list from the phone. Check that it is connected.')));
+        render();
+      });
+    }
+    bar.querySelector('.wa-q').placeholder = tr(L('앱 찾기', 'Find an app'));
+    bar.querySelector('.wa-all').textContent = tr(L('모두 켜기', 'All on'));
+    bar.querySelector('.wa-none').textContent = tr(L('모두 끄기', 'All off'));
+    bar.querySelector('.wa-load').textContent = loading ? tr(L('불러오는 중…', 'Loading…')) : tr(L('폰의 앱 불러오기', 'Load the phone\'s apps'));
+    bar.querySelector('.wa-load').disabled = loading;
+    const shownApps = apps.filter((a) => !query || a.name.toLowerCase().includes(query) || a.pkg.toLowerCase().includes(query));
+    if (!apps.length) {
+      const e = document.createElement('div'); e.className = 'row-desc wa-empty'; e.textContent = tr(L('아직 알림을 보낸 앱이 없어요. ‘폰의 앱 불러오기’를 누르면 폰에 설치된 앱이 모두 나타나요.', 'No app has sent a notification yet. Press “Load the phone\'s apps” to list every app installed on the phone.')); list.appendChild(e);
+    } else if (!shownApps.length) {
+      const e = document.createElement('div'); e.className = 'row-desc wa-empty'; e.textContent = tr(L('찾는 앱이 없어요.', 'No matching app.')); list.appendChild(e);
+    }
+    for (const a of shownApps) {
+      const isOff = !shown(a.pkg);
+      const row = document.createElement('div');
+      row.className = 'wa-row' + (isOff ? ' off' : '');
+      row.dataset.pkg = a.pkg;
+      row.innerHTML = '<span class="wa-name"></span><span class="wa-n"></span><div class="sw" role="switch"></div>';
+      row.querySelector('.wa-name').textContent = a.name;
+      row.querySelector('.wa-n').textContent = a.count > 0 ? lx(`${a.count}건`, `${a.count}×`, `${a.count} 条`, `${a.count} 件`) : '';
+      const sw = row.querySelector('.sw'); sw.setAttribute('aria-checked', String(!isOff));
+      sw.addEventListener('click', () => { setShown([a.pkg], isOff); updateAll(); });
+      list.appendChild(row);
+    }
+  };
+  const refresh = async () => {
+    const api = getApi();
+    if (!api || !api.phone_notify_apps) return;
+    let d; try { d = await api.phone_notify_apps(); } catch (e) { return; }
+    if (!d) return;
+    apps = d.apps || []; PHONEAPPS_CACHE.apps = apps;
+    render();
+  };
+  refresh();
+  const timer = setInterval(() => { if (!document.body.contains(box)) { clearInterval(timer); return; } refresh(); }, 3000);
+  return { el: box, update: () => { box.classList.toggle('disabled', D.settings.phoneNotify === false); render(); } };
 };
 
 COMPONENTS.tabs = function () {
@@ -865,7 +1139,6 @@ COMPONENTS.plugins = function () {
   const box = document.createElement('div');
   box.className = 'plugwrap';
   let timer = null;
-  const live = {};                                   // 플러그인 id -> 상태 문구
   const enabledIds = () => String(D.settings.pluginsEnabled || '').split(',').map((x) => x.trim()).filter(Boolean);
   const setEnabled = (ids, flashId) => { D.settings.pluginsEnabled = ids.join(','); queuePatch('settings', 'pluginsEnabled', D.settings.pluginsEnabled); render(flashId); };
   const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
@@ -886,12 +1159,6 @@ COMPONENTS.plugins = function () {
     for (const a of shown) { const i = mk('span', 'ai'); i.title = tr(a.label); i.innerHTML = uiIconHtml(a.icon, tr(a.label), 15); acts.appendChild(i); }
     if (p.actions.length > shown.length) acts.appendChild(mk('span', 'more', S('pluginMore')(p.actions.length - shown.length)));
     c.appendChild(acts);
-    if (added) {
-      const st = mk('div', 'pstat'); st.appendChild(mk('i', 'dot')); st.appendChild(mk('span', null, ''));
-      const cur = live[p.id];
-      if (cur) { st.classList.add('live'); st.lastChild.textContent = cur; } else st.lastChild.textContent = S('pluginActions')(p.actions.length);
-      c.appendChild(st);
-    }
     const ctl = mk('div', 'pctl');
     if (added) {
       const l = mk('button', 'pmv'); l.type = 'button'; l.innerHTML = chevron(-1); l.title = S('pluginMoveL'); l.disabled = idx === 0;
@@ -906,19 +1173,6 @@ COMPONENTS.plugins = function () {
     ctl.appendChild(b);
     c.appendChild(ctl);
     return c;
-  };
-
-  const refreshLive = async () => {
-    const api = getApi();
-    if (!box.isConnected || !api || !api.plugin_status) return;
-    for (const id of enabledIds()) {
-      let r = null;
-      try { r = await api.plugin_status(id); } catch (e) { r = null; }
-      const txt = r ? tr(r) : '';
-      live[id] = txt;
-      const card = box.querySelector(`.pcard[data-id="${id}"] .pstat`);
-      if (card) { card.classList.toggle('live', !!txt); if (txt) card.lastChild.textContent = txt; }
-    }
   };
 
   const render = (flashId) => {
@@ -978,7 +1232,6 @@ COMPONENTS.plugins = function () {
 
     applyGlass(box);
     if (flashId && !animOff()) { const c = box.querySelector(`.pcard[data-id="${flashId}"]`); if (c) c.classList.add('flash'); }
-    if (added.length) { setTimeout(refreshLive, 60); timer = setInterval(refreshLive, 4000); }
   };
   render();
   return { el: box, update: () => render() };
@@ -1006,18 +1259,262 @@ function openIconPicker(anchor, current, onPick) {
   setTimeout(() => { document.addEventListener('mousedown', away, true); document.addEventListener('keydown', esc, true); }, 0);
 }
 
+
+// 작은 노치에 띄울 항목을 많이 켜면(작은 노치는 최대 네 칸) 시계·타이머가 밀려날 수 있다는 경고
+COMPONENTS.satWarn = function () {
+  const box = document.createElement('div');
+  box.className = 'card satwarn';
+  box.style.cssText = 'padding:10px 14px;font-size:12px;line-height:1.5;border:1px solid rgba(255,180,60,.45);background:rgba(255,180,60,.10)';
+  const render = () => {
+    const s = D.settings;
+    const n = satCount();
+    const off = s.satellite === 'off';
+    box.hidden = !(n > 0 && off) && n < 2;
+    box.textContent = off ? S('swWarnOff') : S('swWarnMany');
+  };
+  render();
+  return { el: box, update: render };
+};
+
+// 설정 줄(.row) 모양 그대로 만드는 도우미: 왼쪽 제목·설명, 오른쪽 조작
+function compRow(title, desc) {
+  const row = document.createElement('div'); row.className = 'row';
+  const text = document.createElement('div'); text.className = 'row-text';
+  const ti = document.createElement('div'); ti.className = 'row-title'; ti.textContent = title || '';
+  const de = document.createElement('div'); de.className = 'row-desc'; de.textContent = desc || '';
+  text.append(ti, de);
+  const ctl = document.createElement('div'); ctl.className = 'row-ctl comp';          // comp: 되돌리기 점이 차지하는 자리를 비워 둬서, 일반 줄의 조작과 오른쪽 끝이 같다
+  row.append(text, ctl);
+  return { row, title: ti, desc: de, ctl, text };
+}
+function compField(extra) { const i = document.createElement('input'); i.className = 'txt' + (extra ? ' ' + extra : ''); i.spellcheck = false; i.autocomplete = 'off'; return i; }
+function compBtn(label) { const b = document.createElement('button'); b.className = 'btn'; b.type = 'button'; b.textContent = label; return b; }
+
+
+// 폰 앱(Dalu Link): 설치 QR(같은 와이파이의 폰이 앱을 받는다), 연결 QR(페어링), 연결된 폰과 해제
+let LINK_POLL = null;
+const PENDING_SAVES = new Set();          // 입력 뒤 0.5초 기다렸다 저장하는 편집기들: 그 사이에 창을 닫으면 대기 중인 것을 바로 저장한다
+window.addEventListener('pagehide', () => { for (const f of Array.from(PENDING_SAVES)) { try { f(); } catch (e) { /* 창이 닫히는 중 */ } } });
+COMPONENTS.linkPair = function () {
+  if (LINK_POLL) { clearInterval(LINK_POLL); LINK_POLL = null; }
+  const box = document.createElement('div');
+  box.className = 'linkpair';
+  const stat = compRow('', '');
+  const s1 = compRow('', ''); const b1 = compBtn(''); s1.ctl.appendChild(b1);
+  const qr1 = document.createElement('div'); qr1.className = 'linkqr'; qr1.hidden = true;
+  const s2 = compRow('', ''); const b2 = compBtn(''); s2.ctl.appendChild(b2);
+  const qr2 = document.createElement('div'); qr2.className = 'linkqr'; qr2.hidden = true;
+  const devs = document.createElement('div');
+  const note = compRow('', ''); note.title.style.display = 'none';
+  const upd = compRow('', ''); const bu = compBtn(''); upd.ctl.appendChild(bu); upd.row.hidden = true;          // 폰 앱 버전(Dalu 에 든 앱 파일보다 낮으면 '폰에 알리기')
+  box.append(stat.row, upd.row, s1.row, qr1, s2.row, qr2, devs, note.row);
+  let st = null, pairExpiry = 0, timer = null, wasConnected = false;
+  const fmt = (k, o) => Object.keys(o || {}).reduce((a, x) => a.replace('{' + x + '}', o[x]), S(k));
+  const showQr = (el, svg, line1, line2) => {
+    el.textContent = '';
+    const w = document.createElement('div'); w.innerHTML = svg || ''; el.appendChild(w);
+    const sv = w.querySelector('svg');          // 크기 속성만 있고 viewBox 가 없는 그림이 와도 상자에 꽉 차게 맞춘다
+    if (sv) { if (!sv.getAttribute('viewBox') && sv.getAttribute('width') && sv.getAttribute('height')) sv.setAttribute('viewBox', '0 0 ' + sv.getAttribute('width') + ' ' + sv.getAttribute('height')); sv.removeAttribute('width'); sv.removeAttribute('height'); }
+    const a = document.createElement('div'); a.className = 'qrnote'; a.textContent = line1 || ''; el.appendChild(a);
+    const b = document.createElement('div'); b.className = 'qrnote dim'; b.textContent = line2 || ''; el.appendChild(b);
+    el.hidden = false;
+    return b;
+  };
+  const labels = () => {
+    s1.title.textContent = S('lkStep1'); s1.desc.textContent = S('lkStep1d'); b1.textContent = S('lkShowInstall');
+    s2.title.textContent = S('lkStep2'); s2.desc.textContent = S('lkStep2d'); b2.textContent = S('lkShowPair');
+    note.desc.textContent = S('lkFirewall');
+    render();
+  };
+  const render = () => {
+    const on = !!D.settings.linkOn;
+    s1.row.hidden = s2.row.hidden = !on; if (!on) { qr1.hidden = qr2.hidden = true; }
+    if (!on) { stat.title.textContent = S('lkOff'); stat.desc.textContent = ''; devs.textContent = ''; upd.row.hidden = true; return; }
+    if (st && st.enabled && !st.listening) { stat.title.textContent = S('lkServerErr'); stat.desc.textContent = ''; return; }
+    if (st && st.connected) {
+      const d = (st.devices || []).find((x) => x.connected) || (st.devices || [])[0];
+      stat.title.textContent = fmt('lkConnected', { n: d ? d.name : '' });
+      stat.desc.textContent = st.battery != null ? fmt('lkBatt', { p: st.battery }) + (st.charging ? ' · ' + S('lkCharging') : '') : '';
+    } else { stat.title.textContent = S('lkNone'); stat.desc.textContent = ''; }
+    // 중계 서버(모바일 데이터용) 상태: 켜 둔 경우에만 한 줄 보여 준다
+    if (D.settings.linkRelayOn) {
+      const rl = st && st.relay;
+      const line = S('lkRelay_' + ((rl && rl.state) || 'off'));          // 중계 서버는 기본 서버만 쓴다(주소를 적을 일이 없다)
+      stat.desc.textContent = (stat.desc.textContent ? stat.desc.textContent + ' · ' : '') + line;
+    }
+    // 폰 앱 버전: 연결된 폰의 앱이 Dalu 에 든 앱 파일보다 낮으면 알린다(새 설치가 필요한 옛 앱은 아래 '설치 QR 보기'로)
+    {
+      const pd = ((st && st.devices) || []).find((x) => x.connected), apk = st && st.apk;
+      if (pd && apk) {
+        const ac = pd.app_code || 0;
+        upd.row.hidden = false;
+        if (ac > 0 && ac >= apk.code) { upd.title.textContent = fmt('lkApp', { v: pd.app_name }); upd.desc.textContent = S('lkAppOk'); bu.hidden = true; }
+        else if (ac > 0) { upd.title.textContent = fmt('lkAppNew', { v: apk.name }); upd.desc.textContent = S('lkAppNewD'); bu.hidden = false; bu.textContent = S('lkAppNotify'); }
+        else { upd.title.textContent = S('lkAppOld'); upd.desc.textContent = fmt('lkAppOldD', { v: apk.name }); bu.hidden = true; }
+      } else upd.row.hidden = true;
+    }
+    devs.textContent = '';
+    for (const d of (st && st.devices) || []) {
+      const r = compRow(d.name, '');
+      const f = compBtn(S('lkForget')); f.addEventListener('click', async () => { const api = getApi(); if (api && api.link_forget) { await api.link_forget(d.id); refresh(); } });
+      r.ctl.appendChild(f); devs.appendChild(r.row);
+    }
+  };
+  const refresh = async () => {
+    const api = getApi(); if (!api || !api.link_status) return;
+    try { st = await api.link_status(); } catch (e) { return; }
+    if (st && st.connected && !wasConnected && !qr2.hidden) { qr2.hidden = true; pairExpiry = 0; showToastSafe(S('lkJustConnected')); }
+    wasConnected = !!(st && st.connected);
+    render();
+  };
+  const showToastSafe = (m) => { try { if (typeof toast === 'function') toast(m); } catch (e) { /* 알림 문구는 없어도 된다 */ } };
+  bu.addEventListener('click', async () => {
+    const api = getApi(); if (!api || !api.link_app_notify) return;
+    let r = null; try { r = await api.link_app_notify(); } catch (e) { r = null; }
+    showToastSafe(S(r && r.ok ? 'lkAppNotified' : 'lkAppNotifyFail'));
+  });
+  b1.addEventListener('click', async () => {
+    const api = getApi(); if (!api || !api.link_apk_start) return;
+    let r = null; try { r = await api.link_apk_start(); } catch (e) { r = null; }
+    if (!r || !r.ok) { qr1.hidden = false; qr1.textContent = S(r && r.error === 'noapk' ? 'lkNoApk' : (r && r.error === 'nonet' ? 'lkNoNet' : 'lkErr')); return; }
+    showQr(qr1, r.svg, r.url, fmt('lkOpenFor', { m: 15 }) + ' · ' + r.mb + ' MB');
+  });
+  b2.addEventListener('click', async () => {
+    const api = getApi(); if (!api || !api.link_pair_start) return;
+    let r = null; try { r = await api.link_pair_start(); } catch (e) { r = null; }
+    if (!r || !r.ok) { qr2.hidden = false; qr2.textContent = S('lkServerErr'); return; }
+    pairExpiry = r.expires * 1000;
+    const line = showQr(qr2, r.svg, (r.hosts || []).join(', ') + ':' + r.port + (r.relay ? ' · ' + S('lkRelayQr') : ''), '');
+    clearInterval(timer);
+    timer = setInterval(() => {
+      if (!document.body.contains(box)) { clearInterval(timer); return; }          // 이 설정 화면을 떠났다
+      const left = Math.round((pairExpiry - Date.now()) / 1000);
+      if (qr2.hidden || left <= 0) { clearInterval(timer); if (!qr2.hidden) { line.textContent = S('lkExpired'); } return; }
+      line.textContent = fmt('lkExpires', { s: left });
+    }, 1000);
+  });
+  labels();
+  refresh();
+  LINK_POLL = setInterval(() => { if (!document.body.contains(box)) { clearInterval(LINK_POLL); LINK_POLL = null; return; } refresh(); }, 2000);          // 다른 설정 탭으로 가면 멈춘다
+  return { el: box, update: labels };
+};
+
+const WX_LOC = { status: '' };      // 윈도우 위치 서비스 상태(이 창을 여는 동안 기억)
+// 날씨 도시 고르기: '검색'을 눌렀을 때만 입력한 이름을 서버(Open-Meteo 지오코딩)로 보낸다. 도시를 고르면 그때부터 날씨가 켜진다(따로 켜는 스위치는 없다)
+COMPONENTS.weatherCity = function () {
+  const box = document.createElement('div');
+  box.className = 'wxcity';
+  const info = compRow(S('wxTitle'), S('wxPrivacy'));
+  const loc = compRow(S('wxLocTitle'), '');
+  const locBtn = compBtn(S('wxLocCheck')); loc.ctl.appendChild(locBtn);
+  const city = compRow(S('wxCityTitle'), '');
+  city.row.classList.add('stack');          // 제목·설명 한 줄, 그 아래에 입력칸(늘어남) + 검색·지우기
+  const inp = compField('wide'); inp.maxLength = 60;
+  const go = compBtn(''); const clr = compBtn('');
+  city.ctl.append(inp, go, clr);
+  const res = document.createElement('div');
+  box.append(info.row, loc.row, city.row, res);
+  const locUi = () => { loc.row.hidden = !D.settings.weatherLocate; loc.title.textContent = S('wxLocTitle'); locBtn.textContent = S('wxLocCheck'); loc.desc.textContent = S('wxLoc_' + (WX_LOC.status || 'unknown')) || ''; };
+  const locCheck = async (force) => {
+    const api = getApi(); if (!api || !api.location_check) return;
+    loc.desc.textContent = S('wxLocChecking');
+    let r = null; try { r = await api.location_check(!!force); } catch (e) { r = null; }
+    WX_LOC.status = (r && r.status) || 'error'; locUi();
+  };
+  locBtn.addEventListener('click', () => locCheck(true));
+  const put = (k, v) => commit({ path: 'settings', key: k, type: 'toggle' }, v);
+  const setCity = (c) => { put('weatherCity', c ? (c.label || c.name) : ''); put('weatherLat', c ? c.lat : 0); put('weatherLon', c ? c.lon : 0); };
+  const labels = () => {
+    info.title.textContent = S('wxTitle'); info.desc.textContent = S('wxPrivacy'); city.title.textContent = S('wxCityTitle');
+    inp.placeholder = S('wxSearchPh'); go.textContent = S('wxSearchBtn'); clr.textContent = S('wxClearCity');
+    city.desc.textContent = D.settings.weatherCity ? S('wxCityNow').replace('{c}', D.settings.weatherCity) : S('wxCityNone');
+    clr.disabled = !D.settings.weatherCity;
+    locUi();
+  };
+  const msgRow = (text) => { const r = compRow(text, ''); r.title.style.fontWeight = '400'; r.title.style.color = 'var(--dim)'; res.appendChild(r.row); };
+  const search = async () => {
+    const q = inp.value.trim(); if (q.length < 2) return;
+    const api = getApi(); if (!api || !api.weather_search) return;
+    res.textContent = ''; msgRow(S('wxSearching'));
+    let r = null; try { r = await api.weather_search(q); } catch (e) { r = null; }
+    res.textContent = '';
+    if (!r || r.status !== 'ok') { msgRow(S('wxSearchFail')); return; }
+    if (!r.items.length) { msgRow(S('wxNoResult')); return; }
+    for (const c of r.items) {
+      const row = compRow(c.label || c.name, '');
+      const pick = compBtn(S('wxPick')); pick.addEventListener('click', () => { setCity(c); res.textContent = ''; inp.value = ''; labels(); });
+      row.ctl.appendChild(pick); res.appendChild(row.row);
+    }
+  };
+  go.addEventListener('click', search);
+  inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); search(); } });
+  clr.addEventListener('click', () => { setCity(null); labels(); });
+  labels();
+  if (!WX_LOC.status && D.settings.weatherLocate) locCheck(false);          // 위치를 읽는 것만(서버로는 아무것도 보내지 않음) 한 번 확인해서 상태를 보여 준다
+  return { el: box, update: labels };
+};
+
+// 직접 만드는 D-day 목록(이름 + 날짜 + 완료/삭제): 일정 탭 맨 위에 보인다. 완료한 것은 숨겨지고 여기서 되돌릴 수 있다
+COMPONENTS.ddayEditor = function () {
+  const box = document.createElement('div');
+  box.className = 'ddedit';
+  let items = [];
+  let saveTimer = null;
+  const flushDd = async () => { clearTimeout(saveTimer); PENDING_SAVES.delete(flushDd); const api = getApi(); if (!api || !api.dday_set) return; await api.dday_set(items.filter((x) => x.name && x.date)); };
+  const save = () => {
+    clearTimeout(saveTimer);
+    PENDING_SAVES.add(flushDd);
+    saveTimer = setTimeout(flushDd, 500);
+  };
+  const render = () => {
+    box.textContent = '';
+    const head = compRow(S('ddTitle'), S('ddHint'));
+    const add = compBtn('+ ' + S('ddAdd'));
+    add.addEventListener('click', () => {
+      if (items.length >= 40) { toast(S('ddFull')); return; }
+      const t = new Date(), p = (x) => String(x).padStart(2, '0');
+      items.push({ id: 'd' + Date.now().toString(36), name: '', date: `${t.getFullYear()}-${p(t.getMonth() + 1)}-${p(t.getDate())}`, done: false, cal: false }); render();
+    });
+    head.ctl.appendChild(add); box.appendChild(head.row);
+    items.forEach((it, idx) => {
+      const row = compRow('', '');
+      row.text.textContent = '';
+      const nm = compField('wide'); nm.maxLength = 30; nm.placeholder = S('ddName'); nm.value = it.name || '';
+      if (it.done) { nm.style.opacity = '0.5'; nm.style.textDecoration = 'line-through'; }
+      nm.addEventListener('input', () => { it.name = nm.value; save(); });
+      row.text.appendChild(nm);
+      const dt = compField(); dt.type = 'date'; dt.value = it.date || '';
+      dt.addEventListener('change', () => { it.date = dt.value; save(); });
+      const done = compBtn(it.done ? S('ddRestore') : S('ddDone2')); done.classList.add('dd-done');          // 폭을 맞춰서 줄마다 날짜 칸 위치가 같게
+      done.addEventListener('click', () => { it.done = !it.done; save(); render(); });
+      const rm = compBtn(''); rm.innerHTML = uiIconSvg('close', 14); rm.title = S('ddDel');
+      rm.addEventListener('click', () => { items.splice(idx, 1); save(); render(); });
+      row.ctl.append(dt, done, rm);
+      box.appendChild(row.row);
+    });
+    if (!items.length) { const e = compRow(S('ddEmpty'), ''); e.title.style.cssText = 'font-weight:400;color:var(--dim)'; box.appendChild(e.row); }
+  };
+  const api = getApi();
+  if (api && api.dday_get) api.dday_get().then((d) => { items = ((d && d.items) || []).map((x) => Object.assign({}, x)); render(); }, () => render());
+  render();
+  return { el: box, update: () => {} };
+};
+
 COMPONENTS.launcher = function () {
   const box = document.createElement('div');
   box.className = 'card lnedit';
   let items = LAUNCHER.map((x) => Object.assign({}, x));
   let saveTimer = null;
+  const flushLn = async () => {
+    clearTimeout(saveTimer); PENDING_SAVES.delete(flushLn);
+    const api = getApi(); if (!api) return;
+    const r = await api.launcher_set(items);
+    if (r && r.status === 'ok') { LAUNCHER = r.items; }
+  };
   const save = () => {
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(async () => {
-      const api = getApi(); if (!api) return;
-      const r = await api.launcher_set(items);
-      if (r && r.status === 'ok') { LAUNCHER = r.items; }
-    }, 500);
+    PENDING_SAVES.add(flushLn);
+    saveTimer = setTimeout(flushLn, 500);
   };
   const render = () => {
     box.textContent = '';
@@ -1070,7 +1567,21 @@ function buildSections(sections, token) {
   for (const sec of sections) {
     const block = document.createElement('div');
     if (sec.title) { const h = document.createElement('div'); h.className = 'sec-title'; h.textContent = tr(sec.title); block.appendChild(h); }
-    const compOnly = sec.items.filter((it) => it.type !== 'hidden').every((it) => it.type === 'custom');   // 컴포넌트만 있는 구역은 바깥 카드 없이 컴포넌트가 자기 모양을 정한다
+    if (sec.tab || sec.offNote) {
+      const note = document.createElement('div');
+      note.className = 'secnote';
+      const upd = () => {
+        let msg = '';
+        if (sec.tab && tabIsOff(sec.tab)) msg = S('tabOffNote').replace('{t}', tabName(sec.tab));
+        else if (sec.offNote && sec.offNote.when(D)) msg = tr(sec.offNote.text);
+        if (note.textContent !== msg) note.textContent = msg;
+        note.hidden = !msg;
+        note.classList.toggle('tabnote', !!(sec.tab && tabIsOff(sec.tab)));
+      };
+      block.appendChild(note);
+      renderedRows.push({ item: { id: 'note' }, el: note, update: upd });
+    }
+    const compOnly = sec.items.filter((it) => it.type !== 'hidden').every((it) => it.type === 'custom' && !it.card);          // card: true 이면 컴포넌트도 다른 설정처럼 카드 안에 둔다   // 컴포넌트만 있는 구역은 바깥 카드 없이 컴포넌트가 자기 모양을 정한다
     const card = compOnly ? null : document.createElement('div');
     if (card) card.className = 'card';
     for (const it of sec.items) {
@@ -1081,7 +1592,10 @@ function buildSections(sections, token) {
         const el = c.el;
         if (it.component === 'animPreview') { const cd = document.createElement('div'); cd.className = 'card'; cd.appendChild(el); holder.appendChild(cd); }
         else holder.appendChild(el);
-        renderedRows.push({ item: it, el, update: c.update });
+        if (it.tab) {
+          el.addEventListener('click', (e) => { if (el.classList.contains('tab-blocked')) { e.preventDefault(); e.stopPropagation(); toast(S('tabOffMsg').replace('{t}', tabName(it.tab))); } }, true);
+          renderedRows.push({ item: it, el, update: () => { c.update(); el.classList.toggle('tab-blocked', tabIsOff(it.tab)); } });
+        } else renderedRows.push({ item: it, el, update: c.update });
       } else {
         const r = makeRow(it);
         card.appendChild(r.el);
@@ -1156,7 +1670,7 @@ function buildNav() {
   for (const p of SETTINGS_PAGES) {
     const b = document.createElement('button');
     b.dataset.page = p.id;
-    b.innerHTML = `${icon(p.icon)}<span>${tr(p.title)}</span>`;
+    b.innerHTML = `${icon(p.icon)}<span>${tr(p.nav || p.title)}</span>`;          // 사이드바에는 짧은 이름(nav)이 있으면 그것을 쓴다(한 줄에 들어가게)
     b.addEventListener('click', () => { $('search').value = ''; searchQuery = ''; gotoPage(p.id); });
     nav.appendChild(b);
   }
@@ -1271,7 +1785,11 @@ function toast(msg) {
 }
 
 function bindChrome() {
-  $('btnClose').addEventListener('click', () => { flushPatch(); const api = getApi(); if (api) api.settings_close(); });
+  $('btnClose').addEventListener('click', async () => {
+    flushPatch();
+    try { await Promise.all(Array.from(PENDING_SAVES).map((f) => f())); } catch (e) { /* 저장 실패는 닫기를 막지 않는다 */ }          // 대기 중인 D-day·바로가기 편집을 저장한 뒤 닫는다
+    const api = getApi(); if (api) api.settings_close();
+  });
   $('btnMin').addEventListener('click', () => { const api = getApi(); if (api) api.settings_minimize(); });
   $('search').addEventListener('input', (e) => onSearch(e.target.value));
   document.addEventListener('keydown', (e) => {

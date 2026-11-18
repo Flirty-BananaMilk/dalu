@@ -18,7 +18,7 @@
   <i class="rimbody" aria-hidden="true"></i><i class="rimear rimear-l" aria-hidden="true"><b></b></i><i class="rimear rimear-r" aria-hidden="true"><b></b></i><i class="rimring" aria-hidden="true"></i>
 
   <!-- 공유 앨범 아트: mini / peek / music / lyrics 상태 사이를 위치·크기가 변하며 이동한다 -->
-  <div class="art-box art-main" id="artMain"><div class="art-in" id="artIn"><img class="js-art" alt=""><span class="note">♪</span></div></div>
+  <div class="art-box art-main" id="artMain"><div class="art-in" id="artIn"><img class="js-art" alt=""><span class="note">♪</span><span class="art-pause"><svg class="ap-pause" viewBox="0 0 24 24"><path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/></svg><svg class="ap-play" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></span></div></div>
 
   <!-- IDLE: 시계 (포모도로가 돌고 있으면 타이머) -->
   <div class="ly l-idle">
@@ -44,6 +44,8 @@
         <div class="dot-item" id="mDot3"><div class="dot-fill" id="mDotFill3"></div></div>
       </div>
     </div>
+    <div class="mini-call" id="miniCall"><span class="mc-ico" id="mcIco"><svg viewBox="0 0 24 24"></svg></span><span class="mc-who" id="mcWho"></span><span class="mc-time" id="mcTime"></span><span class="mc-rec" id="mcRec" hidden></span></div>
+    <div class="mini-xfer" id="miniXfer"><span class="mx-ico" id="mxIco"><svg viewBox="0 0 24 24"></svg></span><span class="mx-name" id="mxName"></span><span class="mx-meta" id="mxMeta"></span><span class="mx-bar"><i id="mxBar"></i></span></div>
     <div class="mini-clock" id="miniClock"></div>
     <div class="mini-bg" id="miniBg"><div class="mini-bg-line" id="miniBgLine"></div></div>
     <div class="tchip"><div class="tring"></div><svg class="sw-ico" viewBox="0 0 24 24"><path d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42A8.962 8.962 0 0 0 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9 9-4.03 9-9c0-2.12-.74-4.07-1.97-5.61zM12 20c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg><span class="js-ttime">25:00</span></div>
@@ -153,6 +155,7 @@
       <div class="hint" id="shHint">-</div>
       <div class="shcards" id="shCards"></div>
     </div>
+    <div class="a szone-phone" id="shPhone"><svg viewBox="0 0 24 24"></svg><span data-i18n="shPhoneDrop">-</span></div>
     <div class="a shtools">
       <button class="pill icon" id="shAdd" data-i18n-title="shAdd"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button>
       <button class="pill hidden" id="shClear" data-i18n="shClear">-</button>
@@ -172,6 +175,7 @@
       <div class="row">
         <input type="text" id="todoText" maxlength="60" data-i18n-ph="todoPlaceholder">
         <input type="time" id="todoTime" hidden>
+        <button type="button" class="timebtn datebtn" id="todoDateBtn" data-i18n-title="todoDateHint"><svg viewBox="0 0 24 24"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg><span id="todoDateTxt"></span></button>
         <button type="button" class="timebtn" id="todoTimeBtn" data-i18n-title="todoTimeHint"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm4.2 13.4-.8 1.3L11 13.9V7h1.5v6.1l3.7 2.3z"/></svg><span id="todoTimeTxt"></span></button>
       </div>
       <div class="row" style="justify-content:flex-end">
@@ -179,7 +183,10 @@
         <button class="pill primary" id="todoSave" data-i18n="add">-</button>
       </div>
       <div class="tpick" id="todoPick">
-        <div class="row mid">
+        <div class="row mid" id="tpDateRow">
+          <div class="stepper" data-t="d"><button type="button" data-d="-1"><svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg></button><span class="val dval" id="tpD">-</span><button type="button" data-d="1"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button></div>
+        </div>
+        <div class="row mid" id="tpTimeRow">
           <div class="stepper" data-t="h"><button type="button" data-d="-1"><svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg></button><span class="val" id="tpH">18</span><button type="button" data-d="1"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button></div>
           <span class="colon">:</span>
           <div class="stepper" data-t="m"><button type="button" data-d="-1"><svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg></button><span class="val" id="tpM">00</span><button type="button" data-d="1"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button></div>
@@ -245,6 +252,98 @@
     <div class="a tempty" id="launcherEmpty"></div>
   </div>
 
+  <!-- 시스템: 배터리·밝기·볼륨·Wi-Fi·블루투스·마이크 -->
+  <div class="ly l-sys" id="sysLayer">
+    <div class="a thead"><span class="ttl" data-i18n="sysTitle">-</span>
+      <span class="sysbat" id="sysBat"><svg viewBox="0 0 24 24" id="sysBatIcon"></svg><span id="sysBatTxt"></span></span></div>
+    <div class="a sysbody">
+      <div class="sysrow" id="sysRowVol"><button class="sysic" id="sysMute"><svg viewBox="0 0 24 24" id="sysMuteIcon"></svg></button><input type="range" id="sysVol" min="0" max="100" step="1"><output id="sysVolOut">0%</output></div>
+      <div class="sysrow" id="sysRowBri"><span class="sysic" id="sysBriIcon"><svg viewBox="0 0 24 24"></svg></span><input type="range" id="sysBri" min="0" max="100" step="1"><output id="sysBriOut">0%</output></div>
+      <div class="systog" id="sysTog">
+        <button class="ltile" id="sysWifi"><span class="ic"><svg viewBox="0 0 24 24"></svg></span><span class="nm"></span></button>
+        <button class="ltile" id="sysBt"><span class="ic"><svg viewBox="0 0 24 24"></svg></span><span class="nm"></span></button>
+        <button class="ltile" id="sysMic"><span class="ic"><svg viewBox="0 0 24 24"></svg></span><span class="nm"></span></button>
+      </div>
+    </div>
+    <div class="a thead spk-head" id="spkHead" hidden><button class="sysic" id="spkBack" data-i18n-title="spkBack"><svg viewBox="0 0 24 24"></svg></button><span class="ttl" id="spkTitle"></span><span class="spk-hint" id="spkHint"></span></div>
+    <div class="a spk-list" id="spkList" hidden></div>
+    <span class="a spk-more" id="spkMore" hidden><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span>
+    <div class="a spk-pw" id="spkPw" hidden><span class="spk-pwname" id="spkPwName"></span><input type="password" id="spkPwIn" autocomplete="off" spellcheck="false" data-i18n-ph="spkPassword"><button class="pill" id="spkPwGo" data-i18n="spkConnect">-</button></div>
+  </div>
+
+  <!-- 전원: 잠금·화면 끄기·절전·로그아웃·다시 시작·종료 (위험한 것은 한 번 더 눌러야 실행) -->
+  <div class="ly l-power" id="powerLayer">
+    <div class="a thead"><span class="ttl" data-i18n="powerTitle">-</span></div>
+    <div class="a pwrgrid" id="pwrGrid">
+      <button class="ltile danger" data-k="shutdown"><span class="ic"><svg viewBox="0 0 24 24"></svg></span><span class="nm" data-i18n="pwrShutdown">-</span></button>
+      <button class="ltile danger" data-k="restart"><span class="ic"><svg viewBox="0 0 24 24"></svg></span><span class="nm" data-i18n="pwrRestart">-</span></button>
+      <button class="ltile" data-k="sleep"><span class="ic"><svg viewBox="0 0 24 24"></svg></span><span class="nm" data-i18n="pwrSleep">-</span></button>
+      <button class="ltile" data-k="screenoff"><span class="ic"><svg viewBox="0 0 24 24"></svg></span><span class="nm" data-i18n="pwrScreenOff">-</span></button>
+      <button class="ltile" data-k="lock"><span class="ic"><svg viewBox="0 0 24 24"></svg></span><span class="nm" data-i18n="pwrLock">-</span></button>
+      <button class="ltile danger" data-k="signout"><span class="ic"><svg viewBox="0 0 24 24"></svg></span><span class="nm" data-i18n="pwrSignOut">-</span></button>
+    </div>
+  </div>
+
+  <!-- 휴대폰: 폰 앱(Dalu Link)으로 폰의 배터리·부재중과 벨소리 모드·방해 금지·폰 찾기 -->
+  <div class="ly l-phone" id="phoneLayer">
+    <div class="a thead"><button class="sysic ph-back" id="phBack" type="button" hidden><svg viewBox="0 0 24 24"></svg></button><span class="ttl" data-i18n="phoneTitle">-</span><span class="spk-hint ph-info" id="phInfo"><span class="ph-batt" id="phBatt"></span><span class="ph-miss" id="phMiss"></span></span></div>
+    <div class="a pwrgrid phgrid" id="phGrid"></div>
+    <div class="a ph-xfer" id="phXfer" hidden></div>
+    <div class="a ph-drop" id="phDrop"><svg viewBox="0 0 24 24"></svg><span data-i18n="shPhoneDrop">-</span></div>
+    <div class="a ph-sms" id="phSms" hidden>
+      <div class="sm-list" id="smList"></div>
+      <div class="sm-chat" id="smChat" hidden>
+        <div class="sm-to" id="smToRow"><input type="text" id="smTo" maxlength="40" autocomplete="off" spellcheck="false" data-i18n-ph="smTo"><div class="sm-sug" id="smSug"></div></div>
+        <div class="sm-msgs" id="smMsgs"></div>
+        <div class="sm-send"><input type="text" id="smIn" maxlength="1000" autocomplete="off" spellcheck="false" data-i18n-ph="smPh"><button class="pill" id="smGo" type="button" data-i18n="phoneSend">-</button></div>
+      </div>
+      <div class="pm-msg" id="smMsg" hidden></div>
+    </div>
+    <div class="a ph-media" id="phMedia" hidden>
+      <div class="pm-bar"><span class="pm-seg" id="pmSeg"><button type="button" data-k="all" data-i18n="pmAll">-</button><button type="button" data-k="image" data-i18n="pmImage">-</button><button type="button" data-k="video" data-i18n="pmVideo">-</button></span><button class="pill pm-copy" id="pmCopy" type="button" disabled>-</button><button class="pill pm-get" id="pmGet" type="button" disabled>-</button></div>
+      <div class="pm-grid" id="pmGrid"></div>
+      <div class="pm-msg" id="pmMsg" hidden></div>
+    </div>
+    <div class="a ph-card" id="phCard" hidden>
+      <div class="ph-card-head"><span class="ph-card-app" id="phCardApp"></span><span class="ph-card-who" id="phCardWho"></span><button class="sysic ph-card-x ph-card-mute" id="phCardMute" type="button" data-i18n-title="phoneMuteApp" hidden><svg viewBox="0 0 24 24"></svg></button><button class="sysic ph-card-x" id="phCardX" type="button" data-i18n-title="phoneDismiss"><svg viewBox="0 0 24 24"></svg></button></div>
+      <div class="ph-card-body" id="phCardBody"></div>
+      <div class="ph-card-reply"><input type="text" id="phCardIn" maxlength="500" autocomplete="off" spellcheck="false" data-i18n-ph="phoneReplyPh"><button class="pill" id="phCardSend" type="button" data-i18n="phoneSend">-</button></div>
+    </div>
+    <div class="a ph-call" id="phCall" hidden>
+      <div class="ph-call-head"><span class="ph-call-st" id="phCallSt"></span><span class="ph-call-who" id="phCallWho"></span></div>
+      <div class="ph-call-num" id="phCallNum"></div>
+      <div class="ph-call-btns"><button class="pill ph-ans" id="phAns" type="button" data-i18n="phoneAnswer">-</button><button class="pill ph-ctl" id="phSpk" type="button" data-i18n="phoneSpeaker" hidden>-</button><button class="pill ph-ctl" id="phMute" type="button" data-i18n="phoneMute" hidden>-</button><button class="pill ph-ctl" id="phRec" type="button" data-i18n="phoneRecord" hidden>-</button><button class="pill ph-end" id="phEnd" type="button">-</button></div>
+    </div>
+    <div class="a ph-dial" id="phDial" hidden>
+      <div class="ph-dial-row"><input type="text" id="phDialIn" maxlength="40" autocomplete="off" spellcheck="false" inputmode="tel" data-i18n-ph="phoneDialPh"><button class="pill" id="phDialGo" type="button" data-i18n="phoneDialGo">-</button><button class="sysic ph-card-x" id="phDialX" type="button" data-i18n-title="phoneDismiss"><svg viewBox="0 0 24 24"></svg></button></div>
+      <div class="ph-dial-list" id="phDialList"></div>
+    </div>
+    <div class="a ph-msg" id="phMsg" hidden><span id="phMsgTx"></span><button class="pill" id="phOpen" type="button" data-i18n="phoneConnect">-</button></div>
+  </div>
+
+  <!-- 성능: CPU · 메모리 · 네트워크 -->
+  <div class="ly l-perf" id="perfLayer">
+    <div class="a thead"><span class="ttl" data-i18n="perfTitle">-</span></div>
+    <div class="a pfgrid" id="pfGrid">
+      <div class="pfcol" data-m="cpu"><span class="pfl" data-i18n="perfCpu">-</span><b class="pfv" id="pfCpu">--</b><svg class="pfspark" id="pfCpuGraph" viewBox="0 0 100 24" preserveAspectRatio="none"><path class="a" d=""/><path class="l" d=""/></svg><span class="pfs" id="pfCpuSub">&nbsp;</span></div>
+      <div class="pfcol" data-m="gpu" id="pfGpuCol" hidden><span class="pfl" data-i18n="perfGpu">-</span><b class="pfv" id="pfGpu">--</b><svg class="pfspark" id="pfGpuGraph" viewBox="0 0 100 24" preserveAspectRatio="none"><path class="a" d=""/><path class="l" d=""/></svg><span class="pfs" id="pfGpuSub">&nbsp;</span></div>
+      <div class="pfcol" data-m="mem"><span class="pfl" data-i18n="perfMem">-</span><b class="pfv" id="pfMem">--</b><svg class="pfspark" id="pfMemGraph" viewBox="0 0 100 24" preserveAspectRatio="none"><path class="a" d=""/><path class="l" d=""/></svg><span class="pfs" id="pfMemSub">&nbsp;</span></div>
+      <div class="pfcol" data-m="net"><span class="pfl" data-i18n="perfNet">-</span><b class="pfv" id="pfNet">--</b><svg class="pfspark" id="pfNetGraph" viewBox="0 0 100 24" preserveAspectRatio="none"><path class="a" d=""/><path class="l" d=""/></svg><span class="pfs" id="pfNetSub">&nbsp;</span></div>
+    </div>
+  </div>
+
+  <!-- 날씨: 현재 날씨 + 3일 예보 (설정에서 켜고 도시를 고른 경우만) -->
+  <div class="ly l-weather" id="weatherLayer">
+    <div class="a thead"><span class="ttl" id="wxCity">-</span><span class="cnt" id="wxUpd"></span>
+      <button class="pill icon" id="wxRefresh" data-i18n-title="wxRefresh"><svg viewBox="0 0 24 24" id="wxRefreshIc"></svg></button></div>
+    <div class="a wxbody" id="wxBody">
+      <div class="wxnow"><span class="wxic"><svg viewBox="0 0 24 24" id="wxIc"></svg></span><b class="wxtemp" id="wxTemp">--</b>
+        <div class="wxmeta"><span id="wxCond"></span><span id="wxFeels"></span><span id="wxHiLo"></span><span id="wxAir"></span></div></div>
+      <div class="wxdays" id="wxDays"></div>
+    </div>
+    <div class="a wxmsg" id="wxMsg" hidden><span id="wxMsgText"></span><button class="pill" id="wxMsgBtn"></button></div>
+  </div>
+
   <!-- 플러그인 -->
   <div class="ly l-plugins" id="pluginsLayer">
     <div class="glow glow-plug"></div>
@@ -271,12 +370,14 @@
       <button class="mbtn" data-mode="3"><svg class="mic" viewBox="0 0 24 24"></svg><span data-i18n="modeAdaptive">-</span></button>
       <button class="mbtn" data-mode="1"><svg class="mic" viewBox="0 0 24 24"></svg><span data-i18n="modeAnc">-</span></button>
     </div>
+    <div class="a btlist" id="btList"></div>
   </div>
 
   <!-- 공통: 페이지 도트 / 핀 / 알림 -->
   <div class="dots" id="pageDots">
-    <i data-p="music"></i><i data-p="pomo"></i><i data-p="timer"></i><i data-p="water"></i><i data-p="shelf"></i><i data-p="todo"></i><i data-p="clip" class="hidden"></i><i data-p="agenda" class="hidden"></i><i data-p="launcher"></i><i data-p="plugins"></i><i data-p="buds" class="hidden"></i>
+    <i data-p="music"></i><i data-p="pomo"></i><i data-p="timer"></i><i data-p="water"></i><i data-p="shelf"></i><i data-p="todo"></i><i data-p="clip" class="hidden"></i><i data-p="agenda" class="hidden"></i><i data-p="launcher"></i><i data-p="sys"></i><i data-p="power"></i><i data-p="perf"></i><i data-p="weather"></i><i data-p="phone"></i><i data-p="plugins"></i><i data-p="buds" class="hidden"></i>
   </div>
+  <button class="upd-chip" id="updChip" type="button"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg><span id="updChipText"></span></button>
   <button class="btn-pin" id="btnPin" data-i18n-title="pin">
     <svg viewBox="0 0 24 24"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
   </button>
@@ -332,8 +433,8 @@
   </filter>
 </defs></svg>
 <div id="slimHit"></div>
-<div class="goo" id="gooLayer"><i class="goo-body"></i><i class="goo-neck" id="gooNeck"><img class="gimg" alt=""></i><i class="goo-bulge"><img class="gimg" alt=""></i><i class="goo-drop" id="gooDrop"><img class="gimg" alt=""></i></div>
-<div class="goo goo-l" id="gooLayerL"><i class="goo-body"></i><i class="goo-neck" id="gooNeckL"><img class="gimg" alt=""></i><i class="goo-bulge"><img class="gimg" alt=""></i><i class="goo-drop" id="gooDropL"><img class="gimg" alt=""></i></div>
+<div class="goo" id="gooLayer"><div class="goo-in"><i class="goo-body"></i><i class="goo-neck" id="gooNeck"><img class="gimg" alt=""></i><i class="goo-bulge"><img class="gimg" alt=""></i><i class="goo-drop" id="gooDrop"><img class="gimg" alt=""></i></div></div>
+<div class="goo goo-l" id="gooLayerL"><div class="goo-in"><i class="goo-body"></i><i class="goo-neck" id="gooNeckL"><img class="gimg" alt=""></i><i class="goo-bulge"><img class="gimg" alt=""></i><i class="goo-drop" id="gooDropL"><img class="gimg" alt=""></i></div></div>
 <div class="sat-wrap" id="satWrap"><div class="sat" id="sat"><img class="sat-desk" id="satDesk" alt=""><i class="sat-skin"></i><div class="sat-in"><div class="sat-ring tring"></div><svg class="sw-ico" viewBox="0 0 24 24"><path d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42A8.962 8.962 0 0 0 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9 9-4.03 9-9c0-2.12-.74-4.07-1.97-5.61zM12 20c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg><span class="sat-t"></span></div></div></div>
 <div class="sat-wrap sat-wrap-l" id="satWrapL"><div class="sat" id="satL"><img class="sat-desk" id="satDeskL" alt=""><i class="sat-skin"></i><div class="sat-in"><div class="sat-ring tring"></div><svg class="sw-ico" viewBox="0 0 24 24"><path d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42A8.962 8.962 0 0 0 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9 9-4.03 9-9c0-2.12-.74-4.07-1.97-5.61zM12 20c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg><span class="sat-t"></span></div></div></div>
 
@@ -344,6 +445,8 @@
 <script src="app.js"></script>
 <script src="features.js"></script>
 <script src="features2.js"></script>
+<script src="phone.js"></script>
+<script src="reorder.js"></script>
 <script src="notchglass.js"></script>
 <script src="satellite.js"></script>
 <script src="prefs.js"></script>

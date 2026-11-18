@@ -131,6 +131,9 @@ html[data-anim="off"] .orb { animation: none; }
 /* ---------- 항목 행 ---------- */
 .row { position: relative; display: flex; align-items: center; gap: 18px; min-height: 58px; padding: 11px 18px; transition: opacity 0.25s, background 0.2s; }
 .row + .row { border-top: 1px solid rgba(255, 255, 255, 0.07); }
+.row.stack { flex-wrap: wrap; row-gap: 8px; }          /* 설명이 긴 주소 입력 줄: 제목·설명이 한 줄 전체를 쓰고 입력칸은 그 아래 */
+.row.stack > .row-text, .row.stack > .row-ctl { flex: 1 0 100%; }
+.row.stack > .row-ctl .txt { flex: 1 1 auto; width: auto; min-width: 0; }
 .row:hover { background: rgba(255, 255, 255, 0.025); }
 .row.indent { padding-left: 42px; }
 .row.indent::before { content: ""; position: absolute; left: 24px; top: 0; bottom: 50%; width: 10px; border-left: 1.5px solid rgba(255,255,255,.16); border-bottom: 1.5px solid rgba(255,255,255,.16); border-bottom-left-radius: 8px; }
@@ -139,8 +142,9 @@ html[data-anim="off"] .orb { animation: none; }
 @keyframes hit { 0%, 55% { background: rgba(91, 140, 255, 0.25); } 100% { background: transparent; } }
 .row-text { flex: 1; min-width: 0; }
 .row-title { font-size: 14.5px; font-weight: 500; line-height: 1.3; }
-.row-desc { margin-top: 3px; font-size: 12.5px; line-height: 1.4; color: var(--dim); }
+.row-desc { margin-top: 3px; font-size: 12.5px; line-height: 1.4; color: var(--dim); white-space: pre-line; }
 .row-ctl { flex: none; display: flex; align-items: center; gap: 10px; }
+.row-ctl.comp:not(:empty)::after { content: ''; flex: none; width: 22px; }          /* 일반 줄은 조작 오른쪽에 되돌리기 점(22px) 자리가 있다: 직접 만든 줄도 같은 자리를 비워 모든 조작의 오른쪽 끝을 맞춘다 */
 .row-page { display: block; margin-top: 4px; font-size: 11.5px; color: var(--accent); }
 .reset-dot {
   width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; opacity: 0; transform: scale(0.6); pointer-events: none;
@@ -202,6 +206,26 @@ html[data-anim="off"] .orb { animation: none; }
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 0 0 1.5px rgba(255, 255, 255, 0.5), 0 4px 14px rgba(91, 140, 255, 0.4); }
 .mm-notch { position: absolute; top: 0; left: 50%; width: 26%; max-width: 40px; height: 5px; margin-left: -13%; border-radius: 0 0 4px 4px; background: #05060a; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25); }
 .mm-pri { position: absolute; right: 6px; bottom: 6px; width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.7; }
+.tiles { display: flex; gap: 8px; }
+.tile { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 7px 7px 6px; border-radius: 12px; font-size: 12px; color: var(--dim); background: rgba(255, 255, 255, 0.06); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1); cursor: pointer; transition: background 0.18s, color 0.18s, box-shadow 0.18s, transform 0.12s; }
+.tile:hover { background: rgba(255, 255, 255, 0.12); color: var(--text); }
+.tile:active { transform: scale(0.97); }
+.tile.on { color: #fff; font-weight: 600; background: rgba(120, 130, 255, 0.2); box-shadow: inset 0 0 0 1.5px rgba(140, 150, 255, 0.9), 0 0 12px rgba(120, 130, 255, 0.3); }
+.pv { position: relative; display: block; width: 74px; height: 40px; border-radius: 8px; overflow: hidden; background: linear-gradient(135deg, #2b3a67, #6a4c93 60%, #c0577d); }
+.pv::before { content: ""; position: absolute; top: 0; left: 50%; width: 30px; height: 13px; margin-left: -15px; border-radius: 0 0 8px 8px; background: #000; }
+.pv-glass::before { background: linear-gradient(180deg, #000 0, #0b0d14 100%); box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.6), inset 0 -6px 9px -6px rgba(150, 175, 255, 0.9); }
+.pv-tint::before { background: linear-gradient(180deg, #000 0, #000 22%, #e0644c 150%); }
+.pv-sat-timer::after, .pv-sat-full::after { content: ""; position: absolute; top: 2px; left: calc(50% + 19px); width: 13px; height: 8px; border-radius: 5px; background: #000; }
+.pv-sat-full::after { box-shadow: -51px 0 0 #000; }
+.posmap { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.pm-stage { position: relative; width: 340px; height: 96px; border-radius: 14px; background: rgba(255, 255, 255, 0.06); box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3); }
+.pm-screen { position: absolute; border-radius: 6px; background: rgba(255, 255, 255, 0.09); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16); display: flex; align-items: flex-end; justify-content: center; }
+.pm-lab { font-size: 10.5px; color: var(--dim); padding-bottom: 5px; font-variant-numeric: tabular-nums; pointer-events: none; }
+.pm-slot { position: absolute; height: 11px; border-radius: 0 0 6px 6px; background: rgba(255, 255, 255, 0.2); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28); cursor: pointer; transition: background 0.18s, transform 0.18s, box-shadow 0.18s; }
+.pm-slot::before { content: ""; position: absolute; left: -9px; right: -9px; top: -2px; bottom: -22px; }          /* 누르기 쉽게 보이지 않는 영역을 넓힌다 */
+.pm-slot:hover { background: rgba(255, 255, 255, 0.4); }
+.pm-slot.on { background: linear-gradient(135deg, rgba(91, 140, 255, 0.95), rgba(154, 107, 255, 0.9)); box-shadow: 0 0 10px rgba(120, 130, 255, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.45); transform: scaleY(1.2); transform-origin: top; }
+.pm-cap { font-size: 12.5px; color: var(--dim); min-height: 16px; }
 .mm-auto { padding: 6px 13px; border-radius: 10px; font-size: 12.5px; color: var(--dim); background: rgba(255, 255, 255, 0.08); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1); transition: background 0.2s, color 0.2s; }
 .mm-auto:hover { color: var(--text); background: rgba(255, 255, 255, 0.14); }
 .mm-auto.on { color: #fff; font-weight: 600; background: linear-gradient(135deg, rgba(91, 140, 255, 0.7), rgba(154, 107, 255, 0.65)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35); }
@@ -294,6 +318,9 @@ html[data-anim="off"] .orb { animation: none; }
 .toast.show { opacity: 1; transform: translate(-50%, 0) scale(1); }
 
 /* ---------- 텍스트 입력 / 볼륨 믹서 ---------- */
+.sel { width: 260px; height: 36px; padding: 0 10px; border-radius: 12px; outline: none; font-size: 13.5px; color: inherit; font-family: inherit; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.14); cursor: pointer; }
+.sel option { background: #1c1d26; color: #eee; }
+.sel:focus { border-color: rgba(255, 255, 255, 0.4); }
 .txt { width: 260px; height: 36px; padding: 0 12px; border-radius: 12px; outline: none; font-size: 13.5px; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--stroke); box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3); -webkit-user-select: text; user-select: text; transition: border-color 0.2s, box-shadow 0.2s; }
 .txt:focus { border-color: rgba(120, 160, 255, 0.6); box-shadow: 0 0 0 3px rgba(91, 140, 255, 0.22); }
 .txt::placeholder { color: var(--faint); }
@@ -437,10 +464,6 @@ html[data-anim="off"] .phero .hero-orb { animation: none; }
 .pacts .ai { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.85); }
 .pacts .ai .uic { width: 15px; height: 15px; }
 .pacts .more { font-size: 11.5px; color: var(--faint); margin-left: 4px; }
-.pstat { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--dim); min-height: 18px; }
-.pstat .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); flex: none; transition: background 0.3s, box-shadow 0.3s; }
-.pstat.live .dot { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
-.pstat span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pctl { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
 .pctl .grow { flex: 1; }
 .pmv { width: 32px; height: 32px; border-radius: 11px; display: grid; place-items: center; font-size: 15px; color: var(--text); background: rgba(255, 255, 255, 0.09); transition: transform calc(0.3s / var(--rate)) var(--spring), background 0.2s; }
@@ -473,6 +496,9 @@ html:lang(ja) { --ui: 'Segoe UI Variable Text', 'Segoe UI', 'Yu Gothic UI', 'Mei
 .winapps { padding: 4px 0 2px; transition: opacity 0.25s; }
 .winapps.disabled { opacity: 0.38; pointer-events: none; }
 .winapps .wa-head { padding: 12px 18px 8px; border-top: 1px solid rgba(255, 255, 255, 0.07); }
+.winapps .wa-bar { display: flex; align-items: center; gap: 8px; padding: 0 18px 10px; }
+.winapps .wa-q { flex: 1; min-width: 0; width: auto; height: 32px; font-size: 13px; }
+.winapps .wa-bar .btn { flex: none; height: 32px; padding: 0 12px; font-size: 12.5px; }
 .wa-list { max-height: 260px; overflow-y: auto; scrollbar-width: thin; }
 .wa-row { display: flex; align-items: center; gap: 12px; padding: 8px 18px; transition: opacity 0.2s; }
 .wa-row + .wa-row { border-top: 1px solid rgba(255, 255, 255, 0.05); }
@@ -512,3 +538,68 @@ html:lang(ja) { --ui: 'Segoe UI Variable Text', 'Segoe UI', 'Yu Gothic UI', 'Mei
 .badv-row + .badv-row { border-top: 1px solid rgba(255, 255, 255, 0.07); }
 .badv-t { flex: 1; min-width: 0; }
 .badv .sw.disabled { opacity: 0.4; pointer-events: none; }
+.txt[type="date"] { width: 150px; color-scheme: dark; }
+.ddedit .row-text .txt { width: 100%; min-width: 0; }
+.wxcity > .row:first-child { border-top: 1px solid rgba(255, 255, 255, 0.07); }
+.wxcity .txt.wide { width: 218px; }
+.wxcity .row.stack > .row-ctl { display: flex; align-items: center; gap: 10px; }
+.wxcity .row.stack .txt.wide { flex: 1 1 auto; width: auto; min-width: 0; }          /* 버튼 열을 다른 줄과 맞추느라 줄어든 만큼(32px) 입력칸을 줄여 왼쪽 글 칸 폭은 그대로 */
+.ddedit .dd-done { min-width: 92px; }
+.ddedit .row-ctl { flex-wrap: nowrap; }
+.row.blocked { pointer-events: auto; cursor: not-allowed; }
+.row.blocked .row-ctl, .row.blocked .row-text { pointer-events: none; }
+.tab-blocked { opacity: 0.38; cursor: not-allowed; }
+.tab-blocked * { pointer-events: none; }
+.secnote { margin: -4px 4px 8px; padding: 9px 14px; border-radius: 12px; font-size: 12.5px; line-height: 1.5; color: rgba(255, 220, 160, 0.95); background: rgba(255, 180, 60, 0.10); border: 1px solid rgba(255, 180, 60, 0.35); }
+.secnote[hidden] { display: none; }
+.secnote.tabnote { color: rgba(255, 225, 190, 0.95); }
+.pv-ns-normal::before { width: 38px; height: 13px; margin-left: -19px; }
+.pv-ns-compact::before { width: 26px; height: 9px; margin-left: -13px; border-radius: 0 0 6px 6px; }
+.pv-ns-slim::before { width: 26px; height: 3px; margin-left: -13px; border-radius: 0 0 3px 3px; }
+/* 그림으로 고르는 설정(tiles)의 미리보기들: CSS 와 작은 SVG 로 그린 그림 (점·글자 없이 모양만) */
+.pv-gl-off::before, .pv-gl-ctrl::before, .pv-gl-full::before { width: 40px; height: 16px; margin-left: -20px; }
+.pv-gl-ctrl::before { background: linear-gradient(180deg, #000 0, #0c0e16 100%); box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.75), inset 0 -6px 8px -6px rgba(255, 255, 255, 0.55); }
+.pv-gl-full::before { background: linear-gradient(180deg, rgba(0, 0, 0, 0.5) 0, rgba(10, 12, 20, 0.18) 100%); box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.7), inset 0 0 0 1px rgba(255, 255, 255, 0.25), inset 0 -6px 9px -6px rgba(170, 190, 255, 0.9); backdrop-filter: blur(2px); }
+.pv-ag-list, .pv-ag-week, .pv-ag-month, .pv-pg-slide, .pv-pg-fade { background-color: #1b1d26; background-repeat: no-repeat; background-size: 100% 100%; }
+.pv-ag-list::before, .pv-ag-week::before, .pv-ag-month::before, .pv-pg-slide::before, .pv-pg-fade::before { display: none; }
+.pv-ag-list { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 74 40%22 preserveAspectRatio=%22none%22%3E%3Crect x=%228%22 y=%226%22 width=%228%22 height=%224%22 rx=%222%22 fill=%22%23ffb340%22/%3E%3Crect x=%2220%22 y=%226%22 width=%2246%22 height=%224%22 rx=%222%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Crect x=%228%22 y=%2214%22 width=%228%22 height=%224%22 rx=%222%22 fill=%22%23ffb340%22/%3E%3Crect x=%2220%22 y=%2214%22 width=%2246%22 height=%224%22 rx=%222%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Crect x=%228%22 y=%2222%22 width=%228%22 height=%224%22 rx=%222%22 fill=%22%23ffb340%22/%3E%3Crect x=%2220%22 y=%2222%22 width=%2246%22 height=%224%22 rx=%222%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Crect x=%228%22 y=%2230%22 width=%228%22 height=%224%22 rx=%222%22 fill=%22%23ffb340%22/%3E%3Crect x=%2220%22 y=%2230%22 width=%2246%22 height=%224%22 rx=%222%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3C/svg%3E"); }
+.pv-ag-week { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 74 40%22 preserveAspectRatio=%22none%22%3E%3Crect x=%225.0%22 y=%227%22 width=%227%22 height=%225%22 rx=%222.5%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Crect x=%2214.5%22 y=%227%22 width=%227%22 height=%225%22 rx=%222.5%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Crect x=%2224.0%22 y=%227%22 width=%227%22 height=%225%22 rx=%222.5%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Crect x=%2233.5%22 y=%227%22 width=%227%22 height=%225%22 rx=%222.5%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Crect x=%2243.0%22 y=%227%22 width=%227%22 height=%225%22 rx=%222.5%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Crect x=%2252.5%22 y=%227%22 width=%227%22 height=%225%22 rx=%222.5%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Crect x=%2262.0%22 y=%227%22 width=%227%22 height=%225%22 rx=%222.5%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Crect x=%225.0%22 y=%2215%22 width=%227%22 height=%2219%22 rx=%222.5%22 fill=%22%23fff%22 fill-opacity=%220.2%22/%3E%3Crect x=%2214.5%22 y=%2215%22 width=%227%22 height=%2219%22 rx=%222.5%22 fill=%22%23fff%22 fill-opacity=%220.2%22/%3E%3Crect x=%2224.0%22 y=%2215%22 width=%227%22 height=%2219%22 rx=%222.5%22 fill=%22%23fff%22 fill-opacity=%220.3%22/%3E%3Crect x=%2233.5%22 y=%2215%22 width=%227%22 height=%2219%22 rx=%222.5%22 fill=%22%23fff%22 fill-opacity=%220.2%22/%3E%3Crect x=%2243.0%22 y=%2215%22 width=%227%22 height=%2219%22 rx=%222.5%22 fill=%22%23fff%22 fill-opacity=%220.2%22/%3E%3Crect x=%2252.5%22 y=%2215%22 width=%227%22 height=%2219%22 rx=%222.5%22 fill=%22%23fff%22 fill-opacity=%220.2%22/%3E%3Crect x=%2262.0%22 y=%2215%22 width=%227%22 height=%2219%22 rx=%222.5%22 fill=%22%23fff%22 fill-opacity=%220.2%22/%3E%3Crect x=%2224%22 y=%2218%22 width=%227%22 height=%224%22 rx=%222%22 fill=%22%23ffb340%22/%3E%3C/svg%3E"); }
+.pv-ag-month { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 74 40%22 preserveAspectRatio=%22none%22%3E%3Ccircle cx=%2210%22 cy=%229.0%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Ccircle cx=%2219%22 cy=%229.0%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Ccircle cx=%2228%22 cy=%229.0%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Ccircle cx=%2237%22 cy=%229.0%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Ccircle cx=%2246%22 cy=%229.0%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Ccircle cx=%2255%22 cy=%229.0%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Ccircle cx=%2264%22 cy=%229.0%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Ccircle cx=%2210%22 cy=%2216.5%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Ccircle cx=%2219%22 cy=%2216.5%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Ccircle cx=%2228%22 cy=%2216.5%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Ccircle cx=%2237%22 cy=%2216.5%22 r=%222.6%22 fill=%22%23ffb340%22/%3E%3Ccircle cx=%2246%22 cy=%2216.5%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Ccircle cx=%2255%22 cy=%2216.5%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Ccircle cx=%2264%22 cy=%2216.5%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Ccircle cx=%2210%22 cy=%2224.0%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Ccircle cx=%2219%22 cy=%2224.0%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Ccircle cx=%2228%22 cy=%2224.0%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Ccircle cx=%2237%22 cy=%2224.0%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Ccircle cx=%2246%22 cy=%2224.0%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Ccircle cx=%2255%22 cy=%2224.0%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Ccircle cx=%2264%22 cy=%2224.0%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Ccircle cx=%2210%22 cy=%2231.5%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Ccircle cx=%2219%22 cy=%2231.5%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Ccircle cx=%2228%22 cy=%2231.5%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Ccircle cx=%2237%22 cy=%2231.5%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Ccircle cx=%2246%22 cy=%2231.5%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Ccircle cx=%2255%22 cy=%2231.5%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3Ccircle cx=%2264%22 cy=%2231.5%22 r=%221.6%22 fill=%22%23fff%22 fill-opacity=%22.8%22/%3E%3C/svg%3E"); }
+.pv-pg-slide { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 74 40%22 preserveAspectRatio=%22none%22%3E%3Crect x=%227%22 y=%229%22 width=%2230%22 height=%2222%22 rx=%224%22 fill=%22%23fff%22 fill-opacity=%22.16%22/%3E%3Crect x=%2215%22 y=%229%22 width=%2230%22 height=%2222%22 rx=%224%22 fill=%22%23fff%22 fill-opacity=%22.34%22/%3E%3Crect x=%2225%22 y=%229%22 width=%2230%22 height=%2222%22 rx=%224%22 fill=%22%23fff%22 fill-opacity=%22.92%22/%3E%3Cpath d=%22M60 15l5 5-5 5%22 fill=%22none%22 stroke=%22%23fff%22 stroke-opacity=%22.85%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M64.5 15l5 5-5 5%22 fill=%22none%22 stroke=%22%23fff%22 stroke-opacity=%22.4%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E"); }
+.pv-pg-fade { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 74 40%22 preserveAspectRatio=%22none%22%3E%3Cdefs%3E%3ClinearGradient id=%22a%22 x1=%220%22 x2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%23fff%22 stop-opacity=%22.95%22/%3E%3Cstop offset=%221%22 stop-color=%22%23fff%22 stop-opacity=%22.12%22/%3E%3C/linearGradient%3E%3ClinearGradient id=%22b%22 x1=%220%22 x2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%23fff%22 stop-opacity=%22.12%22/%3E%3Cstop offset=%221%22 stop-color=%22%23fff%22 stop-opacity=%22.95%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x=%228%22 y=%229%22 width=%2238%22 height=%2222%22 rx=%224%22 fill=%22url(%23a)%22/%3E%3Crect x=%2228%22 y=%229%22 width=%2238%22 height=%2222%22 rx=%224%22 fill=%22url(%23b)%22/%3E%3C/svg%3E"); }
+.txt[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.85); cursor: pointer; }
+.txt:disabled { opacity: 0.5; }
+
+/* 폰 앱 연결(QR) */
+.linkqr { padding: 6px 18px 14px; display: grid; justify-items: start; gap: 4px; }
+.linkqr[hidden] { display: none; }
+.linkqr svg { width: 210px; height: 210px; background: #fff; border-radius: 10px; padding: 6px; box-sizing: border-box; }
+.linkqr .qrnote { font-size: 12px; color: var(--text); word-break: break-all; }
+.linkqr .qrnote.dim { color: var(--dim); }
+
+/* ---------- 좁은 창에서도 깔끔하게 (창을 가장 작게 줄여도 글자가 한 글자씩 꺾이거나 겹치지 않게) ---------- */
+/* 제목 칸은 최소 폭을 지키고, 자리가 모자라면 조작부(스위치·슬라이더·선택 칸)가 아래 줄로 내려간다 */
+.row { flex-wrap: wrap; row-gap: 8px; }
+.row-text { flex: 1 1 190px; min-width: 190px; }
+.row-ctl { margin-left: auto; }
+.row.stack > .row-text { flex: 1 0 100%; }
+.nav button span { white-space: nowrap; }
+.btn, .winbtns button, .beq-grid button, .phero .hero-count, .tmv button { white-space: nowrap; }
+.phero .hero-text { min-width: 0; }
+.phero { flex-wrap: wrap; }
+.beq-grid button { padding-left: 4px; padding-right: 4px; }
+/* 중국어·일본어는 띄어쓰기가 없어서 ‘단어 단위로 끊지 않기’(keep-all)를 쓰면 줄이 안 꺾이고 옆으로 넘친다: 글자 사이에서 꺾는다 */
+html:lang(zh) .phero p, html:lang(zh) .pdesc, html:lang(zh) .pcreate p, html:lang(zh) .pempty, html:lang(zh) .row-desc,
+html:lang(ja) .phero p, html:lang(ja) .pdesc, html:lang(ja) .pcreate p, html:lang(ja) .pempty, html:lang(ja) .row-desc { word-break: normal; overflow-wrap: anywhere; line-break: strict; }
+@media (max-width: 900px) {
+  .slider { width: 210px; gap: 10px; }
+  .slider output { min-width: 54px; }
+  .preview { flex-direction: column; align-items: center; gap: 14px; }
+  .preview .stage { width: 100%; max-width: 420px; flex: none; }
+  .preview .side-note { flex: none; width: 100%; max-width: 420px; padding-top: 0; }
+  .beq-grid { grid-template-columns: repeat(3, 1fr); }
+  .beq-grid button { font-size: 13px; }
+}
+
+/* 설명 문장의 마지막 줄에 한두 글자만 남는 것(「ん。」 같은 외톨이 글자)을 막는다: 지원하는 엔진은 줄을 고르게 나눈다(없으면 그대로) */
+.row-desc, .phero p, .pdesc, .pcreate p, .pempty, .qrnote { text-wrap: pretty; }

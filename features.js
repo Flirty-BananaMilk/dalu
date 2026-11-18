@@ -66,6 +66,33 @@ function pomoComplete() {
   });
 }
 
+// 새 버전 칩(펼친 노치 왼쪽 위): 앱이 알려 주는 값 {version, download, state, percent, error} 로 글자와 모양을 맞춘다. 값이 없으면 숨긴다.
+function updateUpd(u) {
+  const chip = $('updChip');
+  if (!chip) return;
+  const show = !!(u && u.version);
+  chip.classList.toggle('has', show);
+  if (!show) return;
+  const busy = u.state === 'downloading' || u.state === 'installing';
+  chip.classList.toggle('busy', busy);
+  chip.classList.toggle('err', u.state === 'error');
+  const txt = u.state === 'downloading' ? t('updChipProgress', { p: u.percent || 0 })
+    : u.state === 'installing' ? t('updChipInstalling')
+    : u.state === 'error' ? t('updChipFail')
+    : t('updChip', { v: u.version });
+  setText($('updChipText'), txt);
+  chip.title = t('updChipTip', { v: u.version });
+}
+
+function onUpdChip() {
+  const api = getApi();
+  if (!api || !api.start_update) return;
+  api.start_update().then((r) => {
+    if (r && r.status === 'none' && api.open_update_page) api.open_update_page();      // 앱 안에서 받을 파일 정보가 없으면 다운로드 페이지를 연다
+    if (typeof pollNow === 'function') pollNow();
+  });
+}
+
 // 집중 시간(포모도로의 '집중'이 진행 중)에는 윈도우 방해 금지를 켜 둔다. 멈추거나 끝나거나 휴식이 되면 되돌린다.
 let dndWanted = false;
 function syncFocusDnd() {
@@ -164,11 +191,13 @@ function renderWater(grow) {
 
   $('wAmount').innerHTML = `${fmtL(total)}<small>/ ${fmtL(w.goalMl)} L</small>`;
   $('wBarFill').style.width = `${pct}%`;
-  setText($('wStatus'), total >= w.goalMl ? t('waterGoalReached') : `${pct}% · ${t('waterLeft', { l: fmtL(w.goalMl - total) + ' L' })}`);
+  setText($('wStatus'), !w.enabled ? t('waterOffNote') : (total >= w.goalMl ? t('waterGoalReached') : `${pct}% · ${t('waterLeft', { l: fmtL(w.goalMl - total) + ' L' })}`));
+  $('wStatus').classList.toggle('off', !w.enabled);
   setText($('wAddText'), `${w.bottleMl} ml`);
 
   // 시간대별 막대 차트
   const hours = [];
+  waterFixHours(w);
   for (let h = w.startHour; h <= w.endHour; h++) hours.push(h);
   const key = hours.join(',');
   const chart = $('wChart');
@@ -235,9 +264,15 @@ function waterAdjust(what, dir) {
   renderWater();
 }
 
+function waterFixHours(w) {          // 설정 슬라이더는 시작·끝을 서로 제한하지 않는다: 시작이 끝과 같거나 뒤이면 차트가 비고 알림이 영영 멈춘다
+  if (!w) return;
+  if (w.startHour >= w.endHour) { w.startHour = Math.min(w.startHour, 22); w.endHour = Math.min(23, Math.max(w.endHour, w.startHour + 1)); }          // 끝은 최대 23(설정 슬라이더와 같다)
+}
+
 function waterRemindCheck() {
   const w = store.water;
-  if (!w.enabled) return;
+  waterFixHours(w);
+  if (!w.enabled || !tabVisibleId('water')) return;          // 물 탭이 꺼져 있으면 알리지 않는다
   const now = new Date();
   const h = now.getHours();
   if (h < w.startHour || h >= w.endHour) return;
@@ -265,7 +300,7 @@ function todoRollover() {
   if (todoDay === todayKey()) return;
   if (todoDay !== '') {   // 날이 바뀜: 끝낸 일은 치우고, 남은 일은 오늘 알림이 다시 울리도록 초기화
     store.todos = store.todos.filter((x) => !x.done);
-    for (const x of store.todos) { x.notified = false; x.leadDone = false; x.snoozeUntil = 0; }
+    for (const x of store.todos) if (!x.dueDate) { x.notified = false; x.leadDone = false; x.snoozeUntil = 0; }      // 날짜가 없는 옛 할 일만(날짜가 있는 할 일은 그 날짜에 한 번만 알린다)
     saveStoreSoon();
     if (typeof renderTodos === 'function') renderTodos();
   }
@@ -282,13 +317,40 @@ function todoDueTs(todo) {
   if (!todo.due) return 0;
   const [h, m] = todo.due.split(':').map(Number);
   const d = new Date();
+  if (todo.dueDate) {      // 날짜가 있는 할 일(1.0.3~): 그 날짜의 시각. 날짜가 없는 옛 할 일은 '오늘의 시각'으로 센다
+    const [Y, M, D] = todo.dueDate.split('-').map(Number);
+    d.setFullYear(Y, M - 1, D);
+  }
   d.setHours(h, m, 0, 0);
   return d.getTime();
 }
 
+// 날짜 고르기(추가 화면): 오늘로부터 며칠 뒤인지(0 = 오늘). 지난 날짜는 고를 수 없다.
+const TD_MAX = 365;
+let tdOff = 0;
+const TODO_LOC = { ko: 'ko-KR', en: 'en-US', zh: 'zh-CN', ja: 'ja-JP' };
+function todoDateStr(off) {
+  const d = new Date();
+  d.setDate(d.getDate() + off);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+function fmtDueDate(str) {      // '2026-11-07' -> 오늘 / 내일 / 11/7 금
+  if (str === todoDateStr(0)) return t('todoToday');
+  if (str === todoDateStr(1)) return t('agendaTomorrow');
+  const [Y, M, D] = str.split('-').map(Number);
+  return `${M}/${D} ${new Date(Y, M - 1, D).toLocaleDateString(TODO_LOC[lang] || 'en-US', { weekday: 'short' })}`;
+}
+function todoDateRefresh() {
+  const txt = fmtDueDate(todoDateStr(tdOff));
+  setText($('todoDateTxt'), txt);
+  setText($('tpD'), txt);
+  $('todoDateBtn').classList.toggle('set', tdOff > 0);
+}
+
 function renderTodos() {
   const list = $('todoList');
-  const todos = store.todos.slice().sort((a, b) => (a.done - b.done) || ((a.due || '99:99') < (b.due || '99:99') ? -1 : 1));
+  const sortTs = (x) => (x.due ? todoDueTs(x) : Infinity);
+  const todos = store.todos.slice().sort((a, b) => (a.done - b.done) || (sortTs(a) < sortTs(b) ? -1 : sortTs(a) > sortTs(b) ? 1 : 0));
   list.textContent = '';
   const now = Date.now();
   for (const todo of todos) {
@@ -306,7 +368,8 @@ function renderTodos() {
     if (todo.due) {
       const due = document.createElement('span');
       due.className = 'due' + (!todo.done && todoDueTs(todo) < now ? ' late' : '');
-      due.textContent = fmtHM(...todo.due.split(':').map(Number));
+      const hm = fmtHM(...todo.due.split(':').map(Number));
+      due.textContent = todo.dueDate && todo.dueDate !== todoDateStr(0) ? `${fmtDueDate(todo.dueDate)} ${hm}` : hm;      // 오늘이 아니면 날짜도 보여 준다
       if (todo.snoozeUntil && todo.snoozeUntil > now) {
         const d = new Date(todo.snoozeUntil);
         due.classList.add('snoozed');
@@ -334,8 +397,9 @@ function renderTodos() {
   }
   todoNew.clear();
   const done = store.todos.filter((x) => x.done).length;
-  setText($('todoCount'), `${done}/${store.todos.length}`);
+  setText($('todoCount'), `${done}/${store.todos.length}` + (store.settings.todoRemind === false ? ' · ' + t('todoRemindOff') : ''));
   todoTimeRefresh();      // 언어가 바뀐 뒤에도 "시간 없음" 문구가 맞게
+  todoDateRefresh();
   $('todoEmpty').classList.toggle('hidden', store.todos.length > 0);
   $('todoLayer').classList.toggle('empty', store.todos.length === 0);
 }
@@ -349,6 +413,7 @@ function todoTimeRefresh() {
 }
 function todoPickRender() { setText($('tpH'), pad2(tp.h)); setText($('tpM'), pad2(tp.m)); }
 function todoPickOpen() {
+  setText($('tpClear'), t('todoTimeClear'));      // (날짜 선택에서는 '오늘로')
   const v = $('todoTime').value;
   if (v) { const [h, m] = v.split(':').map(Number); tp.h = h; tp.m = m; }
   else {      // 정해 둔 시간이 없으면 다음 30분 단위
@@ -358,8 +423,10 @@ function todoPickOpen() {
   todoPickRender();
   $('todoLayer').classList.add('picking');
 }
-function todoPickClose() { $('todoLayer').classList.remove('picking'); }
+function todoPickClose() { $('todoLayer').classList.remove('picking', 'pickdate'); }
+function todoDateOpen() { $('todoLayer').classList.add('picking', 'pickdate'); setText($('tpClear'), t('todoDateClear')); todoDateRefresh(); }
 function todoPickStep(which, dir) {
+  if (which === 'd') { tdOff = Math.max(0, Math.min(TD_MAX, tdOff + dir)); todoDateRefresh(); return; }
   if (which === 'h') tp.h = (tp.h + dir + 24) % 24;
   else tp.m = ((dir > 0 ? Math.floor(tp.m / 5) + 1 : Math.ceil(tp.m / 5) - 1) * 5 + 60) % 60;      // 분은 5분 단위
   todoPickRender();
@@ -367,7 +434,9 @@ function todoPickStep(which, dir) {
 
 function todoOpenAdd() {
   $('todoLayer').classList.add('adding');
-  $('todoLayer').classList.remove('picking');
+  $('todoLayer').classList.remove('picking', 'pickdate');
+  tdOff = 0;
+  todoDateRefresh();
   $('todoText').value = '';
   $('todoTime').value = '';
   todoTimeRefresh();
@@ -375,15 +444,21 @@ function todoOpenAdd() {
 }
 
 function todoCloseAdd() {
-  $('todoLayer').classList.remove('adding', 'picking');
+  $('todoLayer').classList.remove('adding', 'picking', 'pickdate');
   if (document.activeElement) document.activeElement.blur();
 }
 
 function todoSave() {
   const text = $('todoText').value.trim();
   if (!text) { $('todoText').focus(); return; }
-  const newTodo = { id: Date.now() + Math.floor(Math.random() * 1000), text, due: $('todoTime').value || '', done: false, notified: false, leadDone: false, snoozeUntil: 0 };
-  if (newTodo.due && todoDueTs(newTodo) - Date.now() < todoLeadMs()) newTodo.leadDone = true;      // 이미 마감이 코앞이면 "곧 마감" 알림은 건너뛴다
+  let due = $('todoTime').value || '';
+  if (!due && tdOff > 0) due = '09:00';      // 날짜만 골랐으면 그 날 아침 9시
+  const newTodo = { id: Date.now() + Math.floor(Math.random() * 1000), text, due, dueDate: due ? todoDateStr(tdOff) : '', done: false, notified: false, leadDone: false, snoozeUntil: 0 };
+  if (newTodo.due) {
+    const ts = todoDueTs(newTodo);
+    if (ts <= Date.now()) { newTodo.notified = true; newTodo.leadDone = true; }      // 이미 지난 시각으로 추가했다: 바로 알림이 울리지 않는다(목록에 '지남'으로만 보인다)
+    else if (ts - Date.now() < todoLeadMs()) newTodo.leadDone = true;      // 이미 마감이 코앞이면 "곧 마감" 알림은 건너뛴다
+  }
   store.todos.push(newTodo);
   todoNew.add(newTodo.id);
   saveStoreSoon();
@@ -405,7 +480,7 @@ function todoSnooze(todo) {
 
 function todoDueCheck() {
   todoRollover();
-  if (store.settings.todoRemind === false) return;
+  if (store.settings.todoRemind === false || !tabVisibleId('todo')) return;          // 할 일 탭이 꺼져 있으면 알리지 않는다
   const now = Date.now();
   const lead = todoLeadMs();
   for (const todo of store.todos) {
@@ -628,25 +703,46 @@ function initShelfCards() {
 
 // 탐색기에서 파일을 끌어 노치 위로 가져오면 선반이 저절로 펼쳐진다 (실제 경로는 Python 이 drop 이벤트로 전달)
 let dragDepth = 0;
+const shDropZone = { zone: '', t: 0 };          // 마지막으로 파일을 놓은 칸(선반 | 휴대폰). Python 의 drop 이벤트(shelf_drop)가 이 값을 보고 갈린다
 function hasFiles(e) {
   return !!(e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files'));
 }
 function initFileDrag() {
+  const zoneOf = (e) => {
+    const t = e.target && e.target.closest ? e.target : null;
+    if (t && (t.closest('#shPhone') || t.closest('#phDrop'))) return 'phone';
+    if (t && t.closest('#shZone')) return 'shelf';
+    return page === 'phone' && document.body.classList.contains('phone-drop') ? 'phone' : '';          // 선반 탭이 없을 때는 휴대폰 탭 전체가 '휴대폰으로 보내기' 칸
+  };
+  const mark = (z) => {
+    const sh = document.getElementById('shZone'), sp = document.getElementById('shPhone'), pd = document.getElementById('phDrop');
+    if (sh) sh.classList.toggle('over', z === 'shelf');
+    if (sp) sp.classList.toggle('over', z === 'phone');
+    if (pd) pd.classList.toggle('over', z === 'phone');
+  };
   window.addEventListener('dragenter', (e) => {
     if (!hasFiles(e)) return;
     dragDepth++;
     document.body.classList.add('dragging-files');
-    if (page !== 'shelf' || !isExpanded) { setPage('shelf'); triggerExpand(); }
+    const shelfOk = tabVisibleId('shelf');
+    const phoneOk = tabVisibleId('phone') && typeof phoneS !== 'undefined' && phoneS.st && phoneS.st.state === 'ok';
+    document.body.classList.toggle('phone-drop', !shelfOk && !!phoneOk);
+    if (shelfOk) { if (page !== 'shelf' || !isExpanded) { setPage('shelf'); triggerExpand(); } }
+    else if (phoneOk) { if (page !== 'phone' || !isExpanded) { setPage('phone'); triggerExpand(); } }          // 선반이 없으면 휴대폰 탭에서 받는다
   });
   window.addEventListener('dragleave', () => {
     dragDepth = Math.max(0, dragDepth - 1);
-    if (dragDepth === 0) { document.body.classList.remove('dragging-files'); triggerCollapse(); }
+    if (dragDepth === 0) { document.body.classList.remove('dragging-files', 'phone-drop'); mark(''); triggerCollapse(); }
   });
-  window.addEventListener('dragover', (e) => e.preventDefault());
+  window.addEventListener('dragover', (e) => { e.preventDefault(); if (hasFiles(e)) mark(zoneOf(e)); });
   window.addEventListener('drop', (e) => {
     e.preventDefault();
+    const z = zoneOf(e);
+    shDropZone.zone = z === 'phone' ? 'phone' : 'shelf';
+    shDropZone.t = Date.now();
+    mark('');
     dragDepth = 0;
-    document.body.classList.remove('dragging-files');
+    document.body.classList.remove('dragging-files', 'phone-drop');
   });
 }
 
@@ -663,7 +759,59 @@ let budsSnap = { available: false, connected: false, name: '', battery: {}, cont
 let budsModeBusy = false;
 let budsMode = null;            // 마지막으로 이 앱에서 설정한 모드 (버즈가 현재 모드를 알려 주지 않는다)
 
-function budsConnected() { return !!(budsSnap && budsSnap.connected); }
+// 갤럭시 버즈 말고 연결된 무선 음향 기기(헤드셋·스피커·에어팟): 파이썬(btdevices.py)이 윈도우가 이미 가진 배터리 값을 읽어 보낸다.
+// 노치의 이어버드 탭은 갤럭시 버즈가 연결돼 있으면 그것을, 없으면 이 기기들을 보여 준다(모드 변경 없이 배터리만).
+const BT_STALE_SEC = 10;            // 에어팟 신호가 이보다 오래 안 왔으면 값을 흐리게 보여 준다(값은 2분 동안 유지)
+let btSnap = { enabled: false, devices: [] };
+let btIdx = 0;                       // 여러 대일 때 지금 보여 주는 기기
+let btKey = '';
+const btAlerted = new Set();         // 배터리 부족 알림을 이미 보낸 기기(충전돼 기준을 넘어서면 다시 알린다)
+function btDevices() { return store.settings.btDevices !== false && btSnap && btSnap.enabled ? (btSnap.devices || []) : []; }
+function btLevel(d) {                // 이 기기의 가장 낮은 배터리(없으면 null). 에어팟은 좌/우 중 낮은 쪽(케이스는 뺀다)
+  const vals = [];
+  if (d.pods) { for (const k of ['left', 'right']) if (d.pods[k] != null) vals.push(d.pods[k]); }
+  else for (const v of d.batteries || []) vals.push(v);
+  return vals.length ? Math.min(...vals) : null;
+}
+function btToSnap(d, n) {
+  const p = d.pods;
+  let battery, charging = {};
+  if (p) { battery = { left: p.left, right: p.right, case: p.case }; charging = p.charging || {}; }
+  else { const lv = btLevel(d); battery = lv == null ? {} : { left: lv }; }
+  return { available: true, connected: true, name: d.name, battery, charging, control: false, generic: true, pods: !!p, count: n, age: p ? (p.age || 0) : 0 };
+}
+function viewBuds() {
+  if (budsSnap && budsSnap.connected) return budsSnap;
+  const l = btDevices();
+  if (!l.length) return budsSnap;
+  return btToSnap(l[btIdx % l.length], l.length);
+}
+function budsConnected() { const v = viewBuds(); return !!(v && v.connected); }
+
+function btCheckLow() {
+  const thr = clampN(store.settings.budsLowPct, 5, 50, 20);
+  const names = new Set();
+  for (const d of btDevices()) {
+    names.add(d.name);
+    const lv = btLevel(d);
+    if (lv == null) continue;
+    if (lv <= thr && !btAlerted.has(d.name)) {
+      btAlerted.add(d.name);
+      if (store.settings.notify && store.settings.notify.bt_low !== false) notify({ icon: 'batteryLow', tone: 'red', title: d.name, sub: `${t('btLowMsg')} · ${lv}%`, ms: 5000, key: 'btlow' });
+    } else if (lv > thr + 5) btAlerted.delete(d.name);
+  }
+  for (const n of Array.from(btAlerted)) if (!names.has(n)) btAlerted.delete(n);
+}
+function updateBt(snap) {
+  if (!snap) return;
+  const k = JSON.stringify(snap);
+  if (k === btKey) return;
+  btKey = k;
+  btSnap = snap;
+  btCheckLow();
+  budsKey = '';
+  updateBuds(null);
+}
 
 function batteryLevel(lv) { return lv >= 50 ? 'high' : (lv >= 20 ? 'mid' : 'low'); }
 
@@ -677,25 +825,32 @@ function budsSummary(b) {
 }
 
 function renderBuds(grow) {
-  const s = budsSnap;
+  const s = viewBuds();
+  const gen = !!s.generic, single = gen && !s.pods;       // 갤럭시 버즈가 아닌 기기: 모드 대신 기기 목록, 에어팟 신호가 없으면 링 하나
+  $('budsLayer').classList.toggle('generic', gen);
+  $('budsBats').classList.toggle('single', single);
   setText($('budsName'), s.name || '-');
-  setText($('budsSub'), s.connected ? (s.control ? t('budsConnected') : `${t('budsConnected')} · ${t('budsNoControl')}`) : '');
+  setText($('budsSub'), s.connected ? (gen ? `${t('budsConnected')} · ${t('btBatteryOnly')}` : (s.control ? t('budsConnected') : `${t('budsConnected')} · ${t('budsNoControl')}`)) : '');
   for (const el of $$('#budsBats .bat')) {
     const lv = s.battery ? s.battery[el.dataset.pos] : undefined;
     const ring = el.querySelector('.bring');
     const val = el.querySelector('.bval');
+    const lab = el.querySelector('.blab');
+    if (lab && el.dataset.pos === 'left') setText(lab, single ? t('btBattery') : t('budsLeft'));
     const na = lv == null;
     ring.classList.toggle('na', na);
     val.classList.toggle('na', na);
     ring.dataset.lv = na ? '' : batteryLevel(lv);
     el.classList.toggle('charging', !!(s.charging && s.charging[el.dataset.pos]));
     const pl = s.placement ? s.placement[el.dataset.pos] : undefined;      // 연결 끊김(0) / 닫힌 케이스(4)인 버드는 옛 값이라 흐리게 보여 준다
+    const stale = gen && s.pods && !na && s.age > BT_STALE_SEC;      // 에어팟 신호가 한동안 안 왔다(케이스를 닫으면 끊긴다): 마지막으로 받은 값이라고 흐리게
     const off = pl === 0 || pl === 4;
-    el.classList.toggle('off', off);
-    el.title = off ? t('budsOff') : '';
+    el.classList.toggle('off', off || stale);
+    el.title = off ? t('budsOff') : (stale ? t('btStale', { n: s.age }) : '');
     setText(val, na ? '--' : String(lv));
     if (!grow) ring.style.setProperty('--p', na ? '0' : String(lv));
   }
+  renderBtList();
   const modes = $('budsModes');
   modes.classList.toggle('disabled', !s.control);
   modes.classList.toggle('has-mode', budsMode !== null);
@@ -711,15 +866,37 @@ function renderBuds(grow) {
   });
 }
 
-let budsKey = '';
+// 노치의 이어버드 탭 오른쪽: 갤럭시 버즈가 아닐 때 연결된 무선 기기 목록(눌러서 바꿔 본다)
+function renderBtList() {
+  const box = $('btList');
+  if (!box) return;
+  const l = (budsSnap && budsSnap.connected) ? [] : btDevices();
+  box.textContent = '';
+  l.slice(0, 3).forEach((d, i) => {
+    const b = document.createElement('button');
+    b.className = 'mbtn btchip' + (i === btIdx % l.length ? ' on' : '');
+    b.dataset.i = String(i);
+    const n = document.createElement('span');
+    n.textContent = d.name;
+    const v = document.createElement('b');
+    const lv = btLevel(d);
+    v.textContent = lv == null ? '--' : `${lv}%`;
+    b.append(n, v);
+    box.appendChild(b);
+  });
+}
+
+let budsKey = '', budsWasConn = false;
 function updateBuds(snap) {
-  const was = budsConnected();
-  budsSnap = snap || budsSnap;
+  if (snap) budsSnap = snap;
+  const v = viewBuds();
   // 폴링마다 오지만 값이 바뀔 때만 화면을 갱신한다
-  const key = JSON.stringify([budsSnap.available, budsSnap.connected, budsSnap.name, budsSnap.battery, budsSnap.control, budsSnap.charging, budsSnap.placement]);
+  const key = JSON.stringify([v.available, v.connected, v.name, v.battery, v.control, v.charging, v.placement, v.count, v.pods, btIdx]);
   if (key === budsKey) return;
   budsKey = key;
-  const now = budsConnected();
+  const now = !!(v && v.connected);
+  const was = budsWasConn;
+  budsWasConn = now;
   if (typeof refreshPageDots === 'function') refreshPageDots();
   if (was && !now && page === 'buds') setPage('music', -1);   // 연결이 끊기면 페이지에서 나간다
   renderBuds();
@@ -766,11 +943,15 @@ function initBuds() {
 }
 
 // ---------------------------------------------------------------- 시스템 알림 (볼륨/밝기/Caps Lock/입력 언어/전원/네트워크/오디오 장치)
+let insertOverwrite = false;           // Insert 키 알림이 번갈아 보여 주는 상태(윈도우가 알려 주지 않는다)
 function handleSysEvent(e) {
   if (!notifyAllowed(store.settings, e.type)) return;       // 설정에서 끈 알림 종류
   switch (e.type) {
     case 'agenda':
       agendaAlert(e);
+      break;
+    case 'dday':
+      if (typeof ddayLoad === 'function') ddayLoad();
       break;
     case 'launcher':
       store.launcher = { items: e.items || [] };
@@ -786,6 +967,7 @@ function handleSysEvent(e) {
       notify({ icon: 'volume', tone: 'blue', title: t('testAlert'), sub: t('testAlertSub'), ms: 3000 });
       break;
     case 'volume': {
+      if (typeof sysFollow === 'function' && sysFollow('volume', e)) break;      // 시스템 탭이 열려 있으면 팝업 대신 슬라이더가 따라간다
       if (typeof volFromSystem === 'function' && volFromSystem(e)) break;     // 볼륨 팝오버가 열려 있으면 알림 대신 슬라이더가 따라간다
       const off = e.muted || e.value === 0;
       notify({ icon: off ? 'volumeOff' : 'volume', title: e.muted ? t('muted') : t('volume'),
@@ -793,16 +975,22 @@ function handleSysEvent(e) {
       break;
     }
     case 'brightness':
+      if (typeof sysFollow === 'function' && sysFollow('brightness', e)) break;
       notify({ icon: 'sun', title: t('brightness'), sub: t('percentN', { n: e.value }), meter: e.value / 100, ms: 1600, key: 'brightness' });
       break;
     case 'caps':
       notify({ icon: 'caps', tone: e.on ? 'blue' : '', title: t(e.on ? 'capsOn' : 'capsOff'), ms: 1800 });
       break;
     case 'num':
-      notify({ icon: 'caps', tone: e.on ? 'blue' : '', title: t(e.on ? 'numOn' : 'numOff'), ms: 1800 });
+      notify({ icon: 'numlock', tone: e.on ? 'blue' : '', title: t(e.on ? 'numOn' : 'numOff'), ms: 1800 });
       break;
     case 'scroll':
-      notify({ icon: 'caps', tone: e.on ? 'blue' : '', title: t(e.on ? 'scrollOn' : 'scrollOff'), ms: 1800 });
+      notify({ icon: 'scrolllock', tone: e.on ? 'blue' : '', title: t(e.on ? 'scrollOn' : 'scrollOff'), ms: 1800 });
+      break;
+    case 'insert_key':
+      // 윈도우가 삽입/덮어쓰기 상태를 알려 주지 않으므로, 앱이 누를 때마다 번갈아 보여 준다(처음은 삽입 모드로 본다)
+      insertOverwrite = !insertOverwrite;
+      notify({ icon: 'insertkey', tone: insertOverwrite ? 'blue' : '', title: t('insertKey'), sub: t(insertOverwrite ? 'insertOver' : 'insertIns'), ms: 1800, key: 'insertkey' });
       break;
     case 'media_key':
       // 키보드의 미디어 키(재생/일시정지/다음/이전)를 누르면 지금 곡을 잠깐 보여 준다. 곡이 바뀌는 순간은 새 곡이 뜨도록 잠시 뒤에 보여 준다.
@@ -832,22 +1020,63 @@ function handleSysEvent(e) {
     case 'buds_alert':
       notify({ icon: 'charge', tone: 'red', title: t('budsAlertT'), sub: t('budsAlertS'), ms: 9000, key: 'buds_alert' });
       break;
+    case 'phone_notify':
+      if (typeof phoneNotifyIn === 'function') phoneNotifyIn(e);
+      break;
+    case 'phone_notify_gone':
+      if (typeof phoneNotifyGone === 'function') phoneNotifyGone(e);
+      break;
+    case 'phone_call_audio':     // 폰에서 스피커·음소거·녹음이 바뀜(직접 누르거나 자동 녹음)
+      if (typeof phoneCallAudioIn === 'function') phoneCallAudioIn(e);
+      break;
+    case 'phone_call':       // 폰의 통화 상태(오는 전화·통화 중·끝남·부재중)
+      if (typeof phoneCallIn === 'function') phoneCallIn(e);
+      break;
+    case 'phone_clip':       // 폰에서 복사한 글이 이 PC 의 클립보드에 들어왔다
+      if (typeof notify === 'function') {
+        // 아이콘: 이미지는 복사한 사진의 미리보기(못 불러오면 'img'), 글은 'txt'
+        if (e.image) notify({ img: typeof e.thumb === 'string' ? e.thumb : '', badge: 'img', tone: 'thumb', ms: 2200, title: t('phoneClipGotImg'), sub: t('phoneClipGotImgSub') });          // 이미지를 복사했으면 글자 수 대신 '이미지'라고 알린다
+        else notify({ badge: 'txt', ms: 2200, title: t('phoneClipGot'), sub: t('phoneClipGotSub', { n: Number(e.chars) || 0 }) });
+      }
+      break;
+    case 'link_state':
+      if (typeof phoneLinkState === 'function') phoneLinkState(e);
+      break;
     case 'win_notify_clear':
       if (typeof satNotifDismiss === 'function') satNotifDismiss();      // 윈도우에서 알림을 처리했거나 알림 센터가 열렸다: 동그라미를 지운다
       break;
     case 'win_notify':
       if (typeof satNotify === 'function') satNotify(e.apps);      // 윈도우 알림이 왔다: 보조 노치(동그라미)로 알린다
       break;
+    case 'update_available':       // 새 버전이 나왔다(같은 버전은 한 번만 온다)
+      notify({ icon: 'download', tone: 'blue', ms: 6500, title: t('updTitle', { v: e.version }), sub: t('updSub') });
+      break;
+    case 'link_app_update':       // 폰 앱(Dalu Link)이 Dalu 에 들어 있는 앱 파일보다 옛 버전이다(실행당 한 번)
+      notify({ icon: 'download', tone: 'blue', ms: 6500, title: t('lkUpdTitle'), sub: e.unknown ? t('lkUpdSubOld') : t('lkUpdSub', { v: e.to }) });
+      break;
+    case 'btdevices':
+      updateBt({ enabled: true, devices: e.devices || [] });
+      break;
     case 'buds_gone':
       notify({ icon: 'headphones', title: t('budsGone'), ms: 2600 });
       break;
     case 'audio_device':
-      if (e.headphones && budsConnected()) break;   // 버즈 연결 알림이 이미 보여 준다
+      if (e.headphones && budsSnap && budsSnap.connected) break;   // 버즈 연결 알림이 이미 보여 준다
       if (e.headphones) notify({ icon: 'headphones', tone: 'blue', title: e.name, sub: t('connected'), ms: 3600 });
       else notify({ icon: 'volume', title: t('audioOut'), sub: e.name, ms: 2600 });
       break;
     case 'shelf_drop':
-      shelfAdd(e.paths);
+      if (shDropZone.zone === 'phone' && Date.now() - shDropZone.t < 3000 && typeof phoneSendPaths === 'function') { shDropZone.zone = ''; phoneSendPaths(e.paths); }          // '휴대폰으로 보내기' 칸에 놓았다
+      else shelfAdd(e.paths);
+      break;
+    case 'phone_copy':           // 폰 사진 '복사'가 끝났다(클립보드에 올렸거나 실패했다)
+      showToast(!e.ok ? t('pmCopyFail') : (e.n < e.total ? t('pmCopiedSome', { n: e.n, m: e.total - e.n }) : t('pmCopied', { n: e.n })));
+      break;
+    case 'phone_new_media':      // 폰에 새 사진·동영상
+      if (typeof phoneNewMediaIn === 'function') phoneNewMediaIn(e);
+      break;
+    case 'phone_file':
+      if (typeof phoneFileEvent === 'function') phoneFileEvent(e);
       break;
   }
 }
@@ -877,7 +1106,7 @@ function countUpWater() {
   (function step(now) {
     if (token !== waterTween) return;
     const p = Math.min(1, (now - t0) / 800);
-    const v = target * (1 - Math.pow(1 - p, 3));
+    const v = waterTotal() * (1 - Math.pow(1 - p, 3));          // 그 사이에 물을 마셨어도 지금 총량으로 끝난다
     $('wAmount').innerHTML = `${fmtL(Math.round(v / 10) * 10)}<small>/ ${fmtL(store.water.goalMl)} L</small>`;
     if (p < 1) requestAnimationFrame(step);
   })(t0);
@@ -888,13 +1117,15 @@ let lastEnter = { layer: '', at: 0 };
 function enterLate(layer, sel, kf, delay, step, opts) {
   const dt = performance.now() - lastEnter.at;
   if (lastEnter.layer !== layer || dt > 900) return;
-  enterEach(document.querySelectorAll(sel), kf, Math.max(0, delay - dt), step, opts);
+  // 페이지끼리 넘길 때 앞당긴 만큼(enterShift) 늦게 그려진 항목도 같이 앞당긴다(머리글만 먼저 나오고 목록이 한참 뒤에 나오지 않게)
+  const was = enterShift; enterShift = 0;
+  try { enterEach(document.querySelectorAll(sel), kf, Math.max(0, delay - (lastEnter.shift || 0) - dt), step, opts); } finally { enterShift = was; }
 }
 
 function enterAnim(layer) {
   const root = document.querySelector('.l-' + layer);
   if (!root) return;
-  lastEnter = { layer, at: performance.now() };
+  lastEnter = { layer, at: performance.now(), shift: enterShift };
   const q = (sel) => root.querySelectorAll(sel);
   switch (layer) {
     case 'player':
@@ -911,7 +1142,7 @@ function enterAnim(layer) {
       void ring.offsetWidth;
       ring.style.transition = '--p 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.25s';
       renderPomo();
-      setTimeout(() => { ring.style.transition = ''; }, 1500);
+      setTimeout(() => { ring.style.transition = ''; }, 1500 / ((typeof PREF !== 'undefined' && PREF.rate) || 1));          // 느린 속도에서 전환이 끝나기 전에 지우지 않게
       anim(root.querySelector('.ptime'), [{ opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1 }], { duration: 600, delay: 260, easing: SPRING });
       enterEach(q('.ttl, .sub, .pstep'), RISE, 230, 55, { duration: 480 });
       enterEach(q('.pbtns .pill'), POP, 330, 50, { duration: 540, easing: SPRING });
@@ -938,7 +1169,8 @@ function enterAnim(layer) {
     case 'buds': {
       // 페이지를 여는 순간 제어 연결을 미리 맺어 둔다 (첫 모드 변경의 연결 대기 2~6초를 없앤다)
       const budsApi = getApi();
-      if (budsApi && budsApi.buds_prepare && budsConnected() && budsSnap.control) budsApi.buds_prepare();
+      if (budsApi && budsApi.buds_prepare && budsSnap.connected && budsSnap.control) budsApi.buds_prepare();
+      if (budsApi && budsApi.bt_refresh && !budsSnap.connected) budsApi.bt_refresh();
       // 배터리 링이 0 에서 차오르고, 모드 버튼들이 차례로 튀어 오른다
       renderBuds(true);
       const rings = Array.from(q('.bring'));
@@ -948,9 +1180,10 @@ function enterAnim(layer) {
         void r.offsetWidth;
         r.style.transition = `--p 0.9s cubic-bezier(0.22, 1, 0.36, 1) ${0.25 + i * 0.08}s`;
         const pos = r.closest('.bat').dataset.pos;
-        const lv = budsSnap.battery ? budsSnap.battery[pos] : undefined;
+        const vb = viewBuds();
+        const lv = vb.battery ? vb.battery[pos] : undefined;
         r.style.setProperty('--p', lv == null ? '0' : String(lv));
-        setTimeout(() => { r.style.transition = ''; }, 1600);
+        setTimeout(() => { r.style.transition = ''; }, 1600 / ((typeof PREF !== 'undefined' && PREF.rate) || 1));
       });
       enterEach(q('.ttl, .sub'), RISE, 190, 55, { duration: 480 });
       enterEach(q('.bat'), [{ opacity: 0, translate: '0 12px', scale: 0.8 }, { opacity: 1, translate: '0 0', scale: 1 }], 230, 70, { duration: 560, easing: SPRING });
@@ -965,12 +1198,32 @@ function enterAnim(layer) {
     case 'launcher':
       enterEach(q('.thead > *'), RISE, 190, 45, { duration: 460 });
       enterEach(q('.ltile'), POP, 260, 28, { duration: 500, easing: SPRING });
+      enterEach(q('.tempty'), FADE, 280, 0, { duration: 500 });      // 빈 안내글이 노치가 커지기도 전에 먼저 보이지 않게
+      break;
+    case 'sys':
+      enterEach(q('.thead > *'), RISE, 190, 45, { duration: 460 });
+      enterEach(q('.sysrow'), RISE, 240, 55, { duration: 480 });
+      enterEach(q('.systog .ltile'), POP, 320, 40, { duration: 500, easing: SPRING });
+      break;
+    case 'weather':
+      enterEach(q('.thead > *'), RISE, 190, 45, { duration: 460 });
+      enterEach(q('.wxnow > *, .wxday, .wxmsg > *'), RISE, 240, 45, { duration: 480 });
+      break;
+    case 'perf':
+      enterEach(q('.thead > *'), RISE, 190, 45, { duration: 460 });
+      enterEach(q('.pfcol'), POP, 260, 50, { duration: 520, easing: SPRING });
+      break;
+    case 'power':
+    case 'phone':
+      enterEach(q('.thead > *'), RISE, 190, 45, { duration: 460 });
+      enterEach(q('.ltile'), POP, 260, 28, { duration: 500, easing: SPRING });
       break;
     case 'plugins':
       enterEach(q('.porb'), POP, 170, 0, { duration: 520, easing: SPRING });      // 선택한 플러그인의 큰 아이콘·이름도 나머지와 함께 나타난다
       enterEach(q('.pnm, .pst'), RISE, 230, 40, { duration: 460 });
       enterEach(q('.pchip'), RISE, 190, 35, { duration: 440 });
       enterEach(q('.pbtn'), POP, 280, 30, { duration: 500, easing: SPRING });
+      enterEach(q('.tempty'), FADE, 280, 0, { duration: 500 });
       break;
     case 'clip':
     case 'agenda':
@@ -988,8 +1241,14 @@ function enterAnim(layer) {
 
 // ---------------------------------------------------------------- 페이지가 열릴 때 / 언어 변경 / 주기 작업
 function onPageShown(p) {
+  if (p !== 'sys' && typeof spkClose === 'function') spkClose();
   if (p === 'music' || p === 'lyrics') volSync();      // 볼륨 버튼 아이콘(음소거 여부)을 지금 값으로
   if (p === 'launcher') launcherLoad();
+  else if (p === 'sys') sysLoad();
+  else if (p === 'perf') perfLoad();
+  else if (p === 'phone') { if (typeof phoneLoad === 'function') phoneLoad(); }
+  else if (p === 'weather') wxLoad(false);
+  else if (p === 'power') { if (typeof pwrResetConfirm === 'function') pwrResetConfirm(); }
   else if (p === 'plugins') { pluginsLoad(); pluginStatusRefresh(); }
   else if (p === 'timer') renderTimer();
   else if (p === 'clip') clipRefresh(true);
@@ -1048,12 +1307,19 @@ function initFeatures() {
   $('todoSave').addEventListener('click', todoSave);
   $('todoCancel').addEventListener('click', todoCloseAdd);
   $('todoTimeBtn').addEventListener('click', todoPickOpen);
+  $('todoDateBtn').addEventListener('click', todoDateOpen);
   for (const st of $$('#todoPick .stepper')) {
     for (const b of st.querySelectorAll('button')) b.addEventListener('click', () => todoPickStep(st.dataset.t, Number(b.dataset.d)));
     st.addEventListener('wheel', (e) => { e.preventDefault(); e.stopPropagation(); todoPickStep(st.dataset.t, e.deltaY < 0 ? 1 : -1); }, { passive: false });      // 휠: 위로 올리면 커진다
   }
-  $('tpOk').addEventListener('click', () => { $('todoTime').value = `${pad2(tp.h)}:${pad2(tp.m)}`; todoTimeRefresh(); todoPickClose(); });
-  $('tpClear').addEventListener('click', () => { $('todoTime').value = ''; todoTimeRefresh(); todoPickClose(); });
+  $('tpOk').addEventListener('click', () => {
+    if ($('todoLayer').classList.contains('pickdate')) { if (tdOff > 0 && !$('todoTime').value) { $('todoTime').value = '09:00'; todoTimeRefresh(); } todoPickClose(); return; }      // 날짜만 골랐으면 시간은 아침 9시로
+    $('todoTime').value = `${pad2(tp.h)}:${pad2(tp.m)}`; todoTimeRefresh(); todoPickClose();
+  });
+  $('tpClear').addEventListener('click', () => {
+    if ($('todoLayer').classList.contains('pickdate')) { tdOff = 0; todoDateRefresh(); todoPickClose(); return; }      // 날짜 지우기 = 오늘
+    $('todoTime').value = ''; todoTimeRefresh(); todoPickClose();
+  });
   $('todoPick').addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { e.stopPropagation(); todoPickClose(); }
     else if (e.key === 'Enter') { e.preventDefault(); $('tpOk').click(); }

@@ -38,7 +38,7 @@ def parse_combo(text):
         mods |= _MODS[p]
     key = parts[-1]
     vk = None
-    if len(key) == 1 and key.isalnum():
+    if len(key) == 1 and key.isascii() and key.isalnum():          # 한글 같은 글자는 가상 키 코드가 아니다
         vk = ord(key.upper())
     elif key.startswith("f") and key[1:].isdigit() and 1 <= int(key[1:]) <= 24:
         vk = 0x6F + int(key[1:])
@@ -56,7 +56,7 @@ def format_combo(text):
         return str(text or "")
     mods, vk = parsed
     out = [n for flag, n in ((MOD_CONTROL, "Ctrl"), (MOD_ALT, "Alt"), (MOD_SHIFT, "Shift"), (MOD_WIN, "Win")) if mods & flag]
-    key = next((k for k, v in _NAMED.items() if v == vk and len(k) > 1), None)
+    key = next((k for k, v in _NAMED.items() if v == vk and len(k) > 1), None) or next((k for k, v in _NAMED.items() if v == vk), None)          # 이름이 없으면 한 글자 구두점(- = [ ] ...)
     if 0x70 <= vk <= 0x87:
         key = f"F{vk - 0x6F}"
     out.append(key.capitalize() if key else chr(vk))

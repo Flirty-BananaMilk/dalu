@@ -33,7 +33,17 @@ static class Setup
     static string Quote(string a)
     {
         if (a.Length > 0 && a.IndexOfAny(new[] { ' ', '\t', '"' }) < 0) return a;
-        return "\"" + a.Replace("\"", "\\\"") + "\"";
+        // 명령줄 규칙: 따옴표 앞의 역슬래시는 두 배로, 끝의 역슬래시도 닫는 따옴표 앞이므로 두 배로("D:\\My Apps\\" 가 닫는 따옴표를 이스케이프하지 않게)
+        StringBuilder sb = new StringBuilder("\"");
+        int bs = 0;
+        foreach (char c in a)
+        {
+            if (c == '\\') { bs++; continue; }
+            if (c == '"') { sb.Append('\\', bs * 2 + 1); sb.Append('"'); bs = 0; continue; }
+            sb.Append('\\', bs); bs = 0; sb.Append(c);
+        }
+        sb.Append('\\', bs * 2);
+        return sb.Append('"').ToString();
     }
 
     [STAThread]
@@ -102,7 +112,7 @@ static class Setup
                 string script = Path.Combine(Path.Combine(dir, "Dalu"), "install.ps1");
                 StringBuilder sb = new StringBuilder("-NoProfile -ExecutionPolicy Bypass -File " + Quote(script) + " -FromSetup");
                 foreach (string a in args) sb.Append(' ').Append(Quote(a));
-                if (form != null) form.Invoke((MethodInvoker)delegate { label.Text = T("설치하는 중...", "Installing...", "正在安装…", "インストール中…"); form.Hide(); });
+                if (form != null) { try { form.Invoke((MethodInvoker)delegate { label.Text = T("설치하는 중...", "Installing...", "正在安装…", "インストール中…"); form.Hide(); }); } catch (ObjectDisposedException) { } catch (InvalidOperationException) { } }          // 사용자가 창을 먼저 닫았어도 설치는 이어 간다
                 ProcessStartInfo psi = new ProcessStartInfo("powershell.exe", sb.ToString());
                 psi.UseShellExecute = false;
                 psi.CreateNoWindow = true;
@@ -125,6 +135,7 @@ static class Setup
         });
         worker.IsBackground = false;
         worker.SetApartmentState(ApartmentState.STA);
+        if (form != null) { IntPtr unused = form.Handle; }          // 핸들을 미리 만든다: 압축이 너무 빨리 끝나 Invoke 가 핸들보다 먼저 불리면 설치가 실패한다
         worker.Start();
         if (form != null) Application.Run(form);
         worker.Join();

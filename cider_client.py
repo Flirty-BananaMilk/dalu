@@ -266,6 +266,27 @@ def parse_ttml_text(content: str):
     lines.sort(key=lambda x: x['start'])
     return fill_missing_line_ends(lines)
 
+
+def track_duration(time_info, now, current_time=0.0):
+    """곡 길이(초). Cider 가 time.duration 을 0 으로 보내는 경우(Cider 업데이트 뒤에 생겼다)가 있어서, 그때는 nowPlaying 의 durationInMillis 를,
+    그것도 없으면 현재 위치 + 남은 시간으로 구한다. 길이를 모르면 0.
+    (길이가 0 이면 재생 위치를 시계로 이어 계산하지 못해 가사가 1초마다 툭툭 끊겨 보인다.)"""
+    def num(v):
+        try:
+            f = float(v)
+            return f if f == f and f > 0 else 0.0
+        except (TypeError, ValueError):
+            return 0.0
+    ti, np_ = time_info or {}, now or {}
+    dur = num(ti.get("duration"))
+    if dur <= 0:
+        dur = num(np_.get("durationInMillis")) / 1000.0
+    if dur <= 0:
+        rem = num(ti.get("remaining")) or num(np_.get("remainingTime"))
+        if rem > 0:
+            dur = num(current_time) + rem
+    return dur
+
 class CiderClient:
     def __init__(self):
         self.trace = []
@@ -341,8 +362,8 @@ class CiderClient:
         time_info = d.get('time') or {}
 
         current_time = float(time_info.get('currentTime') or 0.0)
-        duration = float(time_info.get('duration') or 0.0)
         state = str(d.get('state') or 'stopped').lower()
+        duration = track_duration(time_info, now, current_time)
 
         track_id = ""
         catalog_id = ""
@@ -621,13 +642,19 @@ class CiderClient:
         pos = data.get('position')
         if not isinstance(pos, int) or pos < 0 or pos + 1 >= len(items):
             return None
-        attrs = ((items[pos + 1] or {}).get('track') or {}).get('attributes') or {}
+        track = (items[pos + 1] or {}).get('track') or {}
+        attrs = track.get('attributes') or {}
         title = attrs.get('name') or ''
         if not title:
             return None
         art = (attrs.get('artwork') or {}).get('url') or ''
         art = art.replace('{w}x{h}', '120x120').replace('{c}', 'bb').replace('{f}', 'png')
-        return {"title": title, "artist": attrs.get('artistName') or '', "artworkUrl": art}
+        # 곡 ID 는 지금 재생 중인 곡을 읽을 때(get_playback_state)와 같은 방식으로 고른다 -> 다음 곡 가사를 미리 받아 둘 때 같은 키가 된다
+        pp = attrs.get('playParams') or {}
+        track_id = str(pp.get('id') or pp.get('catalogId') or track.get('id') or '')
+        catalog_id = str(pp.get('catalogId') or pp.get('reportingId') or '')
+        return {"title": title, "artist": attrs.get('artistName') or '', "artworkUrl": art,
+                "trackId": track_id, "catalogId": catalog_id, "album": attrs.get('albumName') or ''}
 
     # Playback Controls
     def toggle_playback(self):

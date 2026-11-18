@@ -212,7 +212,7 @@ def is_blank(rgb, tol=6):
 class DeskCapture:
     """노치 뒤 화면을 주기적으로 찍어 push(data_url) 로 넘긴다. 바뀐 게 없으면 넘기지 않는다."""
 
-    OUT_W, OUT_H = 320, 112         # 600x210(CSS px) 영역의 축소본 (굴절이 보이려면 너무 뭉개지면 안 된다)
+    OUT_W, OUT_H = 555, 112         # 1040x210(CSS px) 영역의 축소본 (굴절이 보이려면 너무 뭉개지면 안 된다)
 
     def __init__(self, get_hwnd, get_rect, push, log=None, interval=0.5):
         self._get_hwnd, self._get_rect, self._push = get_hwnd, get_rect, push
@@ -246,7 +246,8 @@ class DeskCapture:
             self._t_first = None
             self._t_on = time.perf_counter()
             self._stream = FrameStream()
-            self._thread = threading.Thread(target=self._loop, daemon=True, name="desk-capture")
+            self._gen = getattr(self, "_gen", 0) + 1          # 껐다 바로 켜도 옛 스레드가 이어 돌지 않게 세대를 올린다
+            self._thread = threading.Thread(target=self._loop, args=(self._gen,), daemon=True, name="desk-capture")
             self._thread.start()
             self._log("deskcap: on (notch window excluded from screen capture)")
         elif not on and self._on:
@@ -351,12 +352,12 @@ class DeskCapture:
     IDLE_GAP = 0.1                   # 한동안 안 바뀌면 10fps 로 낮춰 CPU 를 아낀다
     IDLE_AFTER = 1.0
 
-    def _loop(self):
+    def _loop(self, gen=None):
         """뒤 화면이 움직이는 동안은 60fps 로 찍어 바뀐 프레임만 넘기고, 1초 넘게 안 바뀌면 10fps 로 쉰다."""
         prev, last_change = None, time.perf_counter()
         self._url_at = time.perf_counter()
         self.stats = {"frames": 0, "since": time.perf_counter()}
-        while self._on:
+        while self._on and (gen is None or gen == getattr(self, "_gen", gen)):
             t0 = time.perf_counter()
             try:
                 rect = self._get_rect()
@@ -376,9 +377,10 @@ class DeskCapture:
                     self.stats["frames"] += 1
                 if self._visible and rgb is not None:
                     self._maybe_freeze_visible(rgb, t0)           # 새 화면이 없어도(빈 화면이 계속 와도) 시간이 지나면 얼린다
-                if self._stream is not None and t0 - self._url_at > 3.0:
+                st = self._stream          # 한 번만 읽는다(그 사이 다른 스레드가 끄면 None 이 되므로)
+                if st is not None and t0 - self._url_at > 3.0:
                     self._url_at = t0
-                    self._push(self._stream.url)        # 화면이 새로 고쳐졌어도 다시 연결되도록 주기적으로 알린다 (같은 주소면 화면이 무시한다)
+                    self._push(st.url)        # 화면이 새로 고쳐졌어도 다시 연결되도록 주기적으로 알린다 (같은 주소면 화면이 무시한다)
             except Exception as e:
                 self._log(f"deskcap error: {e!r}")
             if t0 - self.stats["since"] >= 10.0:

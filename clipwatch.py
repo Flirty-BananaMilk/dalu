@@ -91,10 +91,17 @@ def write_text(text):
         if not h:
             return False
         p = kernel32.GlobalLock(h)
+        if not p:
+            kernel32.GlobalFree.argtypes = [ctypes.c_void_p]
+            kernel32.GlobalFree(h)
+            return False
         ctypes.memmove(p, data, len(data))
         kernel32.GlobalUnlock(h)
         user32.SetClipboardData.argtypes = [wintypes.UINT, ctypes.c_void_p]
+        user32.SetClipboardData.restype = ctypes.c_void_p
         if not user32.SetClipboardData(CF_UNICODETEXT, h):
+            kernel32.GlobalFree.argtypes = [ctypes.c_void_p]
+            kernel32.GlobalFree(h)          # 클립보드가 받지 않았으니 이 메모리는 아직 우리 것이다
             return False
         return True
     finally:
@@ -156,9 +163,12 @@ class ClipHistory:
 class ClipWatcher:
     """GetClipboardSequenceNumber 가 바뀔 때만 읽는다(읽기 자체는 가벼움). enabled 는 외부에서 바꾼다."""
 
-    def __init__(self, history, log=None, interval=0.5):
+    def __init__(self, history, log=None, interval=0.5, on_text=None, sync_when=None, on_image=None):
         self.history = history
-        self.enabled = False
+        self.enabled = False                 # 클립보드 '기록'을 남기는가(설정, 기본 꺼짐)
+        self.on_text = on_text               # 복사된 글을 폰으로 동기화할 때 부른다: on_text(text). None 이면 동기화하지 않는다(기록 설정과 별개)
+        self.sync_when = sync_when           # 지금 동기화가 필요한가(켜져 있고 폰이 연결됨). False 면 클립보드를 아예 읽지 않는다
+        self.on_image = on_image             # 복사된 이미지(PNG 바이트)를 폰으로 동기화할 때 부른다: on_image(png). None 이면 이미지는 동기화하지 않는다
         self._log = log or (lambda m: None)
         self._interval = interval
         self._last_seq = user32.GetClipboardSequenceNumber()
@@ -181,14 +191,40 @@ class ClipWatcher:
         if seq == self._last_seq:
             return False
         self._last_seq = seq
-        if not self.enabled:
+        want_sync = self.on_text is not None and (self.sync_when is None or bool(self.sync_when()))
+        if not self.enabled and not want_sync:
+            self._skip_next = False          # 이번 변경을 읽지 않으니 '다음 변경 건너뛰기'도 쓴 것이다(안 지우면 나중의 진짜 복사가 건너뛰어진다)
             return False
         text, excluded = read_text()
-        if excluded or text is None:
+        if excluded:                                  # 비밀번호 관리자처럼 '기록·동기화 제외' 표시가 붙은 글은 어디에도 보내지 않는다
             self._skip_next = False
             return False
-        self._skip_next = False
+        if text is None:
+            skip, self._skip_next = self._skip_next, False
+            if want_sync and self.on_image is not None and not skip:
+                self._maybe_image()
+            return False
+        skip, self._skip_next = self._skip_next, False
+        if want_sync and not skip:     # 우리가 직접 넣은 변경(폰에서 받은 글, 기록에서 다시 복사)은 되돌려 보내지 않는다
+            try:
+                self.on_text(text)
+            except Exception as e:
+                self._log(f"clipwatch sync error: {type(e).__name__}")
+        if not self.enabled:
+            return False
         return self.history.add(text) is not None
+
+    def _maybe_image(self):
+        """클립보드에 이미지가 있으면 PNG 로 바꿔 콜백에 준다(글자가 없을 때만 부른다)."""
+        try:
+            import clipimg
+            if not clipimg.clipboard_has_image():
+                return
+            png = clipimg.read_png()
+            if png:
+                self.on_image(png)
+        except Exception as e:
+            self._log(f"clipwatch image error: {type(e).__name__}")
 
     def _run(self):
         while self._running:

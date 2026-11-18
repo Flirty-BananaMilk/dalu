@@ -7,7 +7,7 @@
 //            노치 뒤 화면을 작게 찍어 setDesk(url) 로 넘기고, 여기서 흐리게 깔고 가장자리를 굴절시킨다.
 //  렌즈는 뒤에 칠해진 것이 있어야 보이므로, 렌즈 요소의 조상에는 backdrop-filter 를 두지 않는다(두면 그 안만 비춘다).
 // ========================================================
-const NOTCH_GLASS_TARGETS = ['.btn-ctrl.big', '.pill', '.mbtn', '.ltile', '.pbtn', '.pchip', '.srcbtn', '.volpop'];
+const NOTCH_GLASS_TARGETS = ['.btn-ctrl.big', '.pill', '.mbtn', '.ltile', '.pbtn', '.pchip', '.srcbtn', '.volpop', '.spk-row'];
 let notchGlassMode = 'off';
 let notchGlassObs = null;
 
@@ -23,7 +23,9 @@ function notchLensOpts(el) {
 
 function bodyLensOpts() {
   const k = notchGlassStrength;
-  return { bezel: Math.max(10, 44 * Math.sqrt(k)), scale: 46 * k, blur: 0, saturate: 1.3, brightness: 1.08, dispersion: 0.1 * Math.min(k, 1.5), power: 1.8 };
+  // scaleRatio: 휘는 세기(scale)가 굴절 폭(bezel)의 1.1배를 넘지 않게 한다(glass.js 가 크기마다 적용). 세기 46px 는 높이 140px 쯤 되는 펼친 노치에 맞춘 값이라,
+  // 높이 32px 인 접힌 노치에 그대로 쓰면 가장자리가 뒤의 그림을 노치 아래 바깥(투명한 곳)까지 끌어 와 아래쪽에 색이 다른 띠·보라색 경계선이 생기고 양 끝 곡률 부분 색도 어긋났다.
+  return { bezel: Math.max(10, 44 * Math.sqrt(k)), scale: 46 * k, scaleRatio: 1.1, blur: 0, saturate: 1.3, brightness: 1.08, dispersion: 0.1 * Math.min(k, 1.5), power: 1.8 };
 }
 
 // 스크롤되는 영역(overflow:auto/scroll) 안의 컨트롤은 굴절 렌즈를 쓰지 않는다: 그 안에서는 backdrop-filter 가 뒤 화면을 못 읽고

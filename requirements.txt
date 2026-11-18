@@ -23,3 +23,13 @@ pystray
 # 볼륨 믹서/미디어 키는 ctypes 만 사용 (추가 패키지 없음)
 # 캘린더(.ics) 시간대(TZID) 해석용 (윈도우에는 시간대 데이터가 없어 필요)
 tzdata
+winrt-Windows.Devices.Bluetooth.Advertisement
+# 시스템 탭의 Wi-Fi·블루투스 켜기/끄기(윈도우 무선 장치). 없으면 그 두 스위치만 빠집니다.
+winrt-Windows.Devices.Radios
+# 날씨의 '내 위치'(윈도우 위치 서비스). 없으면 그 기능만 빠지고 고른 도시로 동작합니다.
+winrt-Windows.Devices.Geolocation
+# 폰 앱(Dalu Link) 연결: 이 PC 에서 한 번 만드는 자체 서명 인증서(TLS)와 QR 코드. 설정에서 '폰 앱 연결' 을 켰을 때만 쓴다.
+cryptography
+segno
+# 중계 서버(선택, 모바일 데이터용) 접속: 순수 파이썬 WebSocket 클라이언트. 없으면 중계만 꺼진다.
+websockets

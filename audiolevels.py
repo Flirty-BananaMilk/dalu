@@ -252,7 +252,8 @@ class LevelMonitor:
                     raise OSError("GetBuffer failed")
                 nf = frames.value
                 if nf:
-                    last_packet = time.monotonic()
+                    if not (flags.value & AUDCLNT_BUFFERFLAGS_SILENT):
+                        last_packet = time.monotonic()          # 무음 표시가 붙은 패킷은 재생으로 치지 않는다(아니면 마지막 소리 크기에서 멈춰 있다)
                     if self._needed() and not (flags.value & AUDCLNT_BUFFERFLAGS_SILENT):
                         raw = ctypes.string_at(data.value, nf * channels * (4 if is_float else 2))
                         mono = self._to_mono(raw, nf, channels, is_float)

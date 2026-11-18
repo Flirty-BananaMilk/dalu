@@ -4,7 +4,7 @@
 // 시작 및 전역 입력 연결 (호버/드래그/휠/버튼/컨텍스트 메뉴)
 // ========================================================
 
-const INTERACTIVE = '.btn-ctrl, .prog-hit, .btn-pin, .dots, .pill, .stepper, .sw, input, .shcard, .trow, .chart';
+const INTERACTIVE = '.btn-ctrl, .prog-hit, .btn-pin, .dots, .pill, .stepper, .sw, input, .shcard, .trow, .chart, button, .cell, .wcell, .pm-it';          // 버튼(타일·모드·출처·볼륨 등)을 빠르게 두 번 눌러도 노치 고정이 바뀌지 않는다
 
 function bindAll(sel, handler) {
   for (const el of $$(sel)) el.addEventListener('click', (e) => { e.stopPropagation(); handler(e); });
@@ -19,6 +19,19 @@ function bindInput() {
     slimHit.addEventListener('mouseenter', onIslandEnter);
     slimHit.addEventListener('mouseleave', () => { if (!isExpanded) { clearTimeout(enterTimer); enterTimer = null; } });
   }
+
+  // 이어버드 탭(갤럭시 버즈가 아닐 때): 연결된 기기 목록에서 보여 줄 기기를 고른다
+  const btList = document.getElementById('btList');
+  const updChipEl = $('updChip');
+  if (updChipEl) updChipEl.addEventListener('click', (e) => { e.stopPropagation(); onUpdChip(); });
+  if (btList) btList.addEventListener('click', (e) => {
+    const b = e.target.closest('.btchip');
+    if (!b) return;
+    e.stopPropagation();
+    btIdx = Number(b.dataset.i) || 0;
+    budsKey = '';
+    updateBuds(null);
+  });
 
   // 페이지 전환: 도트 클릭 / 마우스 휠
   $('pageDots').addEventListener('click', (e) => {
@@ -43,7 +56,7 @@ function bindInput() {
     }
     if (!isExpanded) return;
     // 스크롤 가능한 목록 위에서는 페이지를 넘기지 않는다 (할 일 목록, 선반 카드)
-    const sc = e.target.closest('.tlist, .shcards, .lyr.static, .pchips, .pgrid, .lgrid');
+    const sc = e.target.closest('.tlist, .shcards, .lyr.static, .pchips, .pgrid, .lgrid, .pm-grid, .ph-card-body, .sm-list, .sm-msgs');
     if (sc && (sc.scrollHeight > sc.clientHeight || sc.scrollWidth > sc.clientWidth)) return;
     clearTimeout(wheelIdleTimer);
     wheelIdleTimer = setTimeout(() => { wheelAcc = 0; wheelFired = false; }, WHEEL_GESTURE_GAP);   // 제스처 종료

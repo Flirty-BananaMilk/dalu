@@ -28,6 +28,7 @@ def monitor_dpi(hmon):
     """모니터의 실제(유효) DPI. 못 읽으면 96. (GetDpiForMonitor, Windows 8.1 이상)"""
     try:
         dx, dy = ctypes.c_uint(0), ctypes.c_uint(0)
+        ctypes.windll.shcore.GetDpiForMonitor.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.POINTER(ctypes.c_uint), ctypes.POINTER(ctypes.c_uint)]          # 64비트 핸들이 잘리지 않게
         if ctypes.windll.shcore.GetDpiForMonitor(hmon, 0, ctypes.byref(dx), ctypes.byref(dy)) == 0 and dx.value >= 48:
             return int(dx.value)
     except Exception:
@@ -105,16 +106,18 @@ def clamp_pos(pos):
 
 
 def notch_center_x(mon, pos, scale=1.0, half_css=EXPANDED_HALF_CSS):
-    """모니터 mon 에서 노치 가운데의 가로 좌표(물리 픽셀). 기준 폭은 모니터 높이 기준 16:9 폭(더 좁은 화면이면 실제 폭)을
-    모니터 가운데에 두고 5등분한 칸 하나의 폭이다. 펼친 노치(half_css*scale)가 화면 밖으로 나가면 안쪽으로 당긴다."""
+    """모니터 mon 에서 노치 가운데의 가로 좌표(물리 픽셀). 다섯 자리(-2..2)는 모니터 가운데를 기준으로 같은 간격이다.
+    간격은 '모니터 높이 기준 16:9 폭(더 좁은 화면이면 실제 폭)의 1/5' 이되, 맨 끝 자리(±2)에서도 펼친 노치(half_css*scale)가 화면 밖으로
+    나가지 않도록 그 안에서 줄인다(예전에는 끝 두 자리만 안쪽으로 당겨서 가운데-이웃 간격이 이웃-끝 간격보다 훨씬 넓었다)."""
     pos = clamp_pos(pos)
     ref_w = min(mon["width"], mon["height"] * 16.0 / 9.0)
-    cx = mon["left"] + mon["width"] / 2.0 + pos * (ref_w / 5.0)
     margin = half_css * scale
-    lo, hi = mon["left"] + margin, mon["left"] + mon["width"] - margin
-    if lo > hi:                       # 화면이 펼친 노치보다 좁으면 가운데
-        return int(mon["left"] + mon["width"] / 2.0)
-    return int(max(lo, min(hi, cx)))
+    mid = mon["left"] + mon["width"] / 2.0
+    room = mon["width"] / 2.0 - margin                   # 가운데에서 끝 자리까지 갈 수 있는 거리
+    if room < 0:                                         # 화면이 펼친 노치보다 좁으면 가운데
+        return int(mid)
+    step = min(ref_w / 5.0, room / 2.0)
+    return int(mid + pos * step)
 
 
 def placed_x(mon, window_width_px, pos, scale=1.0):

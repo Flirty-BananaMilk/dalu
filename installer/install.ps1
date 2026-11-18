@@ -77,7 +77,7 @@ try {
     }
     $maxRel = 0
     if (Test-Path (Join-Path $Src 'PATHLEN.txt')) { [void][int]::TryParse((Get-Content (Join-Path $Src 'PATHLEN.txt') -Raw).Trim(), [ref]$maxRel) }
-    if (($InstallDir.TrimEnd('').Length + 1 + $maxRel) -gt 250) { throw (T "설치 위치가 너무 길어요. Windows 의 경로 길이 제한(260자) 때문에 더 짧은 폴더를 골라 주세요. (이 위치의 가장 긴 파일 경로: $($InstallDir.TrimEnd('').Length + 1 + $maxRel)자)" "The install location is too long for Windows' 260-character path limit. Please choose a shorter folder. (longest file path here: $($InstallDir.TrimEnd('').Length + 1 + $maxRel) characters)" "安装位置太长，超出了 Windows 的 260 个字符路径限制。请选择更短的文件夹。（此位置最长的文件路径：$($InstallDir.TrimEnd('').Length + 1 + $maxRel) 个字符）" "インストール先が長すぎて、Windows の 260 文字のパス長制限を超えます。もっと短いフォルダーを選んでください。（この場所で最も長いファイルのパス：$($InstallDir.TrimEnd('').Length + 1 + $maxRel) 文字）") }
+    if (($InstallDir.TrimEnd('\').Length + 1 + $maxRel) -gt 250) { throw (T "설치 위치가 너무 길어요. Windows 의 경로 길이 제한(260자) 때문에 더 짧은 폴더를 골라 주세요. (이 위치의 가장 긴 파일 경로: $($InstallDir.TrimEnd('\').Length + 1 + $maxRel)자)" "The install location is too long for Windows' 260-character path limit. Please choose a shorter folder. (longest file path here: $($InstallDir.TrimEnd('\').Length + 1 + $maxRel) characters)" "安装位置太长，超出了 Windows 的 260 个字符路径限制。请选择更短的文件夹。（此位置最长的文件路径：$($InstallDir.TrimEnd('\').Length + 1 + $maxRel) 个字符）" "インストール先が長すぎて、Windows の 260 文字のパス長制限を超えます。もっと短いフォルダーを選んでください。（この場所で最も長いファイルのパス：$($InstallDir.TrimEnd('\').Length + 1 + $maxRel) 文字）") }
     if ([Environment]::OSVersion.Version.Major -lt 10) { throw (T 'Windows 10 이상이 필요해요.' 'Windows 10 or later is required.' '需要 Windows 10 或更高版本。' 'Windows 10 以降が必要です。') }
 
     # --- 업데이트인지 확인: 설치된 버전이 이 설치 파일보다 새것이면 낮추기 전에 묻는다

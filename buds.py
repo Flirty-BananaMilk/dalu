@@ -301,7 +301,10 @@ class BudsService:
     def stop(self):
         self._running = False
         if self._loop:
-            self._loop.call_soon_threadsafe(self._loop.stop)
+            try:
+                self._loop.call_soon_threadsafe(self._loop.stop)
+            except RuntimeError:
+                pass          # 루프가 이미 닫혔다
 
     def snapshot(self):
         with self._lock:
@@ -447,9 +450,9 @@ class BudsService:
     async def _scan_loop(self):
         while self._running:
             try:
-                fresh = self._session_alive() and (time.time() - self._last_status) < STATUS_FRESH
+                stale = self._session_alive() and self._last_status > 0 and (time.time() - self._last_status) >= STATUS_FRESH          # 연결은 열려 있는데 상태가 오래 끊겼다
                 # 연결이 열려 있고 상태가 들어오는 동안에는 GATT 스캔을 하지 않는다 (배터리는 상태 패킷에 들어 있고, 블루투스 라디오 경합도 피한다)
-                if not self._busy and not fresh and not self._session_alive():
+                if not self._busy and (not self._session_alive() or stale):
                     await asyncio.wait_for(self._scan_once(), SCAN_TIMEOUT)
                 snap = self.snapshot()
                 if (self.watch and snap["connected"] and snap["control"] and not self._busy and not self._session_alive()
@@ -489,7 +492,7 @@ class BudsService:
             if chs.status != GattCommunicationStatus.SUCCESS:
                 continue
             for ch in chs.characteristics:
-                key = (dev.device_id, svc.attribute_handle)
+                key = (dev.device_id, svc.attribute_handle, ch.attribute_handle)          # 같은 서비스의 특성을 구분한다
                 if key not in self._pos_cache:
                     pos = None
                     try:
@@ -716,6 +719,10 @@ class BudsService:
                 if not fut.done():
                     fut.set_exception(ConnectionError("control session closed"))
             sess["waiters"].clear()
+            for fut in sess["replies"].values():          # 같은 번호의 응답을 기다리던 요청도 끊김을 알아야 시간 초과까지 붙들리지 않는다
+                if not fut.done():
+                    fut.set_exception(ConnectionError("control session closed"))
+            sess["replies"].clear()
 
     def _set_placement(self, placement):
         """착용 상태 {'left','right'}: 0=연결 끊김, 1=착용, 2=미착용, 3=케이스, 4=닫힌 케이스 (GalaxyBudsClient 의 PlacementStates).

@@ -24,6 +24,11 @@ const STATES = {
   todo:       { w: 420, h: 140, e: 22 },
   timer:      { w: 420, h: 140, e: 22 },
   launcher:   { w: 420, h: 140, e: 22 },
+  sys:        { w: 420, h: 140, e: 22 },
+  power:      { w: 420, h: 140, e: 22 },
+  perf:       { w: 420, h: 140, e: 22 },
+  weather:    { w: 420, h: 140, e: 22 },
+  phone:      { w: 420, h: 140, e: 22 },
   plugins:    { w: 420, h: 140, e: 22 },
   clip:       { w: 420, h: 140, e: 22 },
   agenda:     { w: 420, h: 140, e: 22 },
@@ -31,7 +36,7 @@ const STATES = {
   lyrics:     { w: 520, h: 140, e: 22 }
 };
 const CHIP_EXTRA_W = 60;        // 포모도로 칩이 보일 때 mini 노치가 넓어지는 폭
-const PAGES = ['music', 'pomo', 'timer', 'water', 'shelf', 'todo', 'clip', 'agenda', 'launcher', 'plugins', 'buds'];   // 기본 순서(실제 순서는 설정 tabOrder)
+const PAGES = ['music', 'pomo', 'timer', 'water', 'shelf', 'todo', 'clip', 'agenda', 'launcher', 'sys', 'power', 'perf', 'weather', 'phone', 'plugins', 'buds'];   // 기본 순서(실제 순서는 설정 tabOrder)
 // 이어버드는 연결됐을 때만, 클립보드는 켰을 때만, 일정은 캘린더 주소가 있을 때만 넘길 수 있다 (features2.js 의 pageAvailable)
 function availablePages() {
   return visibleTabs(store.settings, (p) => (typeof pageAvailable === 'function' ? pageAvailable(p) : true));
@@ -56,12 +61,19 @@ const ICONS = {
   volumeOff: 'M16.5 12A4.5 4.5 0 0 0 14 7.97v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51A8.796 8.796 0 0 0 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06a8.99 8.99 0 0 0 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z',
   sun: 'M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69zM12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm0-10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z',
   caps: 'M12 8.41L16.59 13 18 11.59l-6-6-6 6L7.41 13 12 8.41zM6 18h12v-2H6v2z',
+  numlock: 'M4 4h4v4H4zM10 4h4v4h-4zM16 4h4v4h-4zM4 10h4v4H4zM10 10h4v4h-4zM16 10h4v4h-4zM4 16h4v4H4zM10 16h4v4h-4zM16 16h4v4h-4z',
+  scrolllock: 'M12 3l4.5 4.5H13v9h3.5L12 21l-4.5-4.5H11v-9H7.5z',
+  insertkey: 'M7 3h10v2h-4v14h4v2H7v-2h4V5H7z',
+  download: 'M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z',      // 새 버전 알림
   globe: 'M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95a15.65 15.65 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.92 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.987 7.987 0 0 1 5.08 16zm2.95-8H5.08a7.987 7.987 0 0 1 4.33-3.56A15.65 15.65 0 0 0 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2 0-.68.07-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z',
   charge: 'M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4zM11 20v-5.5H9L13 7v5.5h2L11 20z',
   batteryLow: 'M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.34C7 21.4 7.6 22 8.33 22h7.34c.73 0 1.33-.6 1.33-1.33V5.33C17 4.6 16.4 4 15.67 4zM13 18h-2v-2h2v2zm0-4h-2V9h2v5z',
   wifi: 'M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3a4.237 4.237 0 0 0-6 0zm-4-4l2 2a7.074 7.074 0 0 1 10 0l2-2C15.14 9.14 8.87 9.14 5 13z',
   wifiOff: 'M23.64 7c-.45-.34-4.93-4-11.64-4-1.5 0-2.89.19-4.15.48L18.18 13.8 23.64 7zm-6.6 8.22L3.27 1.44 2 2.72l2.05 2.06C1.91 5.76.59 6.82.36 7l11.63 14.49.01.01.01-.01 3.9-4.86 3.32 3.32 1.27-1.27-3.46-3.46z',
   headphones: 'M12 1a9 9 0 0 0-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7a9 9 0 0 0-9-9z',
+  phone: 'M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z',
+  call: 'M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z',
+  missed: 'M19.59 7L12 14.59 6.41 9H11V7H3v8h2v-4.59l7 7 9-9z',
   timer: 'M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42A8.962 8.962 0 0 0 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9a8.994 8.994 0 0 0 7.03-14.61zM12 20c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z',
   drop: 'M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8zm0 18c-3.35 0-6-2.57-6-6.2 0-2.34 1.95-5.44 6-9.14 4.05 3.7 6 6.79 6 9.14 0 3.63-2.65 6.2-6 6.2z',
   check: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z',
@@ -80,7 +92,9 @@ const ICONS = {
   repeatOne: 'M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4zm-4-2V9h-1l-2 1v1h1.5v4H13z'
 };
 function iconSvg(name) {
-  return `<svg viewBox="0 0 24 24"><path d="${ICONS[name]}"/></svg>`;
+  if (ICONS[name]) return `<svg viewBox="0 0 24 24"><path d="${ICONS[name]}"/></svg>`;
+  const u = typeof uiIconSvg === 'function' ? uiIconSvg(name, 18) : null;          // 이 목록에 없는 이름(folder, image, callring 등)은 선 그림 모음(icons.js)에서 가져온다(없으면 빈 그림: d="undefined" 가 되지 않게)
+  return u || '<svg viewBox="0 0 24 24"></svg>';
 }
 
 // ========================================================
@@ -102,11 +116,14 @@ const I18N = {
     menuLang: '언어', exit: '종료',
     settings: '설정', focusStarted: '집중 시작', dndOnSub: '방해 금지를 켰어요', launcherTitle: '바로가기', launcherEmpty: '설정에서 바로가기를 추가해 보세요', launcherFailed: '실행하지 못했어요', launcherEditTitle: '바로가기 편집',
     pluginsEmpty: '설정에서 플러그인을 켜 주세요', pluginFailed: '실행하지 못했어요', pluginDone: '완료',
-    timerMode: '타이머', stopwatchMode: '스톱워치', tmrSetTime: '시간 직접 설정', unitHour: '시간', unitMin: '분', budsOff: '연결 끊김', lapTitle: '구간 기록', lapEmpty: '깃발 버튼으로 구간 기록', timerDone: '타이머 종료', timerDoneSub: '{n}분이 지났어요',
+    timerMode: '타이머', stopwatchMode: '스톱워치', tmrSetTime: '시간 직접 설정', unitHour: '시간', unitMin: '분', budsOff: '연결 끊김', updChip: '업데이트 {v}', updChipProgress: '받는 중 {p}%', updChipInstalling: '설치 중…', updChipFail: '실패 · 다시 시도', updChipTip: 'Dalu {v}(으)로 업데이트해요. 눌러서 앱 안에서 받아 설치해요.', updTitle: 'Dalu {v} 업데이트가 나왔어요', updSub: '설정 › 정보에서 업데이트할 수 있어요', btBattery: '배터리', btBatteryOnly: '배터리만 표시', btLowMsg: '배터리가 얼마 남지 않았어요', btStale: '신호가 끊겨 {n}초 전 값이에요', lapTitle: '구간 기록', lapEmpty: '깃발 버튼으로 구간 기록', timerDone: '타이머 종료', timerDoneSub: '{n}분이 지났어요',
     clipTitle: '클립보드', clipClear: '모두 지우기', clipEmpty: '복사한 글이 여기에 쌓여요', clipOff: '클립보드 기록이 꺼져 있어요', openSettings: '설정 열기', clipCopied: '다시 복사했어요',
     delete: '삭제', failed: '실패했어요', agoNow: '방금', agoMin: '{n}분 전', agoHour: '{n}시간 전',
     agendaTitle: '일정', agendaNoTitle: '(제목 없음)', agendaEmpty: '앞으로 7일 동안 일정이 없어요', agendaNoSource: '설정에서 캘린더 주소를 넣어 주세요', agendaError: '캘린더를 불러오지 못했어요',
-    agendaAllDay: '종일', agendaNow: '진행 중', agendaInMin: '{n}분 후', agendaTomorrow: '내일', agendaRefreshing: '다시 불러오는 중…', agendaRefreshTitle: '새로고침', agendaStartsIn: '{n}분 후 시작', tab_music: '음악', tab_pomo: '집중', tab_timer: '타이머', tab_water: '물', tab_shelf: '선반', tab_todo: '할 일', tab_clip: '클립보드', tab_agenda: '일정', tab_launcher: '바로가기', tab_plugins: '플러그인', tab_buds: '이어버드', agendaViewList: '목록', agendaViewWeek: '주', agendaViewMonth: '월', agendaToday: '오늘', agendaDayEmpty: '이 날은 일정이 없어요', agendaCont: '이어짐', agendaPrev: '이전', agendaNext: '다음',
+    perfGpu: 'GPU', wxNoLoc: '위치를 알 수 없어요. 윈도우 설정에서 위치 서비스를 켜거나, 달루 설정에서 도시를 골라 주세요.', wxFallback: '위치를 읽지 못해 고른 도시',
+    wxAirEst: '추정', wxAirSrcStation: '{s} 측정소 {t} 기준 실측값', wxAirSrcModel: '측정소 값이 아니라 예측 모델의 추정값이에요 (설정 › 날씨에서 키를 넣으면 실측값)', wxAirProvider: '출처: {p}', wxAirKeyBad: '입력한 키가 거절되어 모델 값을 보여 줘요',
+    waterOffNote: '물 마시기가 꺼져 있어요 · 알림이 오지 않아요', todoRemindOff: '마감 알림 꺼짐',
+    agendaAllDay: '종일', agendaNow: '진행 중', agendaInMin: '{n}분 후', agendaTomorrow: '내일', agendaRefreshing: '다시 불러오는 중…', agendaRefreshTitle: '새로고침', agendaStartsIn: '{n}분 후 시작', spkBack: '뒤로', spkScanning: '찾는 중…', spkNone: '찾은 기기가 없어요', spkConnected: '연결됨', spkSaved: '저장됨', spkConnecting: '연결 중…', spkConnect: '연결', spkPassword: '비밀번호', spkPaired: '짝지어짐', spkHintWifi: '눌러서 연결', spkHintBt: '눌러서 연결/해제', spkUnsupported: '기업용 네트워크는 윈도우 설정에서 연결해 주세요', spkFailed: '연결하지 못했어요', spkBadPw: '비밀번호를 확인해 주세요', spkHold: '꾹 누르면 목록에서 고를 수 있어요', tab_perf: '성능', tab_phone: '휴대폰', phoneReplyPh: '답장 입력…', phoneSend: '보내기', phoneReplySent: '답장을 보냈어요', phoneReplyFail: '답장을 보내지 못했어요', phoneDismiss: '닫기', phoneMuteApp: '이 앱의 알림 끄기', phoneMirror: '화면 보기', phoneHint_mirror: 'PC에서 폰 화면 보기(폰에서 알림을 눌러 허용해야 시작돼요)', phoneMirrorOff: '설정 › Dalu Link 에서 ‘PC에서 폰 화면 보기’를 켜 주세요', phoneMirrorOpened: '폰 화면 창을 열었어요 · 폰에서 알림을 눌러 허용해 주세요', phoneMutedApp: '{app} 알림을 껐어요 · 설정 › Dalu Link 에서 다시 켤 수 있어요', phoneReplyNoLink: '폰 앱과 연결이 끊겼어요', phoneReplyGoneLink: '폰에서 이미 지워진 알림이에요', phoneTitle: '휴대폰', phoneRinger_sound: '소리', phoneRinger_vibrate: '진동', phoneRinger_mute: '무음', phoneDnd: '방해 금지', phoneRing: '소리 재생', phoneRinging: '울리는 중', phoneBattN: '배터리 {n}%', phoneMissedN: '부재중 {n}', phoneUnavail: '이 PC에서는 쓸 수 없어요', phoneGroup: '단체톡', phoneSms: '메시지', smNew: '새 문자', smTo: '받는 사람(번호 또는 이름)', smPh: '문자 입력…', smEmpty: '문자가 없어요', smPerm: '폰 앱에서 문자 권한을 허용해 주세요', smFail: '문자를 불러오지 못했어요', smSent: '문자를 보냈어요', smSendFail: '문자를 보내지 못했어요', smNoAddr: '받는 사람을 먼저 입력해 주세요', smYou: '나', pmNewTitle: '폰에 새 사진', pmNewSub: '{n}개 · 펼쳐서 가져오기', phoneMedia: '갤러리', pmAll: '전체', pmImage: '사진', pmVideo: '동영상', pmGet: '가져오기', pmMore: '더 보기', pmEmpty: '사진·동영상이 없어요', pmPerm: '폰 앱에서 사진·동영상 접근을 허용해 주세요', pmLoading: '불러오는 중…', pmFail: '폰 사진을 불러오지 못했어요', pmPulling: '{n}개를 가져오는 중이에요', phoneBack: '뒤로', phoneFileN: '{n}개 파일', phoneFiles: '파일 전송', phoneFileSending: '폰으로 보내는 중', phoneFileReceiving: '폰에서 받는 중', phoneFileWaiting: '폰이 받기를 기다리는 중', phoneFileSent: '폰으로 보냈어요', phoneFileGot: '폰에서 받았어요', phoneFileFailed: '파일 전송에 실패했어요', phoneFileCanceled: '전송을 취소했어요', phoneFileDeclined: '폰이 파일을 받지 않았어요', phoneFileNoLink: '폰과 연결되어 있지 않아요', phoneFileTooBig: '파일이 너무 커요(8 GB 까지)', phoneFileSpace: '받는 쪽 저장 공간이 부족해요', phoneFileHash: '받은 파일이 달라서 취소했어요(다시 보내 주세요)', phoneFileOpen: '열기', phoneFileFolder: '폴더', phoneFileCancel: '취소', phoneFileDone: '완료', shPhoneDrop: '휴대폰으로 보내기', phoneFileNone: '보낼 파일을 고르지 않았어요', phoneRecord: '녹음', phoneNeedCallScreen: '폰 화면을 켜고 잠금을 푼 뒤 다시 눌러 주세요(통화 화면을 열 수 없었어요)', phoneNoButton: '폰의 통화 화면에서 이 버튼을 찾지 못했어요', phoneNeedA11y: '폰 앱의 \'복사 감지\'(접근성)를 켜야 스피커·녹음을 누를 수 있어요', phoneSpeaker: '스피커', phoneMute: '음소거', phoneAudioRefused: '이 폰은 통화 중 스피커·음소거를 앱에서 바꾸지 못하게 막아요', phoneCallTime: '통화 {t}', phoneCall: '전화', phoneAnswer: '받기', phoneDecline: '거절', phoneHangup: '끊기', phoneCalling: '전화가 오고 있어요', phoneInCall: '통화 중', phoneOutCall: '발신 중', phoneMissedCall: '부재중 전화', phoneUnknownNumber: '알 수 없는 번호', phoneDialPh: '번호 또는 이름', phoneDialGo: '걸기', phoneNeedCallPerm: '폰 앱에서 ‘전화·연락처’ 권한을 허용해 주세요', phoneBadNumber: '전화번호가 올바르지 않아요', phoneDialing: '폰으로 전화를 걸어요', phoneNoContacts: '찾은 연락처가 없어요', phoneContactsPerm: '폰 앱에서 연락처 권한을 허용해 주세요', phoneHint_call: '전화 걸기: 번호를 쓰거나 연락처 이름으로 찾아요', phoneClipGot: '폰에서 복사한 글을 받았어요', phoneClipGotSub: '{n}자 · 지금 붙여넣을 수 있어요', phoneNoPhone: '연결된 폰이 없어요', phoneLinkOff: '폰 앱 연결이 꺼져 있어요', phoneConnect: '폰 앱 연결', phoneNeedPolicy: '폰에서 ‘방해 금지 접근’을 허용해야 해요 (Dalu Link 앱의 준비 항목)', phoneFail: '폰에서 바꾸지 못했어요', phoneHint_ringer: '벨소리 모드: 누를 때마다 소리 → 진동 → 무음', phoneHint_dnd: '폰의 방해 금지 켜기/끄기', phoneHint_ring: '폰이 어디 있는지 모를 때: 폰이 크게 울려요 (다시 누르면 멈춰요)', tab_weather: '날씨', tab_dday: 'D-day', perfTitle: '성능', perfCpu: 'CPU', perfMem: '메모리', perfNet: '네트워크', perfNoData: '읽는 중…', perfPeak: '최고', wxRefresh: '새로고침', wxOffMsg: '설정에서 날씨를 켜고 도시를 골라 주세요', wxNoCity: '날씨를 보려면 도시를 골라 주세요', wxOpenSettings: '설정 열기', wxErr: '날씨를 불러오지 못했어요', wxLoading: '불러오는 중…', wxFeels: '체감 {n}°', wxHiLo: '최고 {hi}° · 최저 {lo}°', wxToday: '오늘', wxUpdatedAt: '{t} 기준', wxStale: '(옛 정보)', wx_clear: '맑음', wx_partly: '구름 조금', wx_cloudy: '흐림', wx_fog: '안개', wx_drizzle: '이슬비', wx_rain: '비', wx_snow: '눈', wx_thunder: '천둥번개', ddayEditTitle: 'D-day 편집', ddayEmpty: '설정에서 D-day를 추가하거나 달력에서 가져오세요', ddayDay: 'D-Day', ddayCal: '달력', pwrHint_lock: '앱은 그대로 두고 화면만 잠가요 (돌아올 때 비밀번호)', pwrHint_screenoff: '모니터만 꺼요. PC 는 계속 돌아가요', pwrHint_sleep: 'PC 를 재워요. 앱·네트워크가 멈춰요', pwrHint_signout: '내 앱을 모두 닫고 계정에서 나가요', pwrHint_restart: 'PC 를 껐다 켜요 (저장 안 한 작업 주의)', pwrHint_shutdown: 'PC 를 완전히 꺼요 (저장 안 한 작업 주의)', ddayFull: 'D-day 는 40개까지예요', ddayMark: 'D-day 로 표시', ddayUnmark: 'D-day 에서 빼기', ddayDone: '완료', ddayDelete: '삭제', wxAir: '미세먼지 {g}', wxAirTip: '초미세먼지(PM2.5) {a}㎍/㎥ · 미세먼지(PM10) {b}㎍/㎥ (모델 추정값)', wxAir1: '좋음', wxAir2: '보통', wxAir3: '나쁨', wxAir4: '매우 나쁨', tab_sys: '시스템', tab_power: '전원', sysTitle: '시스템', powerTitle: '전원', sysVolume: '볼륨', sysBrightness: '밝기', sysMuteTitle: '음소거', sysBattery: '배터리', sysCharging: '충전 중', sysPlugged: '전원 연결됨', sysWifi: 'Wi-Fi', sysBluetooth: '블루투스', sysMic: '마이크', sysOn: '켜짐', sysOff: '꺼짐', sysMuted: '음소거', sysNotConnected: '연결 안 됨', sysFail: '바꾸지 못했어요', pwrLock: '잠금', pwrScreenOff: '화면 끄기', pwrSleep: '절전', pwrSignOut: '로그아웃', pwrRestart: '다시 시작', pwrShutdown: '전원 끄기', pwrAgain: '한 번 더 누르세요', tab_music: '음악', tab_pomo: '집중', tab_timer: '타이머', tab_water: '물', tab_shelf: '선반', tab_todo: '할 일', tab_clip: '클립보드', tab_agenda: '일정', tab_launcher: '바로가기', tab_plugins: '플러그인', tab_buds: '이어버드', agendaViewList: '목록', agendaViewWeek: '주', agendaViewMonth: '월', agendaToday: '오늘', agendaDayEmpty: '이 날은 일정이 없어요', agendaCont: '이어짐', agendaPrev: '이전', agendaNext: '다음',
     sourceSwitch: '재생 소스 전환', sourceSwitched: '재생 소스를 바꿨어요', volumeTitle: '볼륨', muteTitle: '음소거', menuSettings: '설정…', testAlert: '테스트 알림', testAlertSub: '이렇게 표시돼요', done: '완료', cancel: '취소', add: '추가', reset: '초기화', undo: '되돌리기',
     // pomodoro
     pomoFocus: '집중 시간', pomoBreak: '짧은 휴식', start: '시작', pause: '일시정지', resume: '계속',
@@ -120,9 +137,9 @@ const I18N = {
     shHint: '파일을 여기로 끌어다 놓으세요', shHint2: '또는 + 버튼으로 추가', shAdd: '파일 추가', shClear: '모두 지우기',
     shAdded: '선반에 {n}개 추가됨', shMissing: '파일을 찾을 수 없어요', shDragOut: '끌어서 내보내기 · 클릭하면 열기',
     // todo
-    todoTitle: '오늘 할 일', todoAdd: '할 일 추가', todoEmpty: '할 일이 없어요\n+ 버튼으로 추가해 보세요', todoPlaceholder: '할 일을 입력하세요', todoTimeHint: '알림 시각(선택)', todoDue: '할 일 알림', todoSoon: '{n}분 뒤 마감', todoTimeNone: '시간 없음', todoTimeClear: '시간 지우기', snoozeTitle: '{n}분 미루기', snoozed: '{n}분 뒤에 다시 알려요', snoozedUntil: '{t}에 다시 알려요',
+    todoToday: '오늘', todoDateClear: '오늘로', todoDateHint: '날짜(기본: 오늘)', todoTitle: '할 일', todoAdd: '할 일 추가', todoEmpty: '할 일이 없어요\n+ 버튼으로 추가해 보세요', todoPlaceholder: '할 일을 입력하세요', todoTimeHint: '알림 시각(선택)', todoDue: '할 일 알림', todoSoon: '{n}분 뒤 마감', todoTimeNone: '시간 없음', todoTimeClear: '시간 지우기', snoozeTitle: '{n}분 미루기', snoozed: '{n}분 뒤에 다시 알려요', snoozedUntil: '{t}에 다시 알려요',
     // system
-    volume: '음량', muted: '음소거', brightness: '밝기', capsOn: 'Caps Lock 켜짐', capsOff: 'Caps Lock 꺼짐', numOn: 'Num Lock 켜짐', numOff: 'Num Lock 꺼짐', scrollOn: 'Scroll Lock 켜짐', scrollOff: 'Scroll Lock 꺼짐', upNext: '다음 곡',  inputLang: '입력 언어',
+    volume: '음량', muted: '음소거', brightness: '밝기', capsOn: 'Caps Lock 켜짐', capsOff: 'Caps Lock 꺼짐', insertKey: 'Insert', insertOver: '덮어쓰기 모드', insertIns: '삽입 모드', numOn: 'Num Lock 켜짐', numOff: 'Num Lock 꺼짐', scrollOn: 'Scroll Lock 켜짐', scrollOff: 'Scroll Lock 꺼짐', upNext: '다음 곡',  inputLang: '입력 언어',
     charging: '충전기 연결됨', unplugged: '충전기 분리됨', batteryLow: '배터리 부족', netOn: '인터넷 연결됨', netOff: '인터넷 연결 끊김',
     audioOut: '오디오 출력', connected: '연결됨', percentN: '{n}%'
   },
@@ -141,11 +158,14 @@ const I18N = {
     menuLang: 'Language', exit: 'Quit',
     settings: 'Settings', focusStarted: 'Focus started', dndOnSub: 'Do Not Disturb is on', launcherTitle: 'Shortcuts', launcherEmpty: 'Add shortcuts in Settings', launcherFailed: 'Could not launch it', launcherEditTitle: 'Edit shortcuts',
     pluginsEmpty: 'Turn on plugins in Settings', pluginFailed: 'Could not run it', pluginDone: 'Done',
-    timerMode: 'Timer', stopwatchMode: 'Stopwatch', tmrSetTime: 'Set the time', unitHour: 'h', unitMin: 'min', budsOff: 'Disconnected', lapTitle: 'Record a lap', lapEmpty: 'Press the flag to record laps', timerDone: 'Timer finished', timerDoneSub: '{n} min have passed',
+    timerMode: 'Timer', stopwatchMode: 'Stopwatch', tmrSetTime: 'Set the time', unitHour: 'h', unitMin: 'min', budsOff: 'Disconnected', updChip: 'Update {v}', updChipProgress: 'Downloading {p}%', updChipInstalling: 'Installing…', updChipFail: 'Failed · retry', updChipTip: 'Update to Dalu {v}. Click to download and install inside the app.', updTitle: 'Dalu {v} is out', updSub: 'Update from Settings › About', btBattery: 'Battery', btBatteryOnly: 'Battery only', btLowMsg: 'Battery is low', btStale: 'No signal; value from {n} s ago', lapTitle: 'Record a lap', lapEmpty: 'Press the flag to record laps', timerDone: 'Timer finished', timerDoneSub: '{n} min have passed',
     clipTitle: 'Clipboard', clipClear: 'Clear all', clipEmpty: 'Things you copy will pile up here', clipOff: 'Clipboard history is off', openSettings: 'Open settings', clipCopied: 'Copied again',
     delete: 'Delete', failed: 'Failed', agoNow: 'just now', agoMin: '{n} min ago', agoHour: '{n} h ago',
     agendaTitle: 'Agenda', agendaNoTitle: '(No title)', agendaEmpty: 'Nothing on your calendar for the next 7 days', agendaNoSource: 'Add a calendar address in Settings', agendaError: 'Could not load the calendar',
-    agendaAllDay: 'All day', agendaNow: 'Now', agendaInMin: 'in {n} min', agendaTomorrow: 'Tomorrow', agendaRefreshing: 'Refreshing…', agendaRefreshTitle: 'Refresh', agendaStartsIn: 'starts in {n} min', tab_music: 'Music', tab_pomo: 'Focus', tab_timer: 'Timer', tab_water: 'Water', tab_shelf: 'Shelf', tab_todo: 'To-do', tab_clip: 'Clipboard', tab_agenda: 'Agenda', tab_launcher: 'Shortcuts', tab_plugins: 'Plugins', tab_buds: 'Earbuds', agendaViewList: 'List', agendaViewWeek: 'Week', agendaViewMonth: 'Month', agendaToday: 'Today', agendaDayEmpty: 'Nothing on this day', agendaCont: 'Continues', agendaPrev: 'Previous', agendaNext: 'Next',
+    perfGpu: 'GPU', wxNoLoc: 'Your location is unavailable. Turn on the Windows location service, or pick a city in Dalu settings.', wxFallback: 'Location unavailable',
+    wxAirEst: 'estimate', wxAirSrcStation: 'Measured at the {s} station, as of {t}', wxAirSrcModel: 'A forecast-model estimate, not a station measurement (add a key in Settings › Weather for measured values)', wxAirProvider: 'Source: {p}', wxAirKeyBad: 'The key you entered was rejected, so a model value is shown',
+    waterOffNote: 'Water is off · no reminders', todoRemindOff: 'Due alerts off',
+    agendaAllDay: 'All day', agendaNow: 'Now', agendaInMin: 'in {n} min', agendaTomorrow: 'Tomorrow', agendaRefreshing: 'Refreshing…', agendaRefreshTitle: 'Refresh', agendaStartsIn: 'starts in {n} min', spkBack: 'Back', spkScanning: 'Looking…', spkNone: 'Nothing found', spkConnected: 'Connected', spkSaved: 'Saved', spkConnecting: 'Connecting…', spkConnect: 'Connect', spkPassword: 'Password', spkPaired: 'Paired', spkHintWifi: 'Tap to connect', spkHintBt: 'Tap to connect / disconnect', spkUnsupported: 'Enterprise networks must be joined in Windows settings', spkFailed: 'Could not connect', spkBadPw: 'Check the password', spkHold: 'Hold to pick from a list', tab_perf: 'Performance', tab_phone: 'Phone', phoneReplyPh: 'Type a reply…', phoneSend: 'Send', phoneReplySent: 'Reply sent', phoneReplyFail: 'Could not send the reply', phoneDismiss: 'Dismiss', phoneMuteApp: 'Turn off notifications from this app', phoneMirror: 'Screen', phoneHint_mirror: 'View the phone screen on this PC (tap the notification on the phone to allow)', phoneMirrorOff: 'Turn on “View the phone screen on this PC” in Settings › Dalu Link', phoneMirrorOpened: 'Opened the phone screen window · tap the notification on the phone to allow', phoneMutedApp: '{app} notifications turned off · turn them back on in Settings › Dalu Link', phoneReplyNoLink: 'The phone app is not connected', phoneReplyGoneLink: 'This notification is already gone on the phone', phoneTitle: 'Phone', phoneRinger_sound: 'Sound', phoneRinger_vibrate: 'Vibrate', phoneRinger_mute: 'Mute', phoneDnd: 'Do not disturb', phoneRing: 'Find phone', phoneRinging: 'Ringing', phoneBattN: 'Battery {n}%', phoneMissedN: 'Missed {n}', phoneUnavail: 'Not available on this PC', phoneGroup: 'Group chat', phoneSms: 'Messages', smNew: 'New message', smTo: 'To (number or name)', smPh: 'Type a message…', smEmpty: 'No messages', smPerm: 'Allow SMS access in the phone app', smFail: 'Could not load messages', smSent: 'Message sent', smSendFail: 'Could not send the message', smNoAddr: 'Enter who to send it to first', smYou: 'Me', pmNewTitle: 'New on the phone', pmNewSub: '{n} item(s) · expand to get them', phoneMedia: 'Gallery', pmAll: 'All', pmImage: 'Photos', pmVideo: 'Videos', pmGet: 'Get', pmMore: 'More', pmEmpty: 'No photos or videos', pmPerm: 'Allow photo and video access in the phone app', pmLoading: 'Loading…', pmFail: 'Could not load photos from the phone', pmPulling: 'Getting {n} item(s)', phoneBack: 'Back', phoneFileN: '{n} files', phoneFiles: 'Send files', phoneFileSending: 'Sending to phone', phoneFileReceiving: 'Receiving from phone', phoneFileWaiting: 'Waiting for the phone', phoneFileSent: 'Sent to the phone', phoneFileGot: 'Received from the phone', phoneFileFailed: 'File transfer failed', phoneFileCanceled: 'Transfer canceled', phoneFileDeclined: 'The phone did not accept the file', phoneFileNoLink: 'Not connected to the phone', phoneFileTooBig: 'The file is too big (up to 8 GB)', phoneFileSpace: 'Not enough storage on the receiving side', phoneFileHash: 'The received file did not match, so it was canceled (send it again)', phoneFileOpen: 'Open', phoneFileFolder: 'Folder', phoneFileCancel: 'Cancel', phoneFileDone: 'Done', shPhoneDrop: 'Send to phone', phoneFileNone: 'No file was chosen', phoneRecord: 'Record', phoneNeedCallScreen: 'Turn on and unlock the phone, then try again (the call screen could not be opened)', phoneNoButton: 'Could not find this button on the phone\'s call screen', phoneNeedA11y: 'Turn on the phone app\'s copy detection (Accessibility) to press Speaker or Record', phoneSpeaker: 'Speaker', phoneMute: 'Mute', phoneAudioRefused: 'This phone does not let apps change speaker or mute during a call', phoneCallTime: 'Call {t}', phoneCall: 'Call', phoneAnswer: 'Answer', phoneDecline: 'Decline', phoneHangup: 'Hang up', phoneCalling: 'Incoming call', phoneInCall: 'On a call', phoneOutCall: 'Calling…', phoneMissedCall: 'Missed call', phoneUnknownNumber: 'Unknown number', phoneDialPh: 'Number or name', phoneDialGo: 'Call', phoneNeedCallPerm: 'Allow “Calls and contacts” in the phone app', phoneBadNumber: 'That phone number is not valid', phoneDialing: 'Calling from the phone', phoneNoContacts: 'No contacts found', phoneContactsPerm: 'Allow contacts access in the phone app', phoneHint_call: 'Place a call: type a number or search a contact name', phoneClipGot: 'Got the text you copied on the phone', phoneClipGotSub: '{n} characters · paste it now', phoneNoPhone: 'No phone connected', phoneLinkOff: 'Phone app connection is off', phoneConnect: 'Connect phone', phoneNeedPolicy: 'Allow “Do Not Disturb access” on the phone (Dalu Link app › Setup)', phoneFail: 'Could not change it on the phone', phoneHint_ringer: 'Ringer mode: each tap goes Sound → Vibrate → Mute', phoneHint_dnd: 'Turn the phone’s Do not disturb on or off', phoneHint_ring: 'Lost your phone? It rings loudly (tap again to stop)', tab_weather: 'Weather', tab_dday: 'D-day', perfTitle: 'Performance', perfCpu: 'CPU', perfMem: 'Memory', perfNet: 'Network', perfNoData: 'Reading…', perfPeak: 'Peak', wxRefresh: 'Refresh', wxOffMsg: 'Turn on Weather and pick a city in Settings', wxNoCity: 'Pick a city to see the weather', wxOpenSettings: 'Open settings', wxErr: 'Could not load the weather', wxLoading: 'Loading…', wxFeels: 'Feels {n}°', wxHiLo: 'High {hi}° · Low {lo}°', wxToday: 'Today', wxUpdatedAt: 'as of {t}', wxStale: '(old data)', wx_clear: 'Clear', wx_partly: 'Partly cloudy', wx_cloudy: 'Cloudy', wx_fog: 'Fog', wx_drizzle: 'Drizzle', wx_rain: 'Rain', wx_snow: 'Snow', wx_thunder: 'Thunderstorm', ddayEditTitle: 'Edit D-days', ddayEmpty: 'Add D-days in Settings or pull them from your calendar', ddayDay: 'D-Day', ddayCal: 'Calendar', pwrHint_lock: 'Locks the screen, your apps keep running (password to return)', pwrHint_screenoff: 'Only the monitor turns off, the PC keeps running', pwrHint_sleep: 'Puts the PC to sleep: apps and network pause', pwrHint_signout: 'Closes all your apps and ends your session', pwrHint_restart: 'Restarts the PC (save your work first)', pwrHint_shutdown: 'Turns the PC fully off (save your work first)', ddayFull: 'Up to 40 D-days', ddayMark: 'Mark as D-day', ddayUnmark: 'Remove from D-days', ddayDone: 'Done', ddayDelete: 'Delete', wxAir: 'Air {g}', wxAirTip: 'PM2.5 {a} µg/m³ · PM10 {b} µg/m³ (modelled estimate)', wxAir1: 'Good', wxAir2: 'Moderate', wxAir3: 'Poor', wxAir4: 'Very poor', tab_sys: 'System', tab_power: 'Power', sysTitle: 'System', powerTitle: 'Power', sysVolume: 'Volume', sysBrightness: 'Brightness', sysMuteTitle: 'Mute', sysBattery: 'Battery', sysCharging: 'Charging', sysPlugged: 'Plugged in', sysWifi: 'Wi-Fi', sysBluetooth: 'Bluetooth', sysMic: 'Mic', sysOn: 'On', sysOff: 'Off', sysMuted: 'Muted', sysNotConnected: 'Not connected', sysFail: 'Could not change it', pwrLock: 'Lock', pwrScreenOff: 'Screen off', pwrSleep: 'Sleep', pwrSignOut: 'Sign out', pwrRestart: 'Restart', pwrShutdown: 'Shut down', pwrAgain: 'Press again to confirm', tab_music: 'Music', tab_pomo: 'Focus', tab_timer: 'Timer', tab_water: 'Water', tab_shelf: 'Shelf', tab_todo: 'To-do', tab_clip: 'Clipboard', tab_agenda: 'Agenda', tab_launcher: 'Shortcuts', tab_plugins: 'Plugins', tab_buds: 'Earbuds', agendaViewList: 'List', agendaViewWeek: 'Week', agendaViewMonth: 'Month', agendaToday: 'Today', agendaDayEmpty: 'Nothing on this day', agendaCont: 'Continues', agendaPrev: 'Previous', agendaNext: 'Next',
     sourceSwitch: 'Switch playback source', sourceSwitched: 'Playback source changed', volumeTitle: 'Volume', muteTitle: 'Mute', menuSettings: 'Settings…', testAlert: 'Test alert', testAlertSub: 'This is how alerts look', done: 'Done', cancel: 'Cancel', add: 'Add', reset: 'Reset', undo: 'Undo',
     pomoFocus: 'Focus time', pomoBreak: 'Short break', start: 'Start', pause: 'Pause', resume: 'Resume',
     toBreak: 'Take a break', toFocus: 'Back to focus', minutesN: '{n} min', pomoToday: '{n} done today',
@@ -155,8 +175,8 @@ const I18N = {
     waterTime: 'Time to drink water', waterAdded: '+{ml} ml', minutesUnit: 'min', hourUnit: 'h',
     shHint: 'Drop files here', shHint2: 'or add with the + button', shAdd: 'Add files', shClear: 'Clear all',
     shAdded: '{n} added to shelf', shMissing: 'File not found', shDragOut: 'Drag out anytime · click to open',
-    todoTitle: "Today's tasks", todoAdd: 'Add task', todoEmpty: 'No tasks yet\nTap + to add one', todoPlaceholder: 'What needs doing?', todoTimeHint: 'Reminder time (optional)', todoDue: 'Task due', todoSoon: 'Due in {n} min', todoTimeNone: 'No time', todoTimeClear: 'Clear time', snoozeTitle: 'Snooze {n} min', snoozed: 'I’ll remind you again in {n} min', snoozedUntil: 'Reminds again at {t}',
-    volume: 'Volume', muted: 'Muted', brightness: 'Brightness', capsOn: 'Caps Lock on', capsOff: 'Caps Lock off', numOn: 'Num Lock on', numOff: 'Num Lock off', scrollOn: 'Scroll Lock on', scrollOff: 'Scroll Lock off', upNext: 'Up next',  inputLang: 'Input language',
+    todoToday: 'Today', todoDateClear: 'Today', todoDateHint: 'Date (default: today)', todoTitle: "Tasks", todoAdd: 'Add task', todoEmpty: 'No tasks yet\nTap + to add one', todoPlaceholder: 'What needs doing?', todoTimeHint: 'Reminder time (optional)', todoDue: 'Task due', todoSoon: 'Due in {n} min', todoTimeNone: 'No time', todoTimeClear: 'Clear time', snoozeTitle: 'Snooze {n} min', snoozed: 'I’ll remind you again in {n} min', snoozedUntil: 'Reminds again at {t}',
+    volume: 'Volume', muted: 'Muted', brightness: 'Brightness', capsOn: 'Caps Lock on', capsOff: 'Caps Lock off', insertKey: 'Insert', insertOver: 'Overwrite mode', insertIns: 'Insert mode', numOn: 'Num Lock on', numOff: 'Num Lock off', scrollOn: 'Scroll Lock on', scrollOff: 'Scroll Lock off', upNext: 'Up next',  inputLang: 'Input language',
     charging: 'Charger connected', unplugged: 'Charger unplugged', batteryLow: 'Battery low', netOn: 'Internet connected', netOff: 'Internet disconnected',
     audioOut: 'Audio output', connected: 'connected', percentN: '{n}%'
   }
@@ -165,6 +185,16 @@ const I18N = {
 // 중국어(간체)·일본어는 i18n_cjk.js 에 있다. 문구가 빠져 있으면 영어, 영어도 없으면 한국어로 보인다.
 I18N.zh = I18N_CJK.zh;
 I18N.ja = I18N_CJK.ja;
+// 폰 앱(Dalu Link) 새 버전 알림
+Object.assign(I18N.ko, {"lkUpdTitle": "폰 앱 새 버전", "lkUpdSub": "{v} · 폰의 Dalu Link에서 업데이트", "lkUpdSubOld": "설정 › Dalu Link 에서 새로 설치하세요"});
+Object.assign(I18N.ko, {"pmCopy": "복사", "pmCopying": "{n}개를 가져오는 중 · 다 받으면 복사해 둬요", "pmCopied": "{n}개를 복사했어요 · Ctrl+V 로 붙여넣기", "pmCopiedSome": "{n}개만 복사했어요 ({m}개는 받지 못했어요)", "pmCopyFail": "복사하지 못했어요"});
+Object.assign(I18N.ko, {"phoneClipGotImg": "폰에서 복사한 이미지를 받았어요", "phoneClipGotImgSub": "지금 붙여넣을 수 있어요"});
+Object.assign(I18N.en, {"phoneClipGotImg": "Got the image copied on the phone", "phoneClipGotImgSub": "Paste it now"});
+Object.assign(I18N.en, {"pmCopy": "Copy", "pmCopying": "Getting {n} · it is copied when done", "pmCopied": "Copied {n} · paste with Ctrl+V", "pmCopiedSome": "Copied only {n} ({m} could not be received)", "pmCopyFail": "Could not copy"});
+Object.assign(I18N.en, {"lkUpdTitle": "Phone app update", "lkUpdSub": "{v} · update it in Dalu Link on the phone", "lkUpdSubOld": "Install it again in Settings › Dalu Link"});
+// 휴대폰 탭 타일의 풍선말(문자·파일 전송·갤러리): 빠져 있어서 키 이름이 그대로 보였다
+Object.assign(I18N.ko, {"phoneHint_sms": "문자 보기·보내기", "phoneHint_files": "PC의 파일을 골라 폰으로 보내기", "phoneHint_media": "폰의 사진·동영상을 보고 PC로 가져오기"});
+Object.assign(I18N.en, {"phoneHint_sms": "Read and send text messages", "phoneHint_files": "Pick files on this PC and send them to the phone", "phoneHint_media": "Browse the phone’s photos and videos and copy them to this PC"});
 
 let lang = 'ko';
 function t(key, params) {
@@ -178,18 +208,18 @@ function t(key, params) {
 // ========================================================
 const DEFAULT_STORE = {
   settings: {
-    lang: 'ko', lyricsOn: true, sound: true, soundType: 'chime', soundVolume: 70, soundLength: 'normal', soundFile: '', compact: false,
+    lang: 'ko', lyricsOn: true, sound: true, soundType: 'system', soundSystem: 'Windows Proximity Notification.wav', soundVolume: 80, soundFile: '', compact: false,
     clock24: true, clockSeconds: false, compactClock: true, satellite: 'full', glassNotch: 'controls', glassStrength: 100, glassClear: 50, glassRim: true, winNotify: false, winNotifyIgnore: '', uiScale: 100, setAnim: true, setAnimSpeed: 100, budsWatch: true,
-    wordSync: true, lyricSize: 100, lyricGlow: true,
+    wordSync: true, lyricSize: 100, lyricOffset: 0, phoneLyricOffset: 0, lyricGlow: true,
     smtcOn: true, mediaPriority: 'auto', extLyrics: true, extApple: true, extNetease: true, extLrclib: true,
     visualizer: true, vizGain: 100, artGlow: true, glowStrength: 100,
-    notify: { volume: true, brightness: true, caps: true, num: true, scroll: true, lang: true, power: true, battery_low: true, net: true, audio_device: true, buds: true, buds_low: true, buds_alert: true, track: true },
-    peekDur: 3200, budsLowPct: 20,
+    notify: { volume: true, brightness: true, caps: true, num: true, scroll: true, insert: true, lang: true, power: true, battery_low: true, net: true, audio_device: true, buds: true, buds_low: true, bt_low: true, buds_alert: true, track: true },
+    peekDur: 3200, budsLowPct: 20, btDevices: true, airpodsScan: false, updateCheck: true,
     theme: 'black', monitor: 0, hoverDelay: 0, collapseDelay: 850, idleMin: 2, pet: true, petAfter: 45, fullscreenMode: 'yield', notchPos: 0, slimNotch: false, hideInGames: true, gameAlways: '', gameNever: '',
     animOff: false, animSpeed: 100, bounce: 100, entrance: true, pageAnim: 'slide',
-    tabOrder: DEFAULT_TAB_ORDER, tabHidden: '', pluginsEnabled: '',
+    tabOrder: DEFAULT_TAB_ORDER, tabHidden: '', satPerfCpu: false, satPerfMem: false, satPerfNet: false, satPerfGpu: false, satPhoneBatt: false, satPhoneMissed: false, phoneNotify: true, linkOn: false, linkRelayOn: false, linkRelay: '', linkClipPush: true, linkClipPull: true, linkFileAuto: true, linkNewPhoto: true, phoneNotifyOff: '', phoneButtons: '', powerButtons: '', sysButtons: '', linkFileDir: '', phoneNotifyMode: 'all', phoneNotifyOn: '', phoneNotifyQuiet: false, phoneMedia: false, linkMirror: false, linkMirrorControl: false, linkRemote: false, phoneCallMedia: 'duck', satWeather: false, satDday: false, weatherCity: '', weatherLat: 0, weatherLon: 0, weatherUnit: 'c', weatherLocate: true, pluginsEnabled: '',
     focusDnd: true,
-    clipboardOn: false, calendarUrl: '', calendarRemindMin: 10, hotkeysOn: true, tabDock: true, tabDockDelay: 130, tabDockLeave: 260, tabDockMargin: 10, hkToggle: 'Ctrl+Alt+N', hkSettings: 'Ctrl+Alt+S', hkMixer: 'Ctrl+Alt+V', hkLyrics: 'Ctrl+Alt+L', hkCapture: 'Ctrl+Alt+P', captureSeconds: 15, captureNotch: 'auto',
+    clipboardOn: false, calendarUrl: '', calendarRemindMin: 10, hotkeysOn: true, tabDock: true, tabDockDelay: 130, tabDockLeave: 260, tabDockMargin: 10, hkToggle: 'Ctrl+Alt+N', hkSettings: 'Ctrl+Alt+S', hkLyrics: 'Ctrl+Alt+L', hkCapture: 'Ctrl+Alt+P', captureSeconds: 15, captureNotch: 'auto',
     todoRemind: true, todoLeadMin: 0, snoozeMin: 10, weekStart: 'sun', agendaView: 'list', mediaKeys: true, upNext: true, upNextSec: 12, appFilterMode: 'off', appFilterList: ''
   },
   pomo: { focusMin: 25, breakMin: 5, doneToday: 0, doneDate: '' },
@@ -312,11 +342,13 @@ function getApi() {
 let SPRING = 'cubic-bezier(0.34, 1.56, 0.64, 1)';   // applyPrefs 가 탄성 설정에 맞춰 바꾼다
 // 설정에서 온 애니메이션 값 (prefs.js 의 applyPrefs 가 채운다)
 const PREF = { rate: 1, animOff: false, entrance: true, pageAnim: 'slide' };
+let enterShift = 0;          // 등장 연출(enterAnim)을 부르는 동안만 켜진다: 페이지끼리 넘길 때 요소 등장을 이만큼(ms) 앞당긴다
 const EASE_OUT = 'cubic-bezier(0.22, 1, 0.36, 1)';
 function anim(el, keyframes, opts) {
   if (!el || REDUCED_MOTION || PREF.animOff || !el.animate) return null;
   try {
     const o = Object.assign({ easing: EASE_OUT, fill: 'backwards' }, opts);
+    if (enterShift && o.delay) o.delay = Math.max(0, o.delay - enterShift);
     if (PREF.rate !== 1) {            // 속도 설정: 길이와 지연을 같은 비율로 줄이거나 늘린다
       if (o.duration) o.duration /= PREF.rate;
       if (o.delay) o.delay /= PREF.rate;
@@ -365,11 +397,13 @@ function todayKey() {
 
 // Precision continuous audio playhead
 function getCurrentPlayhead() {
-  if (!state.isPlaying || state.duration <= 0) {
+  if (!state.isPlaying || state.posFrozen) {          // posFrozen: 폰 미디어가 버퍼링 중(재생 중으로 보이지만 소리는 멈춰 있다)
     return playheadAnchorTime;
   }
+  // 곡 길이를 모르는 경우(길이 0)에도 시계로 이어 간다: 예전에는 여기서 멈춰서 1초마다 오는 위치로만 움직였고, 가사가 툭툭 끊겨 보였다
   const elapsed = (performance.now() - playheadAnchorPerf) / 1000.0;
-  return Math.min(state.duration, Math.max(0, playheadAnchorTime + elapsed));
+  const t = Math.max(0, playheadAnchorTime + elapsed);
+  return state.duration > 0 ? Math.min(state.duration, t) : t;
 }
 
 function seekTo(sec) {
@@ -448,6 +482,8 @@ function petVisible(now) {
 function computeView() {
   if (isExpanded) return expandedView();
   if (peek.active) return 'peek';
+  if (typeof phoneCallVisible === 'function' && phoneCallVisible()) return 'mini';
+  if (typeof phoneXferMiniOn === 'function' && phoneXferMiniOn()) return 'mini';          // 파일을 주고받는 동안(끝난 뒤 잠깐)에는 접힌 큰 노치에 진행 상황          // 전화가 오거나 통화 중: 큰 노치에 통화 정보(슬림 노치보다 우선)
   if (slimOn()) return 'slim';
   if (hasTrack()) return 'mini';
   if (island.dataset.timer === '1') return 'idle';
@@ -470,7 +506,8 @@ function geometryFor(v) {
     return g;
   }
   if (v === 'peek') return STATES['peek_' + peek.kind] || STATES.peek_track;
-  const base = STATES[v] || STATES.mini;
+  let base = STATES[v] || STATES.mini;
+  if (v === 'phone' && typeof phoneCardBig === 'function') base = phoneCardBig(base);       // 폰 알림 카드가 떠 있으면 크게 보이게 노치를 키운다
   const extra = isPageView(v) ? (dockOn ? dockH() : 0) + (popOn ? POP_H : 0) : 0;      // 탭 아이콘 독이 열리면 노치 아래가, 알림 띠가 뜨면 위쪽이 조금 늘어난다
   return extra ? { w: base.w, h: base.h + extra, e: base.e } : base;
 }
@@ -489,7 +526,7 @@ function setDock(on) {
   scheduleRegion();      // 열릴 땐 바로 영역을 넓히고, 닫힐 땐 노치가 다 줄어든 뒤에 줄인다(강제로 줄이면 줄어드는 도중에 아래가 잘려 보인다)
 }
 
-const PAGE_VIEWS = ['music', 'lyrics', 'pomo', 'timer', 'water', 'shelf', 'todo', 'clip', 'agenda', 'launcher', 'plugins', 'buds'];
+const PAGE_VIEWS = ['music', 'lyrics', 'pomo', 'timer', 'water', 'shelf', 'todo', 'clip', 'agenda', 'launcher', 'sys', 'power', 'perf', 'weather', 'phone', 'plugins', 'buds'];
 const isPageView = (v) => PAGE_VIEWS.includes(v);
 const layerOf = (v) => ((v === 'music' || v === 'lyrics') ? 'player' : v);
 let pageDir = 1;   // 페이지를 넘기는 방향 (+1: 오른쪽 페이지로, -1: 왼쪽으로)
@@ -523,11 +560,13 @@ function slideLayers(fromName, toName, dir) {
 }
 
 // 페이지 전환 '페이드': 들어오는 레이어가 제자리에서 서서히 나타난다.
-// (레이어는 display:none 에서 켜지므로 CSS opacity 전환은 실행되지 않는다 — 스크립트 애니메이션으로 건다. 나가는 쪽은 CSS 가 먼저 0.16s 에 걸쳐 사라진다)
-function fadeInLayer(toName) {
+// (레이어는 display:none 에서 켜지므로 CSS opacity 전환은 실행되지 않는다 — 스크립트 애니메이션으로 건다. 나가는 쪽은 CSS 가 먼저 0.12s 에 걸쳐 사라진다)
+function fadeInLayer(toName, fromCollapsed) {
   const el = document.querySelector('.l-' + toName);
   cancelScriptAnimations(el);
-  anim(el, [{ opacity: 0 }, { opacity: 1 }], { duration: 420, delay: 90, easing: 'ease-out', fill: 'backwards' });
+  // 접힌 노치(미니·알림 등)에서 펼칠 때도 같은 페이드를 건다(조금 짧게): 건너뛰면 레이어가 첫 프레임에 100% 로 켜져서 앨범색 빛이 한 프레임에 확 나타나고,
+  // 앨범 색 테마에서는 접힌 노치의 색 위에 겹쳐 한 프레임 번쩍였다(9가지 조합 프레임 녹화로 확인: 음악 탭 펼침)
+  anim(el, [{ opacity: 0 }, { opacity: 1 }], fromCollapsed ? { duration: 340, delay: 50, easing: 'ease-out', fill: 'backwards' } : { duration: 420, delay: 90, easing: 'ease-out', fill: 'backwards' });
 }
 
 // 가사를 켤 때 보이는 줄들이 위에서부터 차례로 들어온다 (리스트 위치가 잡힌 뒤의 보이는 줄만)
@@ -579,8 +618,12 @@ function updateView() {
 
   if (prev !== null && isPageView(next) && layerOf(next) !== layerOf(prev)) {
     if (isPageView(prev) && PREF.pageAnim === 'slide') slideLayers(layerOf(prev), layerOf(next), pageDir);
-    else if (isPageView(prev)) fadeInLayer(layerOf(next));
-    if (PREF.entrance && typeof enterAnim === 'function') enterAnim(layerOf(next));
+    else fadeInLayer(layerOf(next), !isPageView(prev));
+    if (PREF.entrance && typeof enterAnim === 'function') {
+      // 페이지끼리 넘길 때는 노치가 크게 커지길 기다릴 필요가 없다: 나가는 내용이 사라진 뒤 ~110ms 동안 노치가 텅 비어 보이던 구간(프레임 캡처로 확인)을 줄이려고 요소 등장을 100ms 앞당긴다
+      enterShift = isPageView(prev) ? 100 : 0;
+      try { enterAnim(layerOf(next)); } finally { enterShift = 0; }
+    }
   }
   if (next === 'lyrics' && prev !== 'lyrics') staggerLyrics();
   pageDir = 1;
@@ -610,9 +653,28 @@ function stepPage(dir) {
 // ========================================================
 // 알림: 접힌 상태에서는 노치가 잠깐 나타나는 peek, 펼친 상태에서는 노치 안쪽 토스트
 // ========================================================
-function setIcon(el, name, tone) {
+function setIcon(el, name, tone, img, badge) {
+  el.classList.remove('thumb');
+  if (img && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(img)) {          // 폰 알림의 앱 아이콘(PNG 그림) / 복사한 이미지의 미리보기
+    el.classList.toggle('thumb', tone === 'thumb');          // 사진 미리보기는 칸을 꽉 채운다(앱 아이콘은 비율을 지킨다)
+    el.textContent = '';
+    const im = document.createElement('img'); im.alt = '';
+    if (badge) im.onerror = () => { if (im.parentNode === el) setBadge(el, badge); };          // 그림을 못 불러오면 글자 아이콘으로
+    im.src = img;
+    el.appendChild(im);
+    el.dataset.tone = 'img';
+    return;
+  }
+  if (badge && !name) { setBadge(el, badge); return; }
   el.innerHTML = iconSvg(name);
-  el.dataset.tone = tone || '';
+  el.dataset.tone = tone === 'thumb' ? '' : (tone || '');
+}
+
+function setBadge(el, text) {          // 아이콘 칸에 짧은 글자('txt', 'img')를 넣는다
+  el.textContent = '';
+  const s = document.createElement('span'); s.className = 'ico-badge'; s.textContent = text;
+  el.appendChild(s);
+  el.dataset.tone = 'badge';
 }
 
 function startPeekTimer(ms) {
@@ -643,10 +705,11 @@ function popShow(opts) {
   const bar = $('popBar');
   if (!bar) return;
   const live = popOn && !!opts.key && popKey === opts.key;           // 같은 종류(예: 볼륨)가 이미 떠 있으면 값만 갱신한다
+  const replacing = popOn || !!popFadeTimer || !!popShrinkTimer;    // 이미 떠 있거나 막 닫히는 띠에 다른 알림이 온다: 글자가 비었다 나타나지 않고 곧바로 바뀐다
   popKey = opts.key || '';
-  const hasIcon = !!opts.icon;
+  const hasIcon = !!(opts.icon || opts.img || opts.badge);
   bar.dataset.k = hasIcon ? 'info' : 'msg';
-  if (hasIcon) setIcon($('pbIco'), opts.icon, opts.tone);
+  if (hasIcon) setIcon($('pbIco'), opts.icon, opts.tone, opts.img, opts.badge);
   setText($('pbTitle'), opts.title || '');
   setText($('pbSub'), opts.sub || '');
   const meter = $('pbMeter');
@@ -654,6 +717,7 @@ function popShow(opts) {
   meter.classList.toggle('on', hasMeter);
   if (hasMeter) meter.firstElementChild.style.width = `${Math.round(Math.max(0, Math.min(1, opts.meter)) * 100)}%`;
   if (!popOn) {
+    clearTimeout(popFadeTimer); popFadeTimer = null;       // 막 닫히려던 띠에 바로 다음 알림이 왔다: 사라졌다 다시 나타나지 않고 내용만 바뀐다
     clearTimeout(popShrinkTimer); popShrinkTimer = null;
     popOn = true;
     island.dataset.pop = '1';
@@ -663,32 +727,38 @@ function popShow(opts) {
   }
   if (!live) {
     const kids = [hasIcon ? $('pbIco') : null, $('pbTitle'), $('pbSub')].filter(Boolean);
-    enterEach(kids, [{ opacity: 0, translate: '0 -6px' }, { opacity: 1, translate: '0 0' }], 120, 45, { duration: 380 });
+    if (replacing) enterEach(kids, [{ opacity: 0.5, translate: '0 -4px' }, { opacity: 1, translate: '0 0' }], 0, 25, { duration: 240 });
+    else enterEach(kids, [{ opacity: 0, translate: '0 -6px' }, { opacity: 1, translate: '0 0' }], 120, 45, { duration: 380 });
   }
   clearTimeout(popTimer);
   popTimer = setTimeout(popHide, opts.ms || peekMs(1700));
 }
-let popShrinkTimer = null;
+let popShrinkTimer = null, popFadeTimer = null;
+const POP_GRACE = 220;                           // ms: 닫기 직전의 유예. 이 안에 다음 알림이 오면 띠가 줄었다 커지지 않고 내용만 바뀐다(밝기 -> 할 일처럼 이어지는 알림의 '뚝뚝' 끊김 방지)
 function popHide() {
   clearTimeout(popTimer);
   popTimer = null;
   if (!popOn) return;
   popOn = false;
   popKey = '';
-  island.dataset.pop = '0';                      // 띠의 글자가 먼저 사라지고(0.14s)
-  clearTimeout(popShrinkTimer);
-  popShrinkTimer = setTimeout(() => {            // 그 뒤에 노치가 줄고 내용이 올라온다(같이 줄이면 아직 보이는 글자가 줄어드는 노치에 잘려 보인다)
-    popShrinkTimer = null;
-    if (popOn) return;
-    island.style.setProperty('--pp', '0px');
-    island.classList.remove('toasting');
-    scheduleRegion();                            // 줄어들 땐 애니메이션이 끝난 뒤에 영역을 줄인다
-  }, 120);
+  clearTimeout(popFadeTimer); clearTimeout(popShrinkTimer);
+  popFadeTimer = setTimeout(() => {
+    popFadeTimer = null;
+    island.dataset.pop = '0';                    // 띠의 글자가 먼저 사라지고(0.14s)
+    popShrinkTimer = setTimeout(() => {          // 그 뒤에 노치가 줄고 내용이 올라온다(같이 줄이면 아직 보이는 글자가 줄어드는 노치에 잘려 보인다)
+      popShrinkTimer = null;
+      if (popOn) return;
+      island.style.setProperty('--pp', '0px');
+      island.classList.remove('toasting');
+      scheduleRegion();                          // 줄어들 땐 애니메이션이 끝난 뒤에 영역을 줄인다
+    }, 120);
+  }, POP_GRACE);
 }
 
 // 안전장치: 알림 띠의 상태(popOn / --pp / 타이머)가 어긋난 채 남지 않게 1초마다 맞춘다.
 // 띠가 떠 있는데 닫는 타이머가 없으면 닫고, 띠가 없는데 --pp 가 남아 있으면 0 으로 되돌린다(내용이 아래로 내려간 채 남는 일 방지).
 setInterval(() => {
+  if (popFadeTimer || popShrinkTimer) return;       // 닫히는 중이다
   if (popOn && !popTimer) { popHide(); return; }
   const want = popOn ? POP_H : 0;
   if ((parseFloat(island.style.getPropertyValue('--pp')) || 0) !== want) {
@@ -720,7 +790,8 @@ function notify(opts) {
   const live = !!opts.key && peek.active && peek.kind === 'info' && peek.key === opts.key;
   peek.kind = 'info';
   peek.key = opts.key || '';
-  setIcon(pkIco, opts.icon, opts.tone);
+  setIcon(pkIco, opts.icon, opts.tone, opts.img, opts.badge);
+  pkIco.hidden = !(opts.icon || opts.img || opts.badge);          // 아이콘 없는 알림에 빈 동그라미가 남지 않게
   setText(pkTitle, opts.title);
   setText(pkSub, opts.sub || '');
   const hasMeter = typeof opts.meter === 'number';
@@ -750,8 +821,8 @@ let appliedSize = { w: 0, h: 0 };
 // 호출마다 늘어나는 순번: pywebview 는 호출마다 스레드를 따로 만들어 파이썬 쪽 도착 순서가 뒤바뀔 수 있어, 파이썬이 옛 호출을 버릴 수 있게 한다(Date.now() 에서 시작해 화면을 다시 불러와도 줄어들지 않는다)
 let regionSeq = Date.now();
 
-// 슬림 상태의 마우스 반응 영역(CSS px): 보이는 선(92x6)보다 넉넉하게 — 화면 맨 위에서 맞히기 쉽도록. #slimHit 의 크기와 같다.
-const SLIM_HIT_W = 164, SLIM_HIT_H = 14;
+// 슬림 상태의 마우스 반응 영역(CSS px): 보이는 선(92x6)과 같은 크기. 더 넓으면 화면 맨 위 가운데(탭 줄, 제목 표시줄)로 가는 마우스가 선에 닿지도 않았는데 펼쳐진다. #slimHit 의 크기와 같다.
+const SLIM_HIT_W = 92, SLIM_HIT_H = 6;
 
 function targetPillRect() {
   const g = geometry();
@@ -922,6 +993,9 @@ function handleStateUpdate(res) {
     if (res.isPlaying !== state.isPlaying) res = Object.assign({}, res, { isPlaying: state.isPlaying });   // 방금 누른 결과를 옛 서버 값이 되돌리지 않게
   } else playHoldUntil = 0;
   const playStateChange = state.isPlaying !== res.isPlaying;
+  const revChange = (res.posRev || 0) !== (state.posRev || 0) || !!res.posFrozen !== !!state.posFrozen;
+  state.posRev = res.posRev || 0;
+  state.posFrozen = !!res.posFrozen;
   const prevArt = state.artworkUrl;
 
   state.isPlaying = res.isPlaying;
@@ -943,16 +1017,20 @@ function handleStateUpdate(res) {
   // 일시정지 상태로 앱을 켰어도 곡이 처음 잡히면 바로 시계로 돌아가지 않도록 기준 시각을 갱신
   if (state.isPlaying || (isTrackChange && state.title)) lastPlayingAt = Date.now();
 
-  if (!state.isPlaying) {
+  if (!state.isPlaying || state.posFrozen) {
     playheadAnchorTime = res.currentTime || 0;
     playheadAnchorPerf = performance.now();
   } else {
     const local = getCurrentPlayhead();
     const drift = Math.abs((res.currentTime || 0) - local);
-    if (isTrackChange || playStateChange || drift > 0.25) {
+    // 폰 미디어: 폰이 위치를 새로 알렸으면(posRev 가 바뀜) 차이가 작아도 바로 맞춘다. 버퍼링이 끝난 시점의 0.1~0.2초 보정을 버리면 가사가 그만큼 계속 앞서 나온다
+    if (isTrackChange || playStateChange || drift > 0.25 || revChange) {
       playheadAnchorTime = res.currentTime || 0;
       playheadAnchorPerf = performance.now();
     }
+  }
+  if (playStateChange && state.isPlaying && state.title) {          // 일시정지에서 다시 재생: ▶ 표시를 잠깐 보여 준다
+    island.classList.add('art-flash'); clearTimeout(window.__artFlashT); window.__artFlashT = setTimeout(() => island.classList.remove('art-flash'), 1100);
   }
   island.classList.toggle('playing', state.isPlaying);
 
@@ -1007,6 +1085,8 @@ function handleStateUpdate(res) {
   if (typeof checkUpNext === 'function') checkUpNext(res);
   if (typeof updateSourceBtn === 'function') updateSourceBtn(res);
   if (res.buds && typeof updateBuds === 'function') updateBuds(res.buds);
+  if (res.btdevices && typeof updateBt === 'function') updateBt(res.btdevices);
+  if (typeof updateUpd === 'function') updateUpd(res.update || null);
 
   // 사용자 입력이 없었던 시간 -> 캐릭터(눈) 상태
   if (typeof res.idleSec === 'number') updatePet(res.idleSec);
@@ -1274,6 +1354,7 @@ function setMiniBgOpen(on) {
   if (cur === on) return;
   if (on) {
     island.dataset.bg = '1';
+    if (typeof renderSat === 'function') renderSat();          // 보조 노치 층(.goo-body)에 큰 노치의 새 높이를 바로 알린다: 안 알리면 최대 1초 뒤에야 따라가서 줄어들 때 그림자가 늦게 줄어든다
     scheduleRegion(true);
     return;
   }
@@ -1284,13 +1365,14 @@ function setMiniBgOpen(on) {
     miniBgCloseTimer = null;
     island.classList.remove('bg-closing');
     delete island.dataset.bg;
+    if (typeof renderSat === 'function') renderSat();          // 노치가 줄기 시작하는 이 순간에 보조 노치 층의 높이도 같이 줄인다(같은 스프링이라 그림자가 함께 줄어든다)
     scheduleRegion(false);
   }, 120);
 }
 
 function renderMiniBg(nowSec, enabled) {
   if (miniBgFor !== state.lyrics) { miniBgFor = state.lyrics; miniBgIdx = -1; }      // 곡/가사가 바뀌면 처음부터
-  const idx = enabled ? findMiniBg(nowSec) : -1;
+  const idx = enabled && !compactMode ? findMiniBg(nowSec) : -1;          // 컴팩트 노치는 배경 가사 줄을 보여 주지 않는다(열면 CSS 높이만 늘고 창 영역은 그대로라 잘린다)
   const now = performance.now();
   if (idx >= 0) {
     miniBgHideAt = now + 700;                       // 바로 다음 bg 줄이 이어질 때 노치가 접혔다 펴지지 않게 잠깐 유지
@@ -1620,7 +1702,9 @@ function animationFrame(ts) {
     setTextAll(remainEls, `-${formatTime(state.duration - nowSec)}`);
   }
 
-  renderLyrics(nowSec);
+  // 가사 싱크 보정(설정 › 가사): + 면 가사가 더 일찍 나온다. 폰에서 재생하는 곡에는 폰 전용 보정(설정 › Dalu Link)을 더한다
+  const lyricShift = clampN(store.settings.lyricOffset, -2000, 2000, 0) + (String(state.trackId || '').startsWith('phone:') ? clampN(store.settings.phoneLyricOffset, -1500, 1500, 0) : 0);
+  renderLyrics(nowSec + lyricShift / 1000);
 
   // mini 가사 스크롤: 프레임 간격(dt)에 맞춰 감쇠 계수를 환산해 60Hz 든 144Hz 든 같은 속도로 따라가게 한다
   if (view === 'mini') {
@@ -1749,9 +1833,14 @@ function updateClock() {
 // ========================================================
 // 펼침 / 접힘 / 페이지
 // ========================================================
+const NON_TEXT_INPUT = new Set(['range', 'checkbox', 'radio', 'button', 'submit', 'reset', 'color', 'file', 'image']);
 function isEditing() {
+  const layer = document.getElementById('todoLayer');
+  if (layer && layer.classList.contains('adding')) return true;          // 할 일 추가 창: 날짜·시간 버튼을 눌러 포커스가 버튼으로 옮겨져도 입력 중이다
   const a = document.activeElement;
-  return !!(a && a.tagName === 'INPUT');
+  if (!a) return false;
+  if (a.tagName === 'TEXTAREA') return true;
+  return a.tagName === 'INPUT' && !NON_TEXT_INPUT.has((a.type || 'text').toLowerCase());          // 볼륨·밝기 슬라이더에 남은 포커스는 글을 쓰는 중이 아니다
 }
 
 function triggerExpand() {
@@ -1763,19 +1852,21 @@ function triggerExpand() {
   if (isExpanded) return;
   isExpanded = true;
   updateView();
+  if (typeof phoneOnExpand === 'function') phoneOnExpand();
 }
 
-function triggerCollapse() {
-  if (isPinned || contextMenuOpen) return;
+function triggerCollapse(delayMs) {      // delayMs: 접기 유예를 이 값으로 대신한다(알림 띠가 닫히는 중일 때 곧바로 다시 확인)
+  if (isPinned || contextMenuOpen || (typeof reorderActive !== 'undefined' && reorderActive)) return;          // 버튼을 끌어 옮기는 동안에는 접지 않는다(끝나면 reorder.js 가 다시 확인한다)
   if (!isExpanded) return;
 
   if (collapseTimer) clearTimeout(collapseTimer);
   collapseTimer = setTimeout(() => {
     // 대기 중에 메뉴가 열리거나 고정됐다면 접지 않는다 (mouseleave 직후 우클릭한 경우)
-    if (isPinned || contextMenuOpen) return;
+    if (isPinned || contextMenuOpen || (typeof reorderActive !== 'undefined' && reorderActive)) return;
     // 알림 띠가 떠 있는 동안은 접지 않고 띠가 사라진 뒤에 다시 확인한다(마우스가 노치에 없다고 알림이 뜬 채로 접히지 않게).
     // 그 사이 마우스가 노치 위로 돌아와 있으면 접지 않는다.
-    if (popOn || popShrinkTimer) { triggerCollapse(); return; }
+    if (popOn) { triggerCollapse(); return; }
+    if (popShrinkTimer || popFadeTimer) { triggerCollapse(200); return; }      // 띠가 막 닫히는 중: 기본 유예(850ms)를 또 기다리지 않고 곧바로 다시 확인한다
     if (island.matches(':hover')) return;
     // 입력창에 글을 쓰는 중이면 접지 않고 잠시 뒤 다시 확인한다. 다만 창이 포커스를 잃었거나(다른 창으로 옮겨 감) 15초가 지나도록
     // 입력이 이어지지 않으면 포기하고 접는다: 입력창이 열린 채 떠난 노치가 화면을 계속 가리는(소프트락) 일이 없게 한다
@@ -1786,15 +1877,26 @@ function triggerCollapse() {
     }
     if (typeof tmrPickClose === 'function') tmrPickClose();
     editWaitSince = 0;
-    if (isEditing() && typeof todoCloseAdd === 'function') todoCloseAdd();      // 열려 있던 입력 창은 닫는다(다시 펼쳤을 때 입력 창이 그대로 남지 않게)
+    if (isEditing() && typeof todoCloseAdd === 'function') todoCloseAdd();
+    { const ae = document.activeElement; if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA') && ae.blur) ae.blur(); }      // 열려 있던 입력 창은 닫는다(다시 펼쳤을 때 입력 창이 그대로 남지 않게)
     isExpanded = false;
     updateView();
-  }, isEditing() ? 1500 : collapseDelayMs());   // 기본 850ms: 차분하고 자연스러운 유예
+  }, isEditing() ? 1500 : (delayMs != null ? delayMs : collapseDelayMs()));   // 기본 850ms: 차분하고 자연스러운 유예
 }
 let editWaitSince = 0;
 window.addEventListener('keydown', () => { editWaitSince = 0; });      // 글을 쓰고 있으면 15초 기다림을 처음부터 다시 센다
 
 // Pin Toggle
+function hotkeyToggle() {          // 전역 단축키(기본 Ctrl+Alt+N): 파이썬이 부른다
+  if (isExpanded || isPinned) {
+    if (typeof closeContextMenu === 'function' && contextMenuOpen) closeContextMenu();          // 열려 있던 메뉴·입력을 정리하고 접는다
+    if (typeof todoCloseAdd === 'function') todoCloseAdd();
+    { const ae = document.activeElement; if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA') && ae.blur) ae.blur(); }
+    if (isPinned) { isPinned = false; btnPin.classList.remove('active'); setText($('menuPinText'), t('menuPin')); }          // 토스트 없이 조용히 푼다(접는 중에 알림 띠가 열려 높이가 남지 않게)
+    if (isExpanded) { if (typeof tmrPickClose === 'function') tmrPickClose(); isExpanded = false; updateView(); }          // 키보드로 접는 것이라 마우스가 노치 위에 있어도 접는다(triggerCollapse 는 호버 중이면 건너뛴다)
+  } else togglePin();          // 접힌 상태: 펼치고 고정한다(마우스를 올리지 않아도 열려 있다)
+}
+
 function togglePin() {
   isPinned = !isPinned;
   if (isPinned) {

@@ -72,7 +72,7 @@ def open_target(target):
         if URL_RE.match(t):
             webbrowser.open(t)
         else:
-            os.startfile(t)
+            os.startfile(os.path.expandvars(t))          # %USERPROFILE% 같은 환경 변수를 푼다
         return ok()
     except Exception as e:
         return err(str(e))
@@ -83,7 +83,7 @@ def run_program(target, args=""):
     if not t or "\n" in t:
         return err("empty target")
     try:
-        argv = [t] + (shlex.split(args, posix=False) if args else [])
+        argv = [os.path.expandvars(t)] + (shlex.split(args, posix=False) if args else [])
         subprocess.Popen(argv, close_fds=True, creationflags=0x00000008)      # DETACHED_PROCESS: 노치가 꺼져도 계속 실행
         return ok()
     except FileNotFoundError:
@@ -278,85 +278,16 @@ def _discord_plugin():
     ], status, states=states)
 
 
-def _volume_plugin():
-    def setv(v):
-        return lambda ctx: ok() if audiomix.master_set(volume=v, muted=False) else err("failed")
-
-    def step(d):
-        return lambda ctx: ok() if audiomix.master_step(d) is not None else err("failed")
-
-    def mute(ctx):
-        cur = audiomix.master_get()
-        if cur is None:
-            return err("failed")
-        return ok() if audiomix.master_set(muted=not cur["muted"]) else err("failed")
-
-    def states(ctx):
-        m = audiomix.master_get()
-        if not m:
-            return {}
-        pct = round(m["volume"] * 100)
-        out = {"mute": st(m["muted"], L("음소거 중", "Muted") if m["muted"] else L("소리 켬", "Sound on"), tone="warn" if m["muted"] else None)}
-        for aid, v in (("v25", 25), ("v50", 50), ("v100", 100)):
-            out[aid] = st(not m["muted"] and abs(pct - v) <= 2, L("현재", "Now") if (not m["muted"] and abs(pct - v) <= 2) else None)
-        return out
-
-    def status(ctx):
-        m = audiomix.master_get()
-        if not m:
-            return None
-        pct = round(m["volume"] * 100)
-        return L(f"마스터 볼륨 {pct}%" + (" (음소거)" if m["muted"] else ""), f"Master volume {pct}%" + (" (muted)" if m["muted"] else ""),
-                 f"主音量 {pct}%" + ("（已静音）" if m["muted"] else ""), f"マスター音量 {pct}%" + ("（ミュート中）" if m["muted"] else ""))
-
-    return Plugin("volume", L("볼륨", "Volume"), L("마스터 볼륨 프리셋과 음소거.", "Master volume presets and mute."), "volume", [
-        action("mute", L("음소거", "Mute"), "mute", mute),
-        action("down", L("-5%", "-5%"), "minus", step(-0.05)),
-        action("up", L("+5%", "+5%"), "plus", step(0.05)),
-        action("v25", L("25%", "25%"), "volume1", setv(0.25)),
-        action("v50", L("50%", "50%"), "volume2", setv(0.50)),
-        action("v100", L("100%", "100%"), "volume", setv(1.0)),
-    ], status, states=states)
-
-
 def _system_plugin():
-    import ctypes
-    user32 = ctypes.windll.user32
-
+    """시스템 탭(배터리·밝기·볼륨·Wi-Fi·블루투스·마이크)과 전원 탭(잠금·화면 끄기·절전·로그아웃·다시 시작·종료)에 없는 윈도우 단축 동작만 둔다."""
     def combo(text):
         return lambda ctx: ok() if keys.send_combo(text) else err("failed")
 
-    def lock(ctx):
-        return ok() if user32.LockWorkStation() else err("failed")
-
-    def screen_off(ctx):
-        user32.PostMessageW(0xFFFF, 0x0112, 0xF170, 2)       # WM_SYSCOMMAND / SC_MONITORPOWER / 끄기
-        return ok()
-
-    def mic(ctx):
-        r = audiomix.mic_toggle_mute()
-        return err("no microphone") if r is None else ok(message=(L("마이크 꺼짐", "Mic muted") if r else L("마이크 켜짐", "Mic on")))
-
-    def states(ctx):
-        m = audiomix.mic_get()
-        if m is None:
-            return {}
-        return {"mic": st(m["muted"], L("마이크 꺼짐", "Mic muted") if m["muted"] else L("마이크 켜짐", "Mic on"), tone="warn" if m["muted"] else None)}
-
-    def status(ctx):
-        m = audiomix.mic_get()
-        if m is None:
-            return L("마이크를 찾지 못했어요", "No microphone found")
-        return L("마이크 꺼짐" if m["muted"] else "마이크 켜짐", "Microphone muted" if m["muted"] else "Microphone on")
-
-    return Plugin("system", L("시스템", "System"), L("마이크 음소거, 화면 잠금, 캡처, 바탕화면 보기 같은 윈도우 기능.", "Mic mute, lock screen, screenshot, show desktop and other Windows actions."), "monitor", [
-        action("mic", L("마이크 끄기/켜기", "Mic mute"), "mic", mic),
-        action("lock", L("PC 잠금", "Lock PC"), "lock", lock),
+    return Plugin("system", L("윈도우 도구", "Windows tools"), L("화면 캡처, 바탕화면 보기, 작업 관리자. (볼륨·밝기·Wi-Fi·전원은 시스템/전원 탭에 있어요.)", "Screenshot, show desktop and Task Manager. (Volume, brightness, Wi-Fi and power live in the System and Power tabs.)"), "monitor", [
         action("snip", L("화면 캡처", "Screenshot"), "crop", combo("Win+Shift+S")),
         action("desktop", L("바탕화면", "Desktop"), "monitor", combo("Win+D")),
         action("taskmgr", L("작업 관리자", "Task Manager"), "gauge", combo("Ctrl+Shift+Esc")),
-        action("screenoff", L("화면 끄기", "Screen off"), "moon", screen_off),
-    ], status, states=states)
+    ], None)
 
 
 def _musictools_plugin():
@@ -533,7 +464,7 @@ def _apps_plugin():
 
 
 def builtin_plugins():
-    return [_cider_plugin(), _spotify_plugin(), _discord_plugin(), _volume_plugin(), _system_plugin(), _musictools_plugin(), _quick_plugin(), _web_plugin(),
+    return [_cider_plugin(), _spotify_plugin(), _discord_plugin(), _system_plugin(), _musictools_plugin(), _quick_plugin(), _web_plugin(),
             _applemusic_plugin(), _browsermedia_plugin(), _steam_plugin(), _apps_plugin()]
 
 
@@ -623,7 +554,7 @@ EXAMPLE_PLUGIN = {
              "zh": "示例插件：编辑这个文件来制作你自己的工具集。", "ja": "サンプルプラグイン：このファイルを編集して、自分用のツールセットを作ってみましょう。"},
     "actions": [
         {"label": {"ko": "메모장", "en": "Notepad", "zh": "记事本", "ja": "メモ帳"}, "icon": "note", "run": "notepad.exe"},
-        {"label": {"ko": "다운로드", "en": "Downloads", "zh": "下载", "ja": "ダウンロード"}, "icon": "download", "open": "%USERPROFILE%\Downloads"},
+        {"label": {"ko": "다운로드", "en": "Downloads", "zh": "下载", "ja": "ダウンロード"}, "icon": "download", "open": "%USERPROFILE%\\Downloads"},
         {"label": {"ko": "서명 복사", "en": "Copy signature", "zh": "复制签名", "ja": "署名をコピー"}, "icon": "edit", "copy": "감사합니다.\n홍길동 드림"},
         {"label": {"ko": "작업 관리자", "en": "Task Manager", "zh": "任务管理器", "ja": "タスクマネージャー"}, "icon": "gauge", "keys": "Ctrl+Shift+Esc"},
     ],
