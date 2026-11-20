@@ -413,6 +413,9 @@ class IslandAPI:
         self._files = None              # 폰과 파일 주고받기(filexfer.Manager): 처음 쓸 때 만든다
         self._phone_apps = {}           # 폰에서 알림을 보낸 앱: {패키지: {name, count}} (앱 이름과 횟수만 이 PC 에 기억한다)
         self._phone_apps_loaded = False
+        self._snooze = {}                # 임시 차단 중인 폰 앱 {패키지: 풀리는 시각(초)}: 노치 알림 카드의 1시간·6시간·24시간 단추
+        self._snooze_loaded = False
+        self._snooze_timer = None
         self._pull_until = 0.0          # PC 가 폰에서 가져오기를 요청한 뒤 이 시각까지는 폰이 보내는 파일을 묻지 않고 받는다
         self._file_paths = {}           # 폰에서 받은 파일의 경로(순서 있는 사전)(열기·폴더 보기는 이 경로만 허용한다)
         self._copy_job = None           # 폰 사진 '복사' 진행 중인 작업(받은 파일을 모아 클립보드에 올린다)
@@ -3740,9 +3743,11 @@ class IslandAPI:
             return pkg in self._phone_apps_on()
         return pkg not in self._phone_apps_off()
 
+        if pkg in self._snoozed():
+            return False          # 임시 차단 중인 앱
     def _link_filter_msg(self):
         return {"t": "notif_filter", "mode": "picked" if self._prefs.get("phoneNotifyMode") == "picked" else "all",
-                "on": sorted(self._phone_apps_on())[:400], "off": sorted(self._phone_apps_off())[:400], "quiet": bool(self._prefs.get("phoneNotifyQuiet"))}
+                "on": sorted(self._phone_apps_on() - self._snoozed())[:400], "off": sorted(self._phone_apps_off() | self._snoozed())[:400], "quiet": bool(self._prefs.get("phoneNotifyQuiet"))}
 
     def _link_push_filter(self, force=False):
         """알림 거르기 설정을 연결된 폰에 보낸다(바뀌었을 때만). 폰은 거른 앱의 알림 내용을 PC 로 아예 보내지 않는다."""
@@ -3843,6 +3848,91 @@ class IslandAPI:
             r, err = self._link_command({"t": "apps_list"}, "apps_result", timeout=20)
             if r is None:
                 return {"ok": False, "error": err, "apps": []}
+    # ---- 앱 알림 임시 차단(노치 알림 카드의 1시간·6시간·24시간): 시간이 지나면 저절로 풀린다. 폰에도 알려서 차단 중에는 내용이 PC 로 오지 않는다
+    SNOOZE_HOURS = (1, 6, 24)
+
+    def _snooze_file(self):
+        return os.path.join(ISLAND_DIR, "phone_snooze.json")
+
+    def _snooze_load(self):
+        if self._snooze_loaded:
+            return
+        self._snooze_loaded = True
+        try:
+            with open(self._snooze_file(), encoding="utf-8") as f:
+                d = json.load(f)
+            if isinstance(d, dict):
+                for k, v in d.items():
+                    if re.fullmatch(r"[A-Za-z0-9._-]+", str(k)) and isinstance(v, (int, float)) and not isinstance(v, bool):
+                        self._snooze[str(k)] = float(v)
+        except Exception:
+            pass
+        self._snooze_arm()
+
+    def _snooze_save(self):
+        try:
+            path = self._snooze_file()
+            tmp = path + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(dict(self._snooze), f)
+            os.replace(tmp, path)
+        except Exception:
+            pass
+
+    def _snoozed(self):
+        """지금 차단 중인 앱의 패키지 모음(시간이 지난 것은 버린다)."""
+        self._snooze_load()
+        now = time.time()
+        gone = [k for k, v in list(self._snooze.items()) if v <= now]
+        for k in gone:
+            self._snooze.pop(k, None)
+        if gone:
+            self._snooze_save()
+        return set(self._snooze)
+
+    def _snooze_arm(self):
+        """가장 먼저 풀리는 앱 시각에 맞춰 타이머를 다시 건다(풀리면 폰에 거르기 설정을 다시 보낸다)."""
+        t, self._snooze_timer = self._snooze_timer, None
+        if t is not None:
+            t.cancel()
+        if not self._snooze:
+            return
+        wait = max(1.0, min(self._snooze.values()) - time.time() + 1.0)
+        t = threading.Timer(min(wait, 25 * 3600.0), self._snooze_tick)
+        t.daemon = True
+        self._snooze_timer = t
+        t.start()
+
+    def _snooze_tick(self):
+        self._snooze_timer = None
+        self._snoozed()
+        self._link_push_filter()
+        self._snooze_arm()
+
+    def phone_notify_snooze(self, pkg, hours):
+        """노치 알림 카드의 '1시간·6시간·24시간 차단': 이 앱의 알림을 그 시간 동안 띄우지 않는다. -> {ok, app, until}"""
+        try:
+            pkg = str(pkg or "")
+            if not pkg or len(pkg) > 120 or not re.fullmatch(r"[A-Za-z0-9._-]+", pkg):
+                return {"ok": False, "error": "pkg"}
+            try:
+                h = int(hours)
+            except (TypeError, ValueError):
+                return {"ok": False, "error": "hours"}
+            if isinstance(hours, (bool, float)) and hours != h or h not in self.SNOOZE_HOURS:          # 1.5 같은 값은 정수로 잘려 받아들여지지 않게
+                return {"ok": False, "error": "hours"}
+            self._snooze_load()
+            until = time.time() + h * 3600.0
+            self._snooze[pkg] = until
+            self._snooze_save()
+            self._snooze_arm()
+            self._link_push_filter()
+            name = str((self._phone_apps.get(pkg) or {}).get("name") or pkg)
+            return {"ok": True, "app": name, "until": until}
+        except Exception as e:
+            log(f"phone_notify_snooze error: {type(e).__name__}")
+            return {"ok": False, "error": "exception"}
+
             self._note_phone_app("", "", True)                # 파일에서 읽어 둔다
             added = 0
             for it in (r.get("apps") if isinstance(r.get("apps"), list) else [])[:600]:

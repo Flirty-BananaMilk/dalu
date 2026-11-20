@@ -195,6 +195,8 @@ Object.assign(I18N.en, {"lkUpdTitle": "Phone app update", "lkUpdSub": "{v} · up
 // 휴대폰 탭 타일의 풍선말(문자·파일 전송·갤러리): 빠져 있어서 키 이름이 그대로 보였다
 Object.assign(I18N.ko, {"phoneHint_sms": "문자 보기·보내기", "phoneHint_files": "PC의 파일을 골라 폰으로 보내기", "phoneHint_media": "폰의 사진·동영상을 보고 PC로 가져오기"});
 Object.assign(I18N.en, {"phoneHint_sms": "Read and send text messages", "phoneHint_files": "Pick files on this PC and send them to the phone", "phoneHint_media": "Browse the phone’s photos and videos and copy them to this PC"});
+Object.assign(I18N.ko, {"phoneSnooze1": "1시간", "phoneSnooze6": "6시간", "phoneSnooze24": "24시간", "phoneSnoozeAria": "{h}시간 동안 이 앱의 알림 차단", "phoneSnoozedApp": "{app} 알림을 {h}시간 동안 차단했어요"});
+Object.assign(I18N.en, {"phoneSnooze1": "1h", "phoneSnooze6": "6h", "phoneSnooze24": "24h", "phoneSnoozeAria": "Block this app's notifications for {h} hours", "phoneSnoozedApp": "Blocked {app} notifications for {h} h"});
 
 let lang = 'ko';
 function t(key, params) {

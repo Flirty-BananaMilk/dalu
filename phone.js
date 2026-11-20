@@ -179,6 +179,7 @@ function initPhone() {
   $('phCardSend').addEventListener('click', (e) => { e.stopPropagation(); phoneSendReply(); });
   const mute = $('phCardMute');
   if (mute) { sysSetIc(mute.querySelector('svg'), 'bellOff'); mute.addEventListener('click', (e) => { e.stopPropagation(); phoneMuteApp(); }); }
+  for (const b of $$('#phSnz .ph-snz')) b.addEventListener('click', (e) => { e.stopPropagation(); phoneSnoozeApp(Number(b.dataset.h)); });          // 1시간·6시간·24시간 차단
   $('phCardIn').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); phoneSendReply(); } e.stopPropagation(); });
   $('phCardIn').addEventListener('input', () => document.querySelector('.ph-card-reply').classList.remove('err'));
   langHooks.push(() => { phoneS.sig = ''; renderPhone(); });
@@ -334,6 +335,8 @@ async function phoneMuteApp() {
   const c = phoneS.card, api = getApi();
   if (!c || !c.pkg || !api || !api.phone_notify_app_set) return;
   let r = null;
+  const sz = $('phSnz');          // 임시 차단 단추(패키지 이름을 아는 알림만)
+  if (sz) { sz.hidden = !c.pkg; for (const b of $$('#phSnz .ph-snz')) { b.textContent = t('phoneSnooze' + b.dataset.h); b.setAttribute('aria-label', t('phoneSnoozeAria', { h: b.dataset.h })); } }
   try { r = await api.phone_notify_app_set(c.pkg, false); } catch (e) { r = null; }
   if (r && r.ok) { showToast(t('phoneMutedApp', { app: c.app || r.app || c.pkg })); phoneCardClose(); }
   else showToast(t('phoneFail'));
@@ -347,6 +350,15 @@ const PHONE_REPLY_ERR = { empty: 'phoneReplyFail', toolong: 'phoneReplyFail', no
 async function phoneSendReply() {
   const c = phoneS.card, inp = $('phCardIn'), row = document.querySelector('.ph-card-reply');
   if (!c || !inp || phoneS.sending) return;
+// 카드의 '1시간/6시간/24시간 차단': 이 앱의 알림을 그 시간 동안만 띄우지 않는다(시간이 지나면 저절로 풀린다)
+async function phoneSnoozeApp(h) {
+  const c = phoneS.card, api = getApi();
+  if (!c || !c.pkg || !api || !api.phone_notify_snooze) return;
+  let r = null;
+  try { r = await api.phone_notify_snooze(c.pkg, h); } catch (e) { r = null; }
+  if (r && r.ok) { showToast(t('phoneSnoozedApp', { app: c.app || r.app || c.pkg, h })); phoneCardClose(); }
+  else showToast(t('phoneFail'));
+}
   const text = inp.value.trim();
   if (!text) return;
   const api = getApi(); if (!api || !api.link_reply) return;

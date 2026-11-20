@@ -1174,3 +1174,5 @@ Object.assign(STR_CJK.zh, {"rbDone": "已恢复按钮位置"});
 Object.assign(STR_CJK.ja, {"rbDone": "ボタンの位置を元に戻しました"});
 Object.assign(TR_CJK.zh, {"Button positions in tabs": "标签页内的按钮位置", "Reset": "恢复默认", "In the notch, press and hold a button on the System, Power or Phone tab and drag it to move it.": "在刘海中，长按系统、电源或手机标签页上的按钮并拖动即可调整位置。"});
 Object.assign(TR_CJK.ja, {"Button positions in tabs": "タブ内のボタンの位置", "Reset": "元に戻す", "In the notch, press and hold a button on the System, Power or Phone tab and drag it to move it.": "ノッチでシステム・電源・スマホタブのボタンを長押ししてドラッグすると位置を変えられます。"});
+Object.assign(I18N_CJK.zh, {"phoneSnooze1": "1小时", "phoneSnooze6": "6小时", "phoneSnooze24": "24小时", "phoneSnoozeAria": "屏蔽此应用的通知 {h} 小时", "phoneSnoozedApp": "已屏蔽 {app} 的通知 {h} 小时"});
+Object.assign(I18N_CJK.ja, {"phoneSnooze1": "1時間", "phoneSnooze6": "6時間", "phoneSnooze24": "24時間", "phoneSnoozeAria": "このアプリの通知を {h} 時間ブロック", "phoneSnoozedApp": "{app} の通知を {h} 時間ブロックしました"});

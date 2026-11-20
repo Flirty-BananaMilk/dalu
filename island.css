@@ -1929,7 +1929,13 @@ button.sysic:hover { background: rgba(255, 255, 255, 0.14); }
 .ph-card-x { width: 18px; height: 18px; flex: none; }
 .ph-card-x svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 .ph-card-mute[hidden] { display: none; }
-.ph-card-mute { margin-left: auto; }          /* 이 앱 끄기 단추는 닫기(X) 바로 왼쪽 */
+.ph-card-mute { margin-left: auto; }
+.ph-snzs { margin-left: auto; display: flex; gap: 4px; flex: none; }          /* 1시간·6시간·24시간 차단: 이 앱 끄기 왼쪽 */
+.ph-snzs[hidden] { display: none; }
+.ph-snz { height: 18px; padding: 0 7px; border: none; border-radius: 9px; background: rgba(255, 255, 255, 0.12); color: rgba(255, 255, 255, 0.78); font: inherit; font-size: 10.5px; font-weight: 600; line-height: 18px; white-space: nowrap; cursor: pointer; transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease; }
+.ph-snz:hover { background: rgba(255, 255, 255, 0.22); color: #fff; }
+.ph-snz:active { transform: scale(0.95); }
+.ph-snzs + .ph-card-mute { margin-left: 2px; }          /* 이 앱 끄기 단추는 닫기(X) 바로 왼쪽 */
 .ph-card-mute + .ph-card-x { margin-left: 0; }
 .ph-card-mute svg { width: 14px; height: 14px; }
 /* 파일 전송 진행 카드(휴대폰 탭) */
