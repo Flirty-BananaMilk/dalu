@@ -227,7 +227,7 @@ def topmost_buried(hwnd, user32=None):
     return False
 
 
-APP_VERSION = "1.1.0"   # 배포 버전(MAJOR.MINOR.PATCH). 올릴 때는 CHANGELOG.md 에 같은 버전의 항목을 먼저 쓴다 (installer/build_release.py 가 확인)
+APP_VERSION = "1.1.1"   # 배포 버전(MAJOR.MINOR.PATCH). 올릴 때는 CHANGELOG.md 에 같은 버전의 항목을 먼저 쓴다 (installer/build_release.py 가 확인)
 SETTINGS_W = 980
 SETTINGS_H = 680
 
