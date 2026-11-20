@@ -230,6 +230,48 @@ def diff_new(seen, current_ids):
     return sorted(cur - set(seen)), cur
 
 
+REPLACE_WINDOW = 4.0      # 같은 앱에서 알림이 사라진 뒤 이 시간(초) 안에 새 알림이 오면 '새로 온 것'이 아니라 '갱신'으로 본다
+BURST_COUNT = 4           # 한 앱이 BURST_SECONDS 안에 이만큼 알림을 울렸으면 그 뒤의 알림은 조용히 둔다(소리·노치 표시 없음)
+BURST_SECONDS = 10.0
+
+
+def split_new(new_ids, names, prev_names, gone, notified, now, replace_window=REPLACE_WINDOW, burst_count=BURST_COUNT, burst_seconds=BURST_SECONDS):
+    """이번에 처음 보인 id(new_ids)를 '진짜 새 알림' / '갱신' / '폭주로 조용히 둘 것'으로 나눈다.
+
+    Instagram 오디오 메시지·음악 재생처럼 같은 알림을 계속 바꿔 올리는 앱은, 윈도우가 갱신할 때마다 새 id 를 주고 옛 id 는 없애 버린다.
+    id 만 보면 매번 새 알림으로 보여 노치와 소리가 끝없이 반복되었다. 알림 내용은 보지 않고, 앱 이름과 사라진/나타난 시각만으로 가린다:
+      - 같은 앱에서 옛 알림이 방금(replace_window 안에) 사라졌으면 새 알림은 그 알림의 갱신이다(처리 대기 상태도 이어받는다).
+      - 갱신이 아니어도 한 앱이 burst_seconds 안에 burst_count 번 울렸으면 더는 울리지 않는다(내용이 계속 바뀌는 알림을 막는 안전장치).
+    prev_names: 지난 조회의 {id: 앱}, gone: {앱: [(사라진 시각, 처리 대기였나)]} (이 함수가 바꾼다), notified: {앱: [울린 시각]} (이 함수가 바꾼다).
+    -> (진짜 새 알림 id 목록, 갱신 id 목록 [(새 id, 이어받은 처리 대기 여부)], 조용히 둘 id 목록)"""
+    cur = set(names)
+    for gid, app in prev_names.items():
+        if gid not in cur:
+            gone.setdefault(app, []).append((now, False))
+    for app in list(gone):
+        gone[app] = [g for g in gone[app] if now - g[0] <= replace_window]
+        if not gone[app]:
+            del gone[app]
+    real, replaced, quiet = [], [], []
+    for i in new_ids:
+        app = names.get(i, "")
+        if gone.get(app):
+            gone[app].pop(0)
+            if not gone[app]:
+                del gone[app]
+            replaced.append(i)
+            continue
+        times = [t for t in notified.get(app, []) if now - t <= burst_seconds]
+        if len(times) >= burst_count:
+            notified[app] = times
+            quiet.append(i)
+            continue
+        times.append(now)
+        notified[app] = times
+        real.append(i)
+    return real, replaced, quiet
+
+
 class NotificationWatch:
     """백그라운드 스레드에서 알림 목록을 보다가, 새 알림이 있으면 on_new(앱 이름 목록) 을 부른다."""
 
@@ -247,6 +289,9 @@ class NotificationWatch:
         self._stop = threading.Event()
         self._thread = None
         self._seen = None              # None = 아직 기준선을 잡지 않음
+        self._prev_names = {}          # 지난 조회의 {id: 앱 이름}: 같은 앱에서 알림이 사라지고 새로 생기면 갱신으로 보려고
+        self._gone = {}
+        self._notified = {}
         self.status = "off"            # off | ok | denied | unavailable
         self._store_path = store_path  # 알림을 보낸 앱 이름 목록을 저장할 파일(없으면 메모리에만)
         self.apps = self._load_apps()
@@ -320,6 +365,7 @@ class NotificationWatch:
                 if not self._enabled():
                     self.status = "off"
                     self._seen = None            # 다시 켜면 그때 쌓여 있는 것은 새 알림으로 치지 않는다
+                    self._prev_names = {}
                     await asyncio.sleep(1.0)
                     continue
                 if listener is not None and self.status != "ok":
@@ -335,6 +381,7 @@ class NotificationWatch:
                 names = {i: n for i, n in items}
                 if self._seen is None:
                     self._seen = set(names)       # 기준선
+                    self._prev_names = dict(names)
                     self._unread = set()
                     if record_apps(self.apps, names, set()):      # 지금 쌓여 있는 알림의 앱 이름도 목록에 올려 둔다(알림이 새로 오기 전에도 끌 수 있게)
                         self._save_apps()
@@ -344,7 +391,16 @@ class NotificationWatch:
                         self._save_apps()
                     new = [i for i in new if not is_ignored(names[i], self._ignore())]      # 무시할 앱의 알림은 새 알림으로도, 처리 대기로도 세지 않는다
                     had = bool(self._unread)
-                    self._unread = (self._unread & set(names)) | set(new)
+                    now = time.time()
+                    gone_unread = {i for i in self._unread if i not in names}          # 이번에 사라진 알림 중 처리 대기였던 것
+                    real, replaced, quiet = split_new(new, names, self._prev_names, self._gone, self._notified, now)
+                    self._prev_names = dict(names)
+                    # 처리 대기였던 알림이 갱신되었으면 새 id 가 그 자리를 이어받는다(다시 울리지 않고, 대기는 유지)
+                    keep = set(real) | set(quiet)
+                    if replaced and gone_unread:
+                        keep |= set(replaced[:len(gone_unread)])
+                    self._unread = (self._unread & set(names)) | keep
+                    new = real
                     if new:
                         self._on_new([names[i] for i in new])
                     elif had and not self._unread:
