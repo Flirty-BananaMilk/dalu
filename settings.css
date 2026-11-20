@@ -129,6 +129,8 @@ html[data-anim="off"] .orb { animation: none; }
 }
 
 /* ---------- 항목 행 ---------- */
+/* hidden 속성이 .row 의 display:flex 에 덮이지 않게 한다(연결된 폰이 없을 때 숨겨야 할 '폰 앱 버전' 줄이 빈 제목과 빈 단추로 보이던 것) */
+[hidden] { display: none !important; }
 .row { position: relative; display: flex; align-items: center; gap: 18px; min-height: 58px; padding: 11px 18px; transition: opacity 0.25s, background 0.2s; }
 .row + .row { border-top: 1px solid rgba(255, 255, 255, 0.07); }
 .row.stack { flex-wrap: wrap; row-gap: 8px; }          /* 설명이 긴 주소 입력 줄: 제목·설명이 한 줄 전체를 쓰고 입력칸은 그 아래 */
