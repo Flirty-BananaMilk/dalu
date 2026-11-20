@@ -34,7 +34,6 @@ function applyPrefs() {
     root.style.setProperty('--gd', (lo ? 1.6 - 0.6 * (t / 50) : 1 - 0.8 * ((t - 50) / 50)).toFixed(3));
     root.style.setProperty('--gbr', (lo ? 0.7 + 0.3 * (t / 50) : 1 + 0.35 * ((t - 50) / 50)).toFixed(3));
   }
-  root.dataset.rim = s.glassRim === false ? 'off' : 'on';      // 리퀴드 글래스 '전체'의 노치 테두리 선(끄면 유리만 보인다)
   if (typeof applyNotchGlass === 'function') { if (gmode !== notchGlassMode) applyNotchGlass(gmode); else refreshNotchGlassStrength(); }
   root.style.setProperty('--dkh', dockH() + 'px');
   root.style.setProperty('--dkc', (dockMargin() - 7) + 'px');
@@ -75,8 +74,6 @@ function onIslandLeave() {
 
 const collapseDelayMs = () => clampN(store.settings.collapseDelay, 100, 5000, 850);
 const idleAfterMs = () => clampN(store.settings.idleMin, 1, 60, 2) * 60000;
-const petAfterSec = () => clampN(store.settings.petAfter, 5, 900, 45);
-const petDozeSec = () => petAfterSec() + 105;          // 나타난 뒤 105초가 더 지나면 존다 (예전 45초 -> 150초 간격 그대로)
 
 // 설정 창에서 온 패치를 store 에 합치고 화면에 반영한다 (설정 창이 파이썬에도 이미 저장했으므로 여기서는 메모리/화면만)
 function mergePatch(dst, patch) {

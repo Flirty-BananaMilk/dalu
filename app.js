@@ -11,7 +11,6 @@ const BG_EXTRA_H = 24;      // 백그라운드 보컬 줄이 나올 때 작은 �
 const STATES = {
   slim:       { w: 92,  h: 6,   e: 3 },        // 접힌 노치를 한 번 더 줄인 상태(설정 slimNotch): 내용 없이 화면 위로 살짝 돌출된 선만 남는다
   idle:       { w: 150, h: 30,  e: 10 },
-  pet:        { w: 150, h: 30,  e: 10 },
   mini:       { w: 300, h: 32,  e: 10 },
   compact:    { w: 190, h: 30,  e: 10 },
   peek_track: { w: 340, h: 62,  e: 13 },
@@ -48,9 +47,6 @@ let playHoldUntil = 0;             // 방금 재생/일시정지를 눌렀다면
 const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const IDLE_AFTER_MS = 120000;   // 일시정지/정지 후 이 시간이 지나면 시계(idle)로 돌아간다
 const PEEK_MS = 3200;
-const PET_AFTER_SEC = 45;       // 입력이 이만큼 없으면 시계 대신 눈 캐릭터가 나온다
-const PET_DOZE_SEC = 150;       // 이만큼 없으면 눈을 감고 존다
-const PET_WAVE_MS = 2600;       // 졸다가 돌아오면 이만큼 인사한다
 
 // ========================================================
 // 아이콘 (Material 아이콘 path, 신뢰된 상수만 innerHTML 로 넣는다)
@@ -211,13 +207,13 @@ function t(key, params) {
 const DEFAULT_STORE = {
   settings: {
     lang: 'ko', lyricsOn: true, sound: true, soundType: 'system', soundSystem: 'Windows Proximity Notification.wav', soundVolume: 80, soundFile: '', compact: false,
-    clock24: true, clockSeconds: false, compactClock: true, satellite: 'full', glassNotch: 'controls', glassStrength: 100, glassClear: 50, glassRim: true, winNotify: false, winNotifyIgnore: '', uiScale: 100, setAnim: true, setAnimSpeed: 100, budsWatch: true,
+    clock24: true, clockSeconds: false, compactClock: true, satellite: 'full', glassNotch: 'controls', glassStrength: 100, glassClear: 50, winNotify: false, winNotifyIgnore: '', uiScale: 100, setAnim: true, setAnimSpeed: 100, budsWatch: true,
     wordSync: true, lyricSize: 100, lyricOffset: 0, phoneLyricOffset: 0, lyricGlow: true,
     smtcOn: true, mediaPriority: 'auto', extLyrics: true, extApple: true, extNetease: true, extLrclib: true,
     visualizer: true, vizGain: 100, artGlow: true, glowStrength: 100,
     notify: { volume: true, brightness: true, caps: true, num: true, scroll: true, insert: true, lang: true, power: true, battery_low: true, net: true, audio_device: true, buds: true, buds_low: true, bt_low: true, buds_alert: true, track: true },
     peekDur: 3200, budsLowPct: 20, btDevices: true, airpodsScan: false, updateCheck: true,
-    theme: 'black', monitor: 0, hoverDelay: 0, collapseDelay: 850, idleMin: 2, pet: true, petAfter: 45, fullscreenMode: 'yield', notchPos: 0, slimNotch: false, hideInGames: true, gameAlways: '', gameNever: '',
+    theme: 'black', monitor: 0, hoverDelay: 0, collapseDelay: 850, idleMin: 2, fullscreenMode: 'yield', notchPos: 0, slimNotch: false, hideInGames: true, gameAlways: '', gameNever: '',
     animOff: false, animSpeed: 100, bounce: 100, entrance: true, pageAnim: 'slide',
     tabOrder: DEFAULT_TAB_ORDER, tabHidden: '', satPerfCpu: false, satPerfMem: false, satPerfNet: false, satPerfGpu: false, satPhoneBatt: false, satPhoneMissed: false, phoneNotify: true, linkOn: false, linkRelayOn: false, linkRelay: '', linkClipPush: true, linkClipPull: true, linkFileAuto: true, linkNewPhoto: true, phoneNotifyOff: '', phoneButtons: '', powerButtons: '', sysButtons: '', linkFileDir: '', phoneNotifyMode: 'all', phoneNotifyOn: '', phoneNotifyQuiet: false, phoneMedia: false, linkMirror: false, linkMirrorControl: false, linkRemote: false, phoneCallMedia: 'duck', satWeather: false, satDday: false, weatherCity: '', weatherLat: 0, weatherLon: 0, weatherUnit: 'c', weatherLocate: true, pluginsEnabled: '',
     focusDnd: true,
@@ -305,7 +301,6 @@ let compactMode = false;
 let collapseTimer = null;
 
 const peek = { active: false, kind: 'track', key: '', timer: null };
-const pet = { idleSec: 0, mode: 'awake', waveUntil: 0, dozed: false };
 
 const $ = (id) => document.getElementById(id);
 const $$ = (sel) => Array.from(document.querySelectorAll(sel));
@@ -329,9 +324,7 @@ const pkMeter = $('pkMeter');
 const contextMenu = $('contextMenu');
 const clockEl = $('clock');
 const miniClockEl = $('miniClock');
-const petLayer = $('petLayer');
 const playerEl = document.querySelector('.l-player');
-const eyesEl = $('eyes');
 
 const artBoxes = $$('.art-box');
 const artMain = $('artMain');
@@ -489,11 +482,6 @@ function expandedView() {
 
 const slimOn = () => !!store.settings.slimNotch;
 
-function petVisible(now) {
-  if (!store.settings.pet) return false;
-  return pet.idleSec >= petAfterSec() || now < pet.waveUntil;
-}
-
 function computeView() {
   if (isExpanded) return expandedView();
   if (peek.active) return 'peek';
@@ -502,7 +490,7 @@ function computeView() {
   if (slimOn()) return 'slim';
   if (hasTrack()) return 'mini';
   if (island.dataset.timer === '1') return 'idle';
-  return petVisible(Date.now()) ? 'pet' : 'idle';
+  return 'idle';
 }
 
 function chipVisible() {
@@ -1105,8 +1093,6 @@ function handleStateUpdate(res) {
   if (res.btdevices && typeof updateBt === 'function') updateBt(res.btdevices);
   if (typeof updateUpd === 'function') updateUpd(res.update || null);
 
-  // 사용자 입력이 없었던 시간 -> 캐릭터(눈) 상태
-  if (typeof res.idleSec === 'number') updatePet(res.idleSec);
 
   // 시스템 이벤트(볼륨/Caps Lock/충전기/네트워크/오디오 장치/파일 드롭 ...)
   if (res.events && res.events.length && typeof handleSysEvent === 'function') {
@@ -1114,37 +1100,6 @@ function handleStateUpdate(res) {
   }
 
   updateView();
-}
-
-// ========================================================
-// 캐릭터(눈): 한동안 입력이 없으면 시계 대신 나타나고, 더 지나면 졸고, 돌아오면 인사한다
-// ========================================================
-function updatePet(idleSec) {
-  const now = Date.now();
-  if (pet.idleSec >= petDozeSec()) pet.dozed = true;
-  if (idleSec < 2 && pet.dozed) {          // 졸던 중에 입력이 돌아왔다 -> 인사
-    pet.dozed = false;
-    pet.waveUntil = now + PET_WAVE_MS;
-  }
-  pet.idleSec = idleSec;
-  let mode = 'awake';
-  if (now < pet.waveUntil) mode = 'wave';
-  else if (idleSec >= petDozeSec()) mode = 'doze';
-  if (mode !== pet.mode) {
-    pet.mode = mode;
-    petLayer.dataset.mode = mode;
-  }
-  if (mode === 'wave') setTimeout(updateView, PET_WAVE_MS + 50);   // 인사가 끝나면 시계로
-}
-
-// 눈동자가 가끔 두리번거린다
-function lookAround() {
-  if (pet.mode === 'awake' && view === 'pet') {
-    const lx = (Math.random() * 3 - 1.5).toFixed(1);
-    const ly = (Math.random() * 3 - 1.5).toFixed(1);
-    eyesEl.style.setProperty('--lx', `${lx}px`);
-    eyesEl.style.setProperty('--ly', `${ly}px`);
-  }
 }
 
 // ========================================================

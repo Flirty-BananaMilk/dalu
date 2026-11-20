@@ -67,7 +67,7 @@ input { font-family: inherit; user-select: text; -webkit-user-select: text; }
 
 /* 안쪽 내용을 노치 모양으로 자르는 틀. 좌우로 귀 크기(--e)만큼 넓혀 두고(투명 테두리라 안쪽 좌표는 그대로 노치 상자 기준) 모양은 mask 로 자른다:
    노치 본체(아래 모서리 --r) + 양옆 귀의 오목한 곡선. 그래서 앨범색 빛·유리 바탕 같은 노치의 내용이 귀 자리까지 그대로 이어진다(귀가 따로 칠해져 갈라져 보이지 않는다). */
-/* 옆면·아래 모서리·귀 곡선은 테두리 선(.rimbody/.rimear)보다 1px 바깥까지 넓게 자른다: 조각 가장자리는 노치가 움직이는 동안 최대 1px 흔들리는데, 선보다 안쪽으로 들어오면 선의 바깥 한 칸이 잘려 얇아진다.
+/* 옆면·아래 모서리·귀 곡선은 1px 바깥까지 넓게 자른다: 조각 가장자리는 노치가 움직이는 동안 최대 1px 흔들리는데, 선보다 안쪽으로 들어오면 선의 바깥 한 칸이 잘려 얇아진다.
    바깥으로 나온 1px 는 선 바깥의 그림자 속에 묻힌다. */
 .clip {
   position: absolute; inset: 0 calc(-1 * var(--e)); border: solid transparent; border-width: 0 var(--e);
@@ -152,7 +152,7 @@ input { font-family: inherit; user-select: text; -webkit-user-select: text; }
 }
 
 .island[data-s="slim"] { --w: 92px; --h: 6px; --r: 4px; --e: 3px; }
-.island[data-s="idle"], .island[data-s="pet"] { --w: 150px; --h: 30px; --r: 14px; --e: 10px; }
+.island[data-s="idle"] { --w: 150px; --h: 30px; --r: 14px; --e: 10px; }
 .island[data-s="mini"]   { --w: 300px; --h: 32px;  --r: 15px; --e: 10px; }
 .island[data-s="mini"][data-chip="1"] { --w: 360px; }
 .island.compact[data-s="mini"] { --w: 190px; --h: 30px; --r: 14px; }
@@ -190,7 +190,6 @@ input { font-family: inherit; user-select: text; -webkit-user-select: text; }
 }
 .ly.off { display: none; }
 .island[data-s="idle"]   .l-idle,
-.island[data-s="pet"]    .l-pet,
 .island[data-s="mini"]   .l-mini,
 .island[data-s="peek"]   .l-peek,
 .island[data-s="music"]  .l-player,
@@ -296,6 +295,9 @@ input { font-family: inherit; user-select: text; -webkit-user-select: text; }
 .island[data-timer="1"] .clock { display: none; }
 .idle-timer { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; gap: 7px; }
 .island[data-timer="1"] .idle-timer { display: flex; }
+/* 보조 노치가 켜져 있으면 타이머는 보조 노치가 보여 준다: 쉬는 큰 노치는 시계를 그대로 둔다(양쪽에 같은 타이머가 뜨지 않게) */
+html[data-sat="1"] .island[data-timer="1"] .clock { display: flex; }
+html[data-sat="1"] .island[data-timer="1"] .idle-timer { display: none; }
 
 /* 타이머 칩 (링 + 남은 시간) */
 .tchip { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; flex-shrink: 0; }
@@ -308,40 +310,6 @@ input { font-family: inherit; user-select: text; -webkit-user-select: text; }
   transition: --p 1s linear;
 }
 .island[data-pm="break"] .tring, .island[data-pm="break"] .pring { --c: var(--green); }
-
-/* ---------- PET: 캐릭터(눈) ---------- */
-.l-pet { display: grid; place-items: center; }
-.eyes { display: flex; gap: 9px; align-items: center; }
-.eye {
-  position: relative;
-  width: 9px; height: 13px;
-  border-radius: 6px;
-  background: #fff;
-  overflow: hidden;
-  animation: blink 5.5s infinite;
-  transition: height 0.3s ease, border-radius 0.3s ease, transform 0.3s ease;
-}
-.eye b {
-  position: absolute; left: 50%; top: 50%;
-  width: 4.5px; height: 6.5px; border-radius: 3px; background: #0a0a0a;
-  transform: translate(calc(-50% + var(--lx, 0px)), calc(-50% + var(--ly, 0px)));
-  transition: transform 0.35s var(--spring-hard);
-}
-.eye:nth-child(2) { animation-delay: 0.04s; }
-@keyframes blink { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(0.08); } }
-/* 졸음: 눈이 감긴다 */
-.l-pet[data-mode="doze"] .eye { height: 3px; border-radius: 3px; animation: none; transform: translateY(2px); }
-.l-pet[data-mode="doze"] .eye b { display: none; }
-/* 인사: 눈이 웃는 모양(^ ^)이 된다 */
-.l-pet[data-mode="wave"] .eye { height: 7px; background: transparent; border-top: 3px solid #fff; border-radius: 8px 8px 0 0; animation: none; }
-.l-pet[data-mode="wave"] .eye b { display: none; }
-.zzz { position: absolute; right: 34px; top: 4px; font-size: 10px; font-weight: 700; color: var(--dim); opacity: 0; }
-.l-pet[data-mode="doze"] .zzz { animation: zzz 2.6s ease-in-out infinite; }
-@keyframes zzz { 0% { opacity: 0; transform: translate(0, 6px) scale(0.7); } 40% { opacity: 1; } 100% { opacity: 0; transform: translate(6px, -4px) scale(1.1); } }
-.wave svg { width: 15px; height: 15px; display: block; }
-.wave { color: rgba(255, 255, 255, 0.85); position: absolute; right: 26px; top: 50%; font-size: 13px; transform: translateY(-50%); opacity: 0; transform-origin: 70% 80%; }
-.l-pet[data-mode="wave"] .wave { opacity: 1; animation: wave 0.7s ease-in-out infinite alternate; }
-@keyframes wave { from { transform: translateY(-50%) rotate(-14deg); } to { transform: translateY(-50%) rotate(18deg); } }
 
 /* ---------- MINI: 접힌 상태 (아트 + 실시간 가사 + 타이머 칩 + 이퀄라이저) ---------- */
 .l-mini { display: flex; align-items: center; justify-content: space-between; padding: 0 12px; gap: 0; bottom: auto; height: 32px; }   /* 첫 줄은 항상 위 32px 에 고정: 노치가 늘어나도 아트/가사/막대가 내려가지 않는다 */
@@ -1214,7 +1182,7 @@ html[data-sat="1"] .island[data-chip="1"] .l-mini .tchip { display: none; }
 .sat-skin { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
 html[data-theme="glass"] .sat-skin {
   background: radial-gradient(130% 110% at 50% 130%, rgba(150, 175, 255, 0.22), transparent 58%), linear-gradient(180deg, #000 0%, #0b0d14 100%);
-  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.3), inset 1px 0 0 rgba(255, 255, 255, 0.1), inset -1px 0 0 rgba(255, 255, 255, 0.1), inset 0 -9px 16px -11px rgba(150, 175, 255, 0.5);
+  box-shadow: inset 0 -9px 16px -11px rgba(150, 175, 255, 0.5);
 }
 html[data-theme="tint"] .sat-skin { background: linear-gradient(180deg, #000 0%, #000 26%, color-mix(in srgb, var(--art-a) 44%, #000) 135%); }
 /* 리퀴드 글래스 '전체': 큰 노치처럼 뒤 화면이 비친다 (같은 화면 스트림을 물방울 안에도 같은 위치로 깔고, 그 위에 어둡게 테마를 얹는다) */
@@ -1224,14 +1192,13 @@ html[data-theme="tint"] .sat-skin { background: linear-gradient(180deg, #000 0%,
 html[data-glass="full"][data-desk="1"] .sat-desk { display: block; }
 html[data-glass="full"][data-desk="1"] .sat-skin {
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.92) 0, rgba(5, 7, 12, calc(0.45 * var(--gd, 1))) 55%, rgba(5, 7, 12, calc(0.34 * var(--gd, 1))) 100%);
-  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.3), inset 1px 0 0 rgba(255, 255, 255, 0.12), inset -1px 0 0 rgba(255, 255, 255, 0.12);
 }
 html[data-glass="full"][data-desk="1"][data-theme="tint"] .sat-skin {
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.9) 0, color-mix(in srgb, var(--art-a) calc(38% * var(--gd, 1)), rgba(5, 7, 12, calc(0.42 * var(--gd, 1)))) 55%, color-mix(in srgb, var(--art-a) calc(58% * var(--gd, 1)), rgba(5, 7, 12, calc(0.34 * var(--gd, 1)))) 100%);
 }
 html[data-glass="full"][data-desk="1"][data-theme="glass"] .sat-skin {
   background: radial-gradient(130% 110% at 50% 130%, rgba(150, 175, 255, 0.34), transparent 60%), linear-gradient(180deg, rgba(0, 0, 0, 0.9) 0, rgba(5, 7, 12, calc(0.42 * var(--gd, 1))) 55%, rgba(5, 7, 12, calc(0.32 * var(--gd, 1))) 100%);
-  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.5), inset 1px 0 0 rgba(255, 255, 255, 0.18), inset -1px 0 0 rgba(255, 255, 255, 0.18), inset 0 -9px 16px -11px rgba(150, 175, 255, 0.6);
+  box-shadow: inset 0 -9px 16px -11px rgba(150, 175, 255, 0.6);
 }
 
 /* ---------- 물방울이 큰 노치 '뒤에서' 나오고 '안으로' 들어간다 ----------
@@ -1338,7 +1305,7 @@ html[data-glass="full"][data-desk="1"] .sat-wrap {
    스프링(var(--spring))은 목표를 살짝 넘어갔다 돌아온다. 큰 노치가 접힐 때 높이가 접힌 높이(32px)보다 더 낮아졌다가 올라오면,
    그 사이에 앨범 아트·가사 줄(약 28px)이 노치 아래 모서리에 잘려 보인다(느린 속도에서 특히). 접힌 상태들로 들어갈 때는 높이만
    넘치지 않는 곡선을 쓴다. 너비와 펼쳐질 때(음악/타이머 등)의 높이는 그대로 스프링이라 통통 튀는 느낌은 유지된다. */
-.island[data-s="mini"], .island[data-s="idle"], .island[data-s="pet"], .island[data-s="peek"], .island[data-s="slim"] {
+.island[data-s="mini"], .island[data-s="idle"], .island[data-s="peek"], .island[data-s="slim"] {
   transition: width 0.62s var(--spring), height 0.62s cubic-bezier(0.22, 1, 0.36, 1), border-radius 0.45s ease, --r 0.45s ease, --e 0.62s var(--spring);
 }
 
@@ -1391,7 +1358,7 @@ html[data-glass="full"][data-desk="1"] .sat-wrap {
 @property --gb-b { syntax: '<length-percentage>'; inherits: true; initial-value: 18px; }
 @property --gb-c { syntax: '<length-percentage>'; inherits: true; initial-value: 66px; }
 .glassbody { --gb-a: 1; --gb-b: 18px; --gb-c: 66px; transition: --gb-a 0.5s ease, --gb-b 0.5s ease, --gb-c 0.5s ease; }
-.island[data-s="mini"] .glassbody, .island[data-s="idle"] .glassbody, .island[data-s="pet"] .glassbody, .island[data-s="peek"] .glassbody, .island[data-s="slim"] .glassbody {
+.island[data-s="mini"] .glassbody, .island[data-s="idle"] .glassbody, .island[data-s="peek"] .glassbody, .island[data-s="slim"] .glassbody {
   --gb-a: 0.92; --gb-b: 0px; --gb-c: 55%;
 }
 
@@ -1544,46 +1511,15 @@ html[data-glass="full"][data-desk="1"][data-theme] .goo-bulge::after { backgroun
 html[data-glass="full"][data-desk="1"] .island::before, html[data-glass="full"][data-desk="1"] .island::after { background: none; }
 
 /* ========================================================
-   큰 노치 + 귀 = 하나의 윤곽
-   노치 옆면의 반사광 선(.glassbody 의 ::before)은 노치 사각형 기준이라 귀 곡선과 따로 놀았다(노치 따로, 귀 따로).
-   그 선을 없애고(.glassbody::before 숨김, 안쪽 가장자리 선 그림자 제거) 윤곽선을 둘로 그린다: 노치 본체(.rimbody: 옆면·아래 모서리)와 귀 곡선(.rimear).
-   선은 마스크 조각이 아니라 상자 그림자(inset)와 테두리로 그린다: 마스크 조각은 폭이 소수일 때 조각마다 따로 반올림되어 노치가 펼쳐지는 동안 좌우 선 두께가
-   1~3칸으로 흔들렸다. 그림자·테두리는 두께가 길이 그대로(--rim: 화면 배율에 맞춘 정수 물리 픽셀)라 움직이는 동안에도 일정하다.
-   보조 노치가 닿는 옆면에서 띠를 비우는 구멍(--rim-hr/--rim-hl)은 예전과 같은 변수를 쓴다. 움직이는 동안 옆 띠를 흐리게 하던 처리(--rim-side)는 없앴다: 귀 곡선은 그대로인데 옆면 선만 흐려져서 둘이 어긋나 보였다.
+   큰 노치 + 귀: 노치 옆면의 반사광 선(.glassbody 의 ::before)과 안쪽 가장자리 선 그림자는 두지 않는다(노치 테두리 선은 없앴다).
+   보조 노치가 닿는 옆면의 띠를 비우는 구멍 변수(--rim-hr/--rim-hl)는 물줄기 마스크가 그대로 쓴다.
    ======================================================== */
 html[data-glass="full"][data-desk="1"] .island .glassbody.lg::before { display: none; }
 html[data-glass="full"][data-desk="1"] .island .glassbody { box-shadow: inset 0 -18px 30px -22px rgba(255, 255, 255, 0.35); }
 html[data-glass="full"][data-desk="1"][data-theme="glass"] .island .glassbody { box-shadow: inset 0 -18px 30px -20px rgba(150, 175, 255, 0.6); }
-.rimbody, .rimear { display: none; }
-html[data-glass="full"][data-desk="1"] .rimbody {
-  display: block; position: absolute; inset: 0; z-index: 2; pointer-events: none; border-radius: 0 0 var(--r) var(--r);
-  --rl: rgba(255, 255, 255, 0.5); --rr: rgba(255, 255, 255, 0.24); --rb: rgba(255, 255, 255, 0.55);
-  box-shadow: inset var(--rim, 1px) 0 0 0 var(--rl), inset calc(-1 * var(--rim, 1px)) 0 0 0 var(--rr), inset 0 calc(-1 * var(--rim, 1px)) 0 0 var(--rb);
-  -webkit-mask-image:
-    radial-gradient(circle at 100% 16px, transparent var(--rim-hr), #000 calc(var(--rim-hr) + 5px)),
-    radial-gradient(circle at 0% 16px, transparent var(--rim-hl), #000 calc(var(--rim-hl) + 5px)),
-    linear-gradient(180deg, transparent var(--e), #000 var(--e));      /* 귀 높이 위의 세로 선은 없다: 귀 곡선(.rimear)이 옆면으로 이어진다 */
-  mask-image:
-    radial-gradient(circle at 100% 16px, transparent var(--rim-hr), #000 calc(var(--rim-hr) + 5px)),
-    radial-gradient(circle at 0% 16px, transparent var(--rim-hl), #000 calc(var(--rim-hl) + 5px)),
-    linear-gradient(180deg, transparent var(--e), #000 var(--e));
-  -webkit-mask-composite: source-in, source-in, source-over; mask-composite: intersect, intersect, add;
-}
-html[data-glass="full"][data-desk="1"][data-theme="glass"] .rimbody { --rl: rgba(255, 255, 255, 0.55); --rr: rgba(255, 255, 255, 0.3); --rb: rgba(255, 255, 255, 0.7); }
-html[data-glass="full"][data-desk="1"] .rimear {
-  display: block; position: absolute; top: 0; z-index: 2; width: calc(var(--e) + var(--rim, 1px)); height: var(--e); overflow: hidden; pointer-events: none;      /* 귀 곡선의 끝은 옆면 안쪽으로 선 두께만큼 들어간다 */
-}
-html[data-glass="full"][data-desk="1"] .rimear-l { left: calc(-1 * var(--e)); }
-html[data-glass="full"][data-desk="1"] .rimear-r { left: calc(100% - var(--rim, 1px)); }
-html[data-glass="full"][data-desk="1"] .rimear b {
-  position: absolute; top: calc(-1 * var(--rim, 1px)); width: calc(2 * (var(--e) + var(--rim, 1px))); height: calc(2 * (var(--e) + var(--rim, 1px)));
-  border-radius: 50%; box-shadow: inset 0 0 0 var(--rim, 1px) rgba(255, 255, 255, 0.5);
-}
-html[data-glass="full"][data-desk="1"] .rimear-l b { left: calc(-1 * (var(--e) + var(--rim, 1px))); }
-html[data-glass="full"][data-desk="1"] .rimear-r b { left: 0; box-shadow: inset 0 0 0 var(--rim, 1px) rgba(255, 255, 255, 0.26); }
 
 /* ========================================================
-   노치 내용을 자르는 모양과 테두리 선을 '같은 경로'에서 만든다 (CSS shape(), Chromium 135+; 더 오래된 WebView 는 위의 마스크·그림자 방식을 그대로 쓴다)
+   노치 내용을 자르는 모양을 하나의 경로(CSS shape())에서 만든다 (CSS shape(), Chromium 135+; 더 오래된 WebView 는 위의 마스크·그림자 방식을 그대로 쓴다)
    - 마스크 조각/상자 그림자는 노치 폭·귀 크기가 소수일 때(움직이는 동안, 흔들릴 때) 조각마다 따로 반올림되어, 선이 얇아지거나 사라지고 내용이 선 바깥으로 1px 튀어나왔다.
    - 경로는 반올림 없이 소수 좌표 그대로 안티앨리어싱되므로: 내용의 가장자리 = 선의 바깥 가장자리(항상 같은 곳), 선 두께 = --rim 그대로, 귀 곡선과 옆면은 한 경로라 끊김이 없다.
    모양: 귀 곡선(반지름 --e) -> 옆면 -> 아래 모서리(반지름 --r) -> 아래 -> ... 위쪽은 화면 밖(-4px)까지 연장. 선 = 바깥 경로 - 1선 두께 안쪽으로 줄인 경로(evenodd).
@@ -1595,29 +1531,6 @@ html[data-glass="full"][data-desk="1"] .rimear-r b { left: 0; box-shadow: inset 
     -webkit-mask-image: none; mask-image: none;
     clip-path: shape(from calc(-1 * var(--e)) -4px, line to calc(100% + var(--e)) -4px, line to calc(100% + var(--e)) 0px, arc to 100% var(--e) of var(--e) ccw, line to 100% calc(100% - var(--r)), arc to calc(100% - var(--r)) 100% of var(--r) cw, line to var(--r) 100%, arc to 0px calc(100% - var(--r)) of var(--r) cw, line to 0px var(--e), arc to calc(-1 * var(--e)) 0px of var(--e) ccw, close);
   }
-  html[data-glass="full"][data-desk="1"] .rimbody, html[data-glass="full"][data-desk="1"] .rimear { display: none; }
-  .rimring { display: none; }
-  html[data-glass="full"][data-desk="1"] .rimring {
-    display: block; position: absolute; inset: 0 calc(-1 * var(--e)); z-index: 2; pointer-events: none;
-    /* 펼쳐진 노치 둘레에 밝은 반투명 띠(유리판처럼 보이는)가 간헐적으로 남는 문제의 해결: 값(--e/--r/--rim/잘림 모양)은 항상 맞는데 실제 화면에 그려지는 결과만
-       틀려서(웹 캡처에는 안 보이고 화면에만 보임) 이 선의 모양 잘림이 GPU 합성에서 가끔 어긋났다. 독립된 합성 층으로 분리하면 사라진다(실제 앱에서 A/B 로 확인). */
-    will-change: clip-path, transform;
-    --rl: rgba(255, 255, 255, 0.5); --rr: rgba(255, 255, 255, 0.24); --rb: rgba(255, 255, 255, 0.55);
-    /* 아래쪽 강조는 모서리 곡선을 따라 옆면 색으로 부드럽게 풀린다(예전에는 아래 6px 에서 딱 끊어져 모서리에서 선의 색·밝기가 갑자기 바뀌었다) */
-    background: linear-gradient(0deg, var(--rb) 0, transparent calc(var(--r) * 1.6)), linear-gradient(90deg, var(--rl), var(--rr));
-    /* 물줄기가 붙는 옆면의 선을 비우는 구멍은 귀 높이(--e) 아래의 옆면에만 낸다: 귀 곡선까지 지워지면 선이 사라진 것처럼 보였다 */
-    -webkit-mask-image:
-      linear-gradient(180deg, #000 var(--e), transparent var(--e)),
-      radial-gradient(circle at calc(100% - var(--e)) 16px, transparent var(--rim-hr), #000 calc(var(--rim-hr) + 5px)),
-      radial-gradient(circle at var(--e) 16px, transparent var(--rim-hl), #000 calc(var(--rim-hl) + 5px));
-    mask-image:
-      linear-gradient(180deg, #000 var(--e), transparent var(--e)),
-      radial-gradient(circle at calc(100% - var(--e)) 16px, transparent var(--rim-hr), #000 calc(var(--rim-hr) + 5px)),
-      radial-gradient(circle at var(--e) 16px, transparent var(--rim-hl), #000 calc(var(--rim-hl) + 5px));
-    -webkit-mask-composite: source-over, source-in, source-over; mask-composite: add, intersect, add;
-    clip-path: shape(evenodd from 0px -4px, line to 100% -4px, line to 100% 0px, arc to calc(100% - var(--e)) var(--e) of var(--e) ccw, line to calc(100% - var(--e)) calc(100% - var(--r)), arc to calc(100% - var(--e) - var(--r)) 100% of var(--r) cw, line to calc(var(--e) + var(--r)) 100%, arc to var(--e) calc(100% - var(--r)) of var(--r) cw, line to var(--e) var(--e), arc to 0px 0px of var(--e) ccw, close, move to 0px -4px, line to 100% -4px, line to 100% calc(-1 * var(--rim, 1px)), arc to calc(100% - var(--e) - var(--rim, 1px)) var(--e) of calc(var(--e) + var(--rim, 1px)) ccw, line to calc(100% - var(--e) - var(--rim, 1px)) calc(100% - var(--r)), arc to calc(100% - var(--e) - var(--r)) calc(100% - var(--rim, 1px)) of calc(var(--r) - var(--rim, 1px)) cw, line to calc(var(--e) + var(--r)) calc(100% - var(--rim, 1px)), arc to calc(var(--e) + var(--rim, 1px)) calc(100% - var(--r)) of calc(var(--r) - var(--rim, 1px)) cw, line to calc(var(--e) + var(--rim, 1px)) var(--e), arc to 0px calc(-1 * var(--rim, 1px)) of calc(var(--e) + var(--rim, 1px)) ccw, close);
-  }
-  html[data-glass="full"][data-desk="1"][data-theme="glass"] .rimring { --rl: rgba(255, 255, 255, 0.55); --rr: rgba(255, 255, 255, 0.3); --rb: rgba(255, 255, 255, 0.7); }
 }
 
 /* 중국어·일본어 글꼴: 한글용 글꼴(Malgun Gothic)에는 한자·가나가 없거나 모양이 달라서, 언어별로 맞는 글꼴을 앞에 둔다 */
@@ -1626,9 +1539,6 @@ html:lang(ja) { --ui: 'Segoe UI Variable Text', 'Segoe UI', 'Yu Gothic UI', 'Mei
 
 /* 한국어는 두 줄로 나뉠 때 단어 중간(예: 캔/슬링)에서 끊기지 않고 띄어쓰기에서 나뉜다 */
 html:lang(ko) .mbtn, html:lang(ko) .pbtn, html:lang(ko) .ltile { word-break: keep-all; }
-
-/* 노치 테두리 선 끄기(설정 › 모양·동작 › 노치 테두리 선): 리퀴드 글래스 '전체'의 윤곽선(.rimring, 구형 WebView 용 .rimbody/.rimear)을 숨긴다 */
-html[data-rim="off"] .rimring, html[data-rim="off"] .rimbody, html[data-rim="off"] .rimear { display: none !important; }
 
 /* 일정: 목록 / 주 / 월 보기 */
 .island[data-s="agenda"][data-ag="month"] { --w: 480px; --h: 176px; }

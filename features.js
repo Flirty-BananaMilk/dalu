@@ -1344,5 +1344,4 @@ function initFeatures() {
   initBuds();
 
   setInterval(featureTick, 250);
-  setInterval(lookAround, 2200);
 }

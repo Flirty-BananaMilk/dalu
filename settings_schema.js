@@ -165,9 +165,6 @@ const SETTINGS_PAGES = [
         { id: 'glassClear', type: 'slider', path: 'settings', key: 'glassClear', def: 50, min: 0, max: 100, step: 5, fmt: pct, label: L('글래스 투명도', 'Glass transparency'),
           desc: L('글래스 “전체”에서 노치가 얼마나 투명한지예요.', 'How see-through the notch is in Liquid Glass “Full”.'),
           indent: true, enabledIf: (d) => d.settings.glassNotch === 'full' },
-        { id: 'glassRim', type: 'toggle', path: 'settings', key: 'glassRim', def: true, label: L('노치 테두리 선', 'Notch outline'),
-          desc: L('리퀴드 글래스 “전체”에서 노치 둘레의 밝은 선이에요.', 'The bright outline around the notch in Liquid Glass “Full”.'),
-          indent: true, enabledIf: (d) => d.settings.glassNotch === 'full' },
         { id: 'captureNotch', type: 'seg', path: 'settings', key: 'captureNotch', def: 'auto', label: L('캡처·영상 녹화에서 노치', 'Notch in screenshots & video'),
           desc: L('“표시”로 하면 노치 뒤 화면이 정지돼요.', 'With “Shown”, the screen behind the notch freezes.'),
           options: [{ v: 'hide', label: L('가리기', 'Hidden') }, { v: 'auto', label: L('자동', 'Auto') }, { v: 'show', label: L('표시', 'Shown') }],
@@ -251,12 +248,6 @@ const SETTINGS_PAGES = [
           label: L('마우스를 뗀 뒤 접힘 지연', 'Delay before collapsing'), },
         { id: 'idleMin', type: 'slider', path: 'settings', key: 'idleMin', def: 2, min: 1, max: 10, step: 1, fmt: (v) => `${v}분`, fmtEn: (v) => `${v} min`,
           label: L('일시정지 후 시계로 돌아가기까지', 'Return to the clock after pausing'), },
-      ] },
-      { title: L('눈 캐릭터', 'Eyes character'), items: [
-        { id: 'pet', type: 'toggle', path: 'settings', key: 'pet', def: true, label: L('눈 캐릭터', 'Eyes character'),
-          desc: L('한동안 입력이 없으면 시계 대신 눈이 나타나 두리번거리고, 더 지나면 졸아요.', 'Appears when you are idle, looks around, then dozes off.') },
-        { id: 'petAfter', type: 'slider', path: 'settings', key: 'petAfter', def: 45, min: 10, max: 300, step: 5, fmt: (v) => `${v}초`, fmtEn: (v) => `${v}s`,
-          label: L('나타나기까지 입력 없는 시간', 'Idle time before it appears'), enabledIf: (d) => d.settings.pet },
       ] },
       { title: L('전체화면', 'Fullscreen'), items: [
         { id: 'fullscreenMode', type: 'seg', path: 'settings', key: 'fullscreenMode', def: 'yield', label: L('전체화면 앱이 켜지면', 'When a fullscreen app is on'),
