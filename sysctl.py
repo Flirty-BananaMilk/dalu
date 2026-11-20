@@ -319,7 +319,15 @@ def _first_interface(wlan, handle):
         n = ctypes.c_ulong.from_address(lst.value).value
         if not n:
             return None, None
-        info = _WLAN_INTERFACE_INFO.from_address(lst.value + 8)
+        size = ctypes.sizeof(_WLAN_INTERFACE_INFO)
+        pick = None
+        for i in range(min(n, 8)):          # 무선 어댑터가 여럿이면(USB 어댑터 등) 연결돼 있는 것을 우선한다(늘 첫 번째만 보던 것)
+            cand = _WLAN_INTERFACE_INFO.from_address(lst.value + 8 + i * size)
+            if pick is None or cand.isState == 1:
+                pick = cand
+                if cand.isState == 1:
+                    break
+        info = pick
         guid = _GUID()
         ctypes.memmove(ctypes.byref(guid), ctypes.byref(info.InterfaceGuid), ctypes.sizeof(_GUID))
         return guid, info.isState
@@ -358,7 +366,8 @@ def wifi_list(rescan=True):
                            "saved": bool(net.dwFlags & 2), "connected": bool(net.dwFlags & 1), "profile": net.strProfileName or ssid,
                            "auth": int(net.dot11DefaultAuthAlgorithm)}
                     old = best.get(ssid)
-                    if old is None or row["connected"] or (not old["connected"] and row["signal"] > old["signal"]):
+                    rank = lambda r: (r["connected"], r["saved"], r["signal"])          # 연결됨 > 저장된 프로필 > 신호 세기: 신호가 센 미저장 항목이 저장된 항목을 덮어 비밀번호를 다시 묻던 것
+                    if old is None or rank(row) > rank(old):
                         best[ssid] = row
                 out = sorted(best.values(), key=lambda r: (not r["connected"], -r["signal"], r["ssid"].lower()))
                 return out[:30]
@@ -503,13 +512,9 @@ def bt_list():
 
 
 def _parse_bt_address(text):
-    parts = str(text).split(":")
-    if len(parts) != 6:
+    if not re.fullmatch(r"(?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}", str(text)):          # 옥텟이 두 자리 16진수가 아니면 받지 않는다('1:2:3:4:5:6' 같은 느슨한 꼴 거부)
         return None
-    try:
-        return int("".join(parts), 16)
-    except ValueError:
-        return None
+    return int(str(text).replace(":", ""), 16)
 
 
 def bt_set(address, on):
@@ -621,7 +626,9 @@ def power(kind, runner=None):
         if kind == "sleep":
             if runner is not None:
                 return run(["sleep"])
-            return bool(ctypes.windll.powrprof.SetSuspendState(False, True, False))
+            fn = ctypes.windll.powrprof.SetSuspendState
+            fn.restype = ctypes.c_ubyte          # BOOLEAN(1바이트): 기본 정수형으로 받으면 위쪽의 쓰레기 비트 때문에 실패해도 True 가 될 수 있다
+            return bool(fn(False, True, False))
         if kind == "signout":
             return run(["shutdown", "/l"])
         if kind == "restart":

@@ -62,6 +62,18 @@ class ApiRejected(Exception):
 _REJECT_MARKS = ("SERVICE_KEY", "SERVICE KEY", "SERVICE ACCESS DENIED", "UNREGISTERED", "NOT_REGISTERED", "LIMITED_NUMBER_OF_SERVICE_REQUESTS")
 
 
+class _HostRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        p = urllib.parse.urlsplit(newurl)
+        if p.scheme != "https" or p.hostname not in ALLOWED_HOSTS:
+            raise urllib.error.URLError("redirect to a host that is not allowed")          # 허용 밖의 주소나 http 로 넘기면 따라가지 않는다
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+def _safe_open(req, timeout=8):
+    return urllib.request.build_opener(_HostRedirect()).open(req, timeout=timeout)
+
+
 def _get_json(url, opener=None, timeout=8, headers=None):
     """허용된 호스트의 HTTPS 만, 크기 제한을 두고 JSON 으로 읽는다. JSON 이 아닌 거절 응답(공공데이터포털은 XML 로 답한다)과 HTTP 401/403 은 ApiRejected."""
     p = urllib.parse.urlsplit(url)
@@ -71,7 +83,7 @@ def _get_json(url, opener=None, timeout=8, headers=None):
     h.update(headers or {})
     req = urllib.request.Request(url, headers=h)
     try:
-        with (opener or urllib.request.urlopen)(req, timeout=timeout) as r:
+        with (opener or _safe_open)(req, timeout=timeout) as r:
             raw = r.read(MAX_BYTES + 1)
     except urllib.error.HTTPError as e:
         if e.code in (401, 403):
@@ -189,7 +201,7 @@ def parse_forecast(data):
         return {"temp": round(cur["temperature_2m"]), "feels": round(feels if feels is not None else cur["temperature_2m"]),          # 값이 null 로 오면 기온으로 대신한다
                 "humidity": int(cur.get("relative_humidity_2m") or 0), "wind": round(float(cur.get("wind_speed_10m") or 0), 1),
                 "key": key, "icon": icon, "isDay": is_day, "days": days}
-    except (KeyError, TypeError, ValueError, IndexError):
+    except (KeyError, TypeError, ValueError, IndexError, AttributeError):          # "current": null 처럼 모양이 어긋나도 크래시하지 않는다
         return None
 
 
@@ -217,7 +229,7 @@ def parse_air(data):
         out = {"pm25": pm25, "pm10": pm10, "source": "model"}
         out.update(air_grades(pm25, pm10))
         return out
-    except (KeyError, TypeError, ValueError):
+    except (KeyError, TypeError, ValueError, AttributeError):
         return None
 
 
@@ -411,7 +423,7 @@ def _openaq_reading(latest, sensors, now=None):
     for r in latest or []:
         k = kind.get((r or {}).get("sensorsId"))
         v = (r or {}).get("value")
-        if not k or not isinstance(v, (int, float)) or v != v or v < 0:
+        if not k or not isinstance(v, (int, float)) or v != v or v < 0 or v > 1e6:          # NaN·음수·무한대 제외
             continue
         dt = ((r.get("datetime") or {}).get("utc") or "")
         try:
@@ -532,7 +544,7 @@ class WeatherCache:
         c = clean_coords(lat, lon)
         if not c:
             return None
-        key = (c, "f" if unit == "f" else "c", bool(air_key), bool(openaq_key))
+        key = (c, "f" if unit == "f" else "c", str(air_key or ""), str(openaq_key or ""))          # 키 값 자체로 구분(키를 바꾼 뒤에도 옛 오류 캐시가 15분 남던 것)
         with self._lock:
             fresh = self._key == key and self._val is not None and self._clock() - self._at < self._ttl
             if fresh and not force:

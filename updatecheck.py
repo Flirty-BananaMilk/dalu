@@ -47,6 +47,8 @@ def safe_url(url):
     """https 이고 허용된 주소만 통과시킨다. 아니면 기본 다운로드 주소."""
     m = re.match(r"^https://([A-Za-z0-9.-]+)(?::443)?(/[^\s]*)?$", str(url or ""))
     if m and m.group(1).lower() in ALLOWED_HOSTS:
+        if m.group(1).lower() == "github.com" and not (m.group(2) or "").lower().startswith("/flirty-bananamilk/"):
+            return DOWNLOAD_URL          # github.com 은 우리 저장소 아래만(남의 저장소 주소를 알림이 열어 주지 않는다)
         return str(url)
     return DOWNLOAD_URL
 
@@ -88,7 +90,7 @@ def fetch(current, timeout=8, url=URL, opener=None):
     """version.json 을 받아 파싱한다. 실패하면 None(네트워크 없음·서버 오류·잘못된 내용 모두)."""
     try:
         req = urllib.request.Request(url, headers={"User-Agent": f"Dalu/{current}", "Accept": "application/json", "Cache-Control": "no-cache"})
-        op = opener or urllib.request.urlopen
+        op = opener or urllib.request.build_opener(_SafeRedirect(ALLOWED_HOSTS, ("https",))).open          # version.json 을 받다가 허용 밖의 주소나 http 로 넘기면 따라가지 않는다
         with op(req, timeout=timeout) as r:
             return parse_manifest(r.read(MAX_BYTES + 1))
     except urllib.error.HTTPError as e:
@@ -287,6 +289,8 @@ def download_installer(info, dest_dir, progress=None, current="", timeout=20, ho
         raise
     except Exception as e:
         _rm(part)
+        if isinstance(e, OSError) and not isinstance(e, urllib.error.URLError) and not isinstance(e, (ConnectionError, TimeoutError)):
+            raise UpdateError("disk", repr(e)) from e          # 디스크 부족·권한 오류는 인터넷 문제가 아니다(안내를 다르게)
         raise UpdateError("network", repr(e)) from e
 
 

@@ -15,6 +15,16 @@ import threading
 import time
 from ctypes import wintypes
 
+_dlls = {}
+
+
+def _wd(name, last_error=True):
+    """WinDLL 은 한 번만 만들어 쓴다(폴링 루프에서 매번 새로 만들던 것)."""
+    d = _dlls.get(name)
+    if d is None:
+        d = _dlls[name] = ctypes.WinDLL(name, use_last_error=last_error)
+    return d
+
 # 이 이름(소문자, 확장자 포함)의 프로세스가 떠 있으면 화면을 찍고 있다고 본다. 항상 떠 있기만 하는 도구(ShareX, Lightshot 등)와
 # 창을 닫은 뒤에도 오래 남아 있는 윈도우 캡처 도구(SnippingTool.exe)는 넣지 않는다(오탐으로 글래스가 계속 얼어 버린다) — 그쪽은 키로 잡는다.
 CAPTURE_PROCESSES = frozenset({
@@ -54,7 +64,7 @@ def running_names():
                     ("th32ParentProcessID", wintypes.DWORD), ("pcPriClassBase", ctypes.c_long), ("dwFlags", wintypes.DWORD),
                     ("szExeFile", ctypes.c_wchar * 260)]
 
-    k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    k32 = _wd("kernel32")
     k32.CreateToolhelp32Snapshot.restype = wintypes.HANDLE
     k32.CreateToolhelp32Snapshot.argtypes = [wintypes.DWORD, wintypes.DWORD]
     k32.Process32FirstW.argtypes = [wintypes.HANDLE, ctypes.POINTER(PROCESSENTRY32W)]

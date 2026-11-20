@@ -25,7 +25,7 @@ if (-not $FromTemp -and $PSScriptRoot -and ($PSScriptRoot.TrimEnd('\') -ieq $Ins
     $tmp = Join-Path $env:TEMP ('dalu-uninstall-' + [guid]::NewGuid().ToString('N').Substring(0, 8) + '.ps1')
     Copy-Item $PSCommandPath $tmp -Force
     # Start-Process 는 배열 인자를 따옴표 없이 이어 붙인다: 공백이 든 경로(기본 설치 위치도 그렇다)는 직접 따옴표로 감싸야 한다
-    function Q($v) { '"' + $v + '"' }
+    function Q($v) { '"' + ([string]$v -replace '(\\+)$', '$1$1') + '"' }          # 끝의 역슬래시는 닫는 따옴표를 가리므로 두 배로(뒤 인자가 경로 안으로 합쳐지던 것)
     $argList = '-NoProfile -ExecutionPolicy Bypass -File ' + (Q $tmp) + ' -InstallDir ' + (Q $InstallDir) + ' -StartMenuDir ' + (Q $StartMenuDir) + ' -RegistryRoot ' + (Q $RegistryRoot) + ' -RunKey ' + (Q $RunKey) + ' -DataDir ' + (Q $DataDir) + ' -LockName ' + (Q $LockName) + ' -FromTemp'
     if ($FromSetup) { $argList += ' -FromSetup' }
     if ($RemoveData) { $argList += ' -RemoveData' }
@@ -69,13 +69,16 @@ try {
 } catch {}
 # 바로가기 / 제거 프로그램 등록
 Remove-Item -Path (Join-Path $StartMenuDir "$AppName.lnk") -Force -ErrorAction SilentlyContinue
+Remove-Item -Path (Join-Path $StartMenuDir "Startup\$AppName.lnk") -Force -ErrorAction SilentlyContinue          # 예전 버전이 시작 프로그램 폴더에 둔 바로가기
 Remove-Item -Path (Join-Path $RegistryRoot $UninstallId) -Recurse -Force -ErrorAction SilentlyContinue
 # 사용자 데이터
 if ($RemoveData -and (Test-Path $DataDir)) { Remove-Item -Path $DataDir -Recurse -Force -ErrorAction SilentlyContinue }
 
 # 설치 폴더는 이 스크립트가 끝난 뒤에 지운다 (PowerShell 이 쓰던 파일이 없으니 바로 지워도 되지만, 안전하게 잠깐 기다린다)
 Start-Sleep -Milliseconds 300
-Remove-Item -Path $InstallDir -Recurse -Force -ErrorAction SilentlyContinue
-if (Test-Path $InstallDir) { Start-Process cmd.exe -ArgumentList ('/c ping -n 3 127.0.0.1 >nul & rmdir /s /q "' + $InstallDir + '"') -WindowStyle Hidden }
+$looksLikeDalu = (Test-Path (Join-Path $InstallDir 'app\dalu.py')) -or -not (Get-ChildItem -Path $InstallDir -Force -ErrorAction SilentlyContinue)          # Dalu 설치 폴더이거나 빈 폴더일 때만 통째로 지운다(공유 폴더에 풀었다면 다른 파일을 지우지 않는다)
+if (-not $looksLikeDalu) { Remove-Item -Path (Join-Path $InstallDir 'app'), (Join-Path $InstallDir 'runtime') -Recurse -Force -ErrorAction SilentlyContinue }
+else { Remove-Item -Path $InstallDir -Recurse -Force -ErrorAction SilentlyContinue }
+if ($looksLikeDalu -and (Test-Path $InstallDir)) { Start-Process cmd.exe -ArgumentList ('/c ping -n 3 127.0.0.1 >nul & rmdir /s /q "' + $InstallDir + '"') -WindowStyle Hidden }
 if (-not $Quiet) { [void][System.Windows.MessageBox]::Show((T '제거했어요.' 'Uninstalled.' '已卸载。' 'アンインストールしました。'), $AppName, 'OK', 'Information') }
 if ($FromTemp) { Start-Process cmd.exe -ArgumentList ('/c ping -n 3 127.0.0.1 >nul & del /f /q "' + $PSCommandPath + '"') -WindowStyle Hidden }

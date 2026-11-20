@@ -145,6 +145,11 @@ def parse_time_to_seconds(t_str: str) -> float:
     if not t_str:
         return 0.0
     t_str = t_str.strip()
+    if t_str.endswith('ms'):          # "1500ms" 는 밀리초(아래 's' 처리에 걸려 0.0 이 되던 것)
+        try:
+            return float(t_str[:-2]) / 1000.0
+        except ValueError:
+            return 0.0
     if t_str.endswith('s'):
         try:
             return float(t_str[:-1])
@@ -317,7 +322,8 @@ class CiderClient:
         """가사용 GET. 'Cider 가 확실히 가사가 없다고 답했는지'를 ctx 에 센다 (타임아웃과 구분)."""
         ctx["calls"] += 1
         status, data = self._http_get_status(endpoint, LYRICS_TIMEOUT)
-        if status == 404 and isinstance(data, dict) and (data.get("error") or {}).get("code") == "LYRICS_NOT_FOUND":
+        err = data.get("error") if isinstance(data, dict) else None
+        if status == 404 and isinstance(err, dict) and err.get("code") == "LYRICS_NOT_FOUND":          # error 가 문자열로 와도 예외 없이 지나간다
             ctx["nf"] += 1
             return None
         return data if status == 200 else None

@@ -41,10 +41,12 @@ def safe_name(name):
     if not name:
         name = "file"
     stem, ext = os.path.splitext(name)
-    if stem.upper() in _RESERVED:
+    ext = ext[:20]          # 확장자가 아주 길어도 전체 이름이 한도를 넘지 않게
+    if stem.split(".")[0].strip().upper() in _RESERVED:          # CON.a.txt 처럼 첫 점 앞이 예약 이름이어도 윈도는 장치로 본다
         stem = "_" + stem
     if len(stem) + len(ext) > 120:
         stem = stem[:max(1, 120 - len(ext))]
+    stem = stem.rstrip(" .") or "file"          # 자르고 나서 끝에 공백·점이 남지 않게
     return stem + ext
 
 
@@ -106,16 +108,28 @@ class Incoming:
         except Exception:
             pass
         self._f = None
-        if int(n) != self.next or int(size) != self.got or self.got != self.size:
+        try:
+            n_ok, size_ok = int(n) == self.next, int(size) == self.got          # 숫자가 아닌 값이 와도 예외로 .part 를 남기지 않는다
+        except (TypeError, ValueError):
+            n_ok = size_ok = False
+        if not n_ok or not size_ok or self.got != self.size:
             self.abort()
             return None, "size"
         if str(sha).lower() != self._sha.hexdigest():
             self.abort()
             return None, "hash"
-        final = unique_path(self.folder, self.name)
-        try:
-            os.replace(self.part, final)
-        except OSError:
+        final = None
+        for _ in range(50):
+            cand = unique_path(self.folder, self.name)
+            try:
+                os.rename(self.part, cand)          # 이미 있으면 실패한다(replace 는 그 사이 생긴 같은 이름 파일을 덮어쓴다)
+                final = cand
+                break
+            except FileExistsError:
+                continue
+            except OSError:
+                break
+        if final is None:
             self.abort()
             return None, "write"
         self.path = final
@@ -256,8 +270,10 @@ class Manager:
                     if not data:
                         break
                     with o.cond:
-                        ok = o.cond.wait_for(lambda: seq - o.acked <= WINDOW or o.canceled, ACK_TIMEOUT)
+                        ok = o.cond.wait_for(lambda: seq - o.acked <= WINDOW or o.canceled or o.done is not None, ACK_TIMEOUT)
                         if o.canceled:
+                            break
+                        if o.done is not None and not o.done[0]:          # 받는 쪽이 이미 실패로 끝냈다(디스크 부족 등): 남은 조각을 계속 보내며 시간 초과를 기다리지 않는다
                             break
                         if not ok:
                             cancel_msg()
@@ -273,6 +289,10 @@ class Manager:
                         self._event(o.fid, "out", o.name, o.size, o.sent, "sending", bps=o.sent / max(0.1, now - o.t0))
             if o.canceled:
                 return stop()
+            if o.done is not None and not o.done[0]:
+                with self._lock:
+                    self._out.pop(o.fid, None)
+                return self._fail_out(o, o.done[1] or "failed")
             if not self._send({"t": "file_end", "fid": o.fid, "n": seq, "size": o.sent, "sha256": sha.hexdigest()}):
                 return self._fail_out(o, "nolink")
             with o.cond:
@@ -316,6 +336,10 @@ class Manager:
         """상대가 보낸 file_* 메시지 하나를 처리한다."""
         t = m.get("t")
         fid = str(m.get("fid", ""))[:32]
+        if not re.fullmatch(r"[A-Za-z0-9_-]{1,32}", fid):          # fid 는 임시 파일 이름에 들어가므로 경로 문자(\ / : .. NUL)가 든 값은 받지 않는다
+            if t == "file_offer":
+                self._send({"t": "file_accept", "fid": "", "ok": False, "error": "bad"})
+            return
         try:
             if t == "file_offer":
                 self._on_offer(fid, m)

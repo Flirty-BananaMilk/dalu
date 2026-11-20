@@ -318,8 +318,8 @@ async function clipRefresh(force) {
   const api = getApi();
   if (!api || !api.clip_list) return;
   let d; try { d = await api.clip_list(); } catch (e) { return; }
-  if (!d) return;
-  const sig = JSON.stringify([d.enabled, d.items.map((i) => i.id)]);
+  if (!d || !Array.isArray(d.items)) return;          // 모양이 어긋난 응답이면 그리지 않는다(.map 예외로 화면이 멈추지 않게)
+  const sig = JSON.stringify([d.enabled, d.items.map((i) => i.id), Math.floor(Date.now() / 60000), lang]);          // 몇 분 전 같은 글자와 언어가 바뀌면 다시 그린다(시간 표시가 멈춰 있던 것)
   if (sig === clipSig && !force) return;
   clipSig = sig;
   const list = $('clipList'), empty = $('clipEmpty');
@@ -528,7 +528,7 @@ async function agendaRefresh(force) {
   const api = getApi();
   if (!api || !api.calendar_get) return;
   let d; try { d = await api.calendar_get(!!force); } catch (e) { return; }
-  if (!d) return;
+  if (!d || !Array.isArray(d.events)) return;
   const nowSec = Date.now() / 1000;
   const sig = JSON.stringify([d.configured, d.error, d.events.map((e) => [e.title, e.start]), Math.floor(nowSec / 60), ddS.items.map((x) => [x.id, x.date, x.done]), lang]);
   if (sig === agendaSig && !force) return;
@@ -660,6 +660,7 @@ function initVolume() {
     vol.sendTimer = setTimeout(() => { volSend(Number(slider.value) / 100, false); }, 35);
   });
   slider.addEventListener('change', () => { vol.dragging = false; vol.v = Number(slider.value) / 100; volRender(); });
+  for (const evn of ['pointerup', 'pointercancel', 'blur']) slider.addEventListener(evn, () => { if (vol.dragging) { vol.dragging = false; volRender(); } });          // 처음 값으로 돌려 놓으면 change 가 오지 않아 '끄는 중' 이 남던 것
   $('volMute').addEventListener('click', (e) => { e.stopPropagation(); vol.muted = !vol.muted; volRender(); volSend(undefined, vol.muted); volKeepOpen(); });
   $('volPop').addEventListener('mousedown', (e) => e.stopPropagation());
 }
@@ -1046,7 +1047,7 @@ async function pwrPress(btn) {
 
 
 // ---------------------------------------------------------------- 시스템 탭: Wi-Fi / 블루투스 선택창 (타일을 0.5초 꾹 누르면 노치 안에 목록이 펼쳐진다)
-const spk = { kind: null, items: [], busy: false, pwFor: null, poll: null };
+const spk = { kind: null, items: [], busy: false, pwFor: null, poll: null, seq: 0 };
 const SPK_HOLD_MS = 520;
 function spkSignal(pct) {
   const n = Math.max(1, Math.min(4, Math.ceil((pct || 0) / 25)));
@@ -1097,11 +1098,15 @@ function spkRender() {
 }
 async function spkLoad() {
   const api = getApi(); if (!api) return;
+  const kind = spk.kind, seq = ++spk.seq;          // 기다리는 사이 다른 종류(Wi-Fi <-> 블루투스)로 바뀌면 늦게 온 응답을 버린다(Wi-Fi 목록이 블루투스 선택창에 덮이던 것)
   spk.busy = true; spkRender();
+  let items = [];
   try {
-    if (spk.kind === 'wifi') { const r = await api.wifi_scan(); spk.items = (r && r.items) || []; }
-    else { const r = await api.bt_devices(); spk.items = (r && r.items) || []; }
-  } catch (e) { spk.items = []; }
+    if (kind === 'wifi') { const r = await api.wifi_scan(); items = (r && r.items) || []; }
+    else { const r = await api.bt_devices(); items = (r && r.items) || []; }
+  } catch (e) { items = []; }
+  if (seq !== spk.seq || kind !== spk.kind) return;
+  spk.items = items;
   spk.busy = false;
   if (spk.kind) spkRender();
 }
@@ -1165,7 +1170,12 @@ function sysHoldable(el, onTap, onHold) {
   el.dataset.hold = '1';          // 길게 눌러 선택창을 여는 타일: reorder.js 는 이 타일에서 '길게 누른 뒤 움직일 때'만 끌기를 시작한다(가만히 있으면 선택창)
   const start = (e) => {
     held = false; clearTimeout(timer); sx = e.clientX; sy = e.clientY;
-    timer = setTimeout(() => { if (typeof reorderActive !== 'undefined' && reorderActive) return; held = true; onHold(); }, SPK_HOLD_MS);
+    timer = setTimeout(() => {
+      if (typeof reorderActive !== 'undefined' && reorderActive) return;
+      held = true;
+      if (typeof reorderDrag !== 'undefined' && reorderDrag && !reorderDrag.begun && typeof reorderCancelPending === 'function') reorderCancelPending(reorderDrag);          // 선택창이 열렸다: 이어서 마우스를 움직여도 보이지 않는 타일을 끌어가지 않게
+      onHold();
+    }, SPK_HOLD_MS);
   };
   const stop = () => clearTimeout(timer);
   const move = (e) => { if (timer && Math.hypot(e.clientX - sx, e.clientY - sy) > 6) clearTimeout(timer); };          // 움직였다: 끌기이거나 손이 미끄러진 것이다
@@ -1215,9 +1225,9 @@ function perfPush(arr, v) { arr.push(v == null ? null : v); while (arr.length > 
 function sparkPath(vals, max) {
   const n = vals.length; if (n < 2) return ['', ''];
   const step = 100 / (PERF_HIST - 1), x0 = 100 - (n - 1) * step;
-  let line = '', started = false, lastX = x0;
-  vals.forEach((v, i) => { if (v == null) { started = false; return; } const x = x0 + i * step, y = 23 - Math.max(0, Math.min(1, v / max)) * 21; line += (started ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1); started = true; lastX = x; });
-  const area = line ? line + `L${lastX.toFixed(1)} 24L${x0.toFixed(1)} 24Z` : '';
+  let line = '', started = false, lastX = x0, firstX = null;
+  vals.forEach((v, i) => { if (v == null) { started = false; return; } const x = x0 + i * step, y = 23 - Math.max(0, Math.min(1, v / max)) * 21; line += (started ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1); started = true; lastX = x; if (firstX === null) firstX = x; });
+  const area = line ? line + `L${lastX.toFixed(1)} 24L${(firstX === null ? x0 : firstX).toFixed(1)} 24Z` : '';          // 앞쪽이 비어 있어도(값이 없던 구간) 첫 점에서 닫는다(삼각형 조각이 생기던 것)
   return [line, area];
 }
 function drawSpark(id, vals, max, warn) {
@@ -1318,7 +1328,7 @@ function wxHasCity() { const s = store.settings; return !!(Number(s.weatherLat) 
 function wxWanted() { return tabVisibleId('weather') && (!!store.settings.weatherLocate || wxHasCity()); }
 function weatherSatItems() {
   const s = store.settings, r = wxS.res;
-  if (!s.satWeather || !tabVisibleId('weather') || !r || r.status !== 'ok' || !r.weather) return [];
+  if (!s.satWeather || !tabVisibleId('weather') || !wxWanted() || !r || r.status !== 'ok' || !r.weather) return [];          // 도시를 지우고 위치도 끄면 지워진 도시의 날씨를 보조 노치에 남기지 않는다
   return [{ id: 'weather', kind: 'weather', page: 'weather', running: false, text: `${r.weather.temp}° ${wxLabel(r.weather.key)}`, icon: r.weather.icon, pct: 100 }];
 }
 function initWeather() {
@@ -1461,3 +1471,5 @@ function initFeatures2() {
   launcherLoad();
   refreshPageDots();
 }
+
+if (typeof langHooks !== 'undefined') langHooks.push(() => { clipSig = ''; agendaSig = ''; if (page === 'clip' && typeof clipRefresh === 'function') clipRefresh(true); if (page === 'agenda' && typeof agendaRefresh === 'function') agendaRefresh(true); });          // 언어를 바꾸면 클립보드·일정 목록도 새 언어로

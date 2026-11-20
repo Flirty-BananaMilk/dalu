@@ -56,7 +56,7 @@ function bindInput() {
     }
     if (!isExpanded) return;
     // 스크롤 가능한 목록 위에서는 페이지를 넘기지 않는다 (할 일 목록, 선반 카드)
-    const sc = e.target.closest('.tlist, .shcards, .lyr.static, .pchips, .pgrid, .lgrid, .pm-grid, .ph-card-body, .sm-list, .sm-msgs');
+    const sc = e.target.closest('.tlist, .shcards, .lyr.static, .pchips, .pgrid, .lgrid, .pm-grid, .ph-card-body, .sm-list, .sm-msgs, .laplist, .agdl, .ph-dial-list');          // 일정·통화 목록도 스크롤 중에는 탭을 넘기지 않는다
     if (sc && (sc.scrollHeight > sc.clientHeight || sc.scrollWidth > sc.clientWidth)) return;
     clearTimeout(wheelIdleTimer);
     wheelIdleTimer = setTimeout(() => { wheelAcc = 0; wheelFired = false; }, WHEEL_GESTURE_GAP);   // 제스처 종료
@@ -95,6 +95,7 @@ function bindInput() {
     el.addEventListener('click', (e) => e.stopPropagation());   // 끌기가 끝난 뒤의 click 이 노치의 다른 동작(접기 등)으로 번지지 않게
     const ratioOf = (e) => {
       const rect = el.getBoundingClientRect();
+      if (!(rect.width > 0)) return scrub.ratio || 0;          // 노치가 접혀 폭이 0 이면 0 으로 나누어 NaN·무한대가 되던 것(재생 위치가 NaN 으로 굳는다)
       return Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     };
     el.addEventListener('pointerdown', (e) => {

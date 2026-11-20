@@ -38,7 +38,16 @@ def parse_prop(line):
     """'DTSTART;TZID=Asia/Seoul:20261026T100000' -> ('DTSTART', {'TZID': 'Asia/Seoul'}, '20261026T100000')"""
     if ":" not in line:
         return None
-    head, value = line.split(":", 1)
+    cut, q = -1, False
+    for i, ch in enumerate(line):          # 따옴표 안의 ':' 는 건너뛴다(Outlook: TZID="(UTC+09:00) Seoul":...)
+        if ch == '"':
+            q = not q
+        elif ch == ":" and not q:
+            cut = i
+            break
+    if cut < 0:
+        return None
+    head, value = line[:cut], line[cut + 1:]
     parts = head.split(";")
     params = {}
     for p in parts[1:]:
@@ -78,7 +87,7 @@ def parse_dt(value, params, default_tz=None):
     try:
         if params.get("VALUE") == "DATE" or (len(value) == 8 and value.isdigit()):
             d = datetime.strptime(value[:8], "%Y%m%d")
-            return d.replace(tzinfo=default_tz or _local_tz()), True
+            return (d.replace(tzinfo=default_tz) if default_tz else d.astimezone()), True          # 시간대 없는 날짜는 그 날짜의 이 컴퓨터 시간대(서머타임 반영)로
         if value.endswith("Z"):
             return datetime.strptime(value, "%Y%m%dT%H%M%SZ").replace(tzinfo=timezone.utc), False
         naive = datetime.strptime(value[:15], "%Y%m%dT%H%M%S")
@@ -89,7 +98,9 @@ def parse_dt(value, params, default_tz=None):
                 tz = ZoneInfo(tzid)
             except Exception:
                 tz = None
-        return naive.replace(tzinfo=tz or default_tz or _local_tz()), False
+        if tz or default_tz:
+            return naive.replace(tzinfo=tz or default_tz), False
+        return naive.astimezone(), False          # 시간대 없는 시각: 그 날짜의 이 컴퓨터 시간대로(지금 시점의 고정 오프셋을 쓰면 서머타임 경계 일정이 1시간 어긋난다)
     except Exception:
         return None, False
 
@@ -127,15 +138,15 @@ def _nth_weekday(y, m, wd, n):
         return None
 
 
-def _safe_expand(start, rule, until_limit):
+def _safe_expand(start, rule, until_limit, from_dt=None):
     """깨진 반복 규칙 하나가 일정 전체를 죽이지 않게: 그 일정의 반복만 건너뛴다."""
     try:
-        yield from expand(start, rule, until_limit)
+        yield from expand(start, rule, until_limit, from_dt=from_dt)
     except Exception:
         return
 
 
-def expand(start, rule, until_limit, tz_aware=True):
+def expand(start, rule, until_limit, tz_aware=True, from_dt=None):
     """start(aware datetime)부터 until_limit(aware datetime)까지의 시작 시각들을 순서대로 만든다.
     벽시계 시간(start 의 시간대 기준)으로 계산해서 서머타임이 있어도 같은 시각을 유지한다."""
     freq = rule.get("FREQ")
@@ -172,6 +183,8 @@ def expand(start, rule, until_limit, tz_aware=True):
         if count is not None and emitted >= count:
             return False
         emitted += 1
+        if from_dt is not None and dt < from_dt:
+            return True          # 보여 줄 범위 앞의 지난 발생분: 횟수(COUNT)에는 세지만 목록에는 담지 않는다(오래된 매일 반복이 상한 2000개를 지난 날로 채우지 않게)
         out.append(dt)
         return dt <= until_limit and len(out) < MAX_OCCURRENCES
 
@@ -185,13 +198,14 @@ def expand(start, rule, until_limit, tz_aware=True):
             if make(d) > until_limit + timedelta(days=1):
                 break
     elif freq == "WEEKLY":
-        wds = sorted({w for _, w in bydays}) or [start.weekday()]
-        week0 = base - timedelta(days=base.weekday())
+        wkst = _DAYS.index(rule["WKST"]) if rule.get("WKST") in _DAYS else 0          # 주의 시작 요일(기본 월요일): INTERVAL>1 이면 주 묶음이 이 기준으로 정해진다
+        wds = sorted({w for _, w in bydays} or {start.weekday()}, key=lambda w: (w - wkst) % 7)
+        week0 = base - timedelta(days=(base.weekday() - wkst) % 7)
         wk = 0
         while True:
             ws = week0 + timedelta(weeks=wk * interval)
             for wd in wds:
-                if not emit(make(ws + timedelta(days=wd))):
+                if not emit(make(ws + timedelta(days=(wd - wkst) % 7))):
                     return out
             wk += 1
             if make(ws) > until_limit + timedelta(days=7):
@@ -244,8 +258,17 @@ def expand(start, rule, until_limit, tz_aware=True):
 def parse_events(text):
     """ICS 텍스트 -> 원본 이벤트 목록(반복 확장 전)."""
     events, cur = [], None
+    in_alarm = False
     for line in unfold(text):
         up = line.strip().upper()
+        if up == "BEGIN:VALARM":          # 알림(VALARM) 안의 SUMMARY·DURATION 이 일정의 제목·길이를 덮어쓰지 않게 건너뛴다
+            in_alarm = True
+            continue
+        if up == "END:VALARM":
+            in_alarm = False
+            continue
+        if in_alarm:
+            continue
         if up == "BEGIN:VEVENT":
             cur = {"exdates": [], "rdates": []}
             continue
@@ -317,7 +340,7 @@ def upcoming(text, now=None, days=14, since=None):
             continue
         if e.get("rrule"):
             ex = {d for d in e["exdates"]}
-            for occ in _safe_expand(s, e["rrule"], horizon):
+            for occ in _safe_expand(s, e["rrule"], horizon, from_dt=now - max(dur, timedelta(0)) - timedelta(days=1)):
                 if occ in ex or (e.get("uid"), occ) in overrides:
                     continue
                 add(e.get("title"), occ, occ + dur, all_day, e.get("location"))
@@ -389,8 +412,8 @@ class CalendarSource:
             src = self._src
             if not src:
                 return False
-            if not force and time.time() - self._at < self.ttl and self._text:
-                return False
+            if not force and time.time() - self._at < (self.ttl if self._text else min(self.ttl, 120)):
+                return False          # 못 받은 주소는 매번 다시 요청하지 않고 2분쯤 쉰다(20초마다 무한히 두드리던 것)
         try:
             text, err = self._fetch(src), ""          # 가져오는 동안은 락을 잡지 않는다(오래 걸릴 수 있다)
         except Exception as e:

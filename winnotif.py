@@ -20,6 +20,16 @@ import threading
 import time
 from ctypes import wintypes
 
+_dlls = {}
+
+
+def _wd(name, last_error=True):
+    """WinDLL 은 한 번만 만들어 쓴다(폴링 루프에서 매번 새로 만들던 것)."""
+    d = _dlls.get(name)
+    if d is None:
+        d = _dlls[name] = ctypes.WinDLL(name, use_last_error=last_error)
+    return d
+
 try:
     from winrt.windows.ui.notifications.management import UserNotificationListener, UserNotificationListenerAccessStatus
     from winrt.windows.ui.notifications import NotificationKinds
@@ -40,8 +50,8 @@ CENTER_TITLES = ("알림 센터", "notification center", "action center", "通�
 def foreground_info():
     """지금 맨 앞 창의 (실행 파일 이름 소문자, 창 클래스, 제목). 못 읽으면 ('', '', '')."""
     try:
-        u = ctypes.WinDLL("user32", use_last_error=True)
-        k = ctypes.WinDLL("kernel32", use_last_error=True)
+        u = _wd("user32")
+        k = _wd("kernel32")
         u.GetForegroundWindow.restype = wintypes.HWND
         k.OpenProcess.restype = wintypes.HANDLE
         k.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
@@ -92,7 +102,7 @@ def open_center(build=None, info=None, send=None):
     vk = center_hotkey(build)
     if send is None:
         def send(keys):
-            u = ctypes.WinDLL("user32", use_last_error=True)
+            u = _wd("user32")
             for v in keys:
                 u.keybd_event(v, 0, 0, 0)
             for v in reversed(keys):
@@ -119,7 +129,7 @@ def move_center_to(number, timeout=2.5, log=None):
     log = log or (lambda *_: None)
     try:
         import monitors as _mon
-        u = ctypes.WinDLL("user32", use_last_error=True)
+        u = _wd("user32")
         u.SetThreadDpiAwarenessContext.restype = ctypes.c_void_p
         u.SetThreadDpiAwarenessContext.argtypes = [ctypes.c_void_p]
         old = u.SetThreadDpiAwarenessContext(ctypes.c_void_p(-4))      # DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2
@@ -136,21 +146,23 @@ def move_center_to(number, timeout=2.5, log=None):
                 return False
             mons = _mon.list_monitors()
             tm = next((m for m in mons if m["number"] == number), None)
-            if tm is None or tm.get("primary"):
+            if tm is None:
                 return False
+            u.MonitorFromWindow.restype = ctypes.c_void_p
+            u.MonitorFromWindow.argtypes = [wintypes.HWND, wintypes.DWORD]
+            u.MonitorFromPoint.restype = ctypes.c_void_p
             class _MI(ctypes.Structure):
                 _fields_ = [("cbSize", wintypes.DWORD), ("rcMonitor", wintypes.RECT), ("rcWork", wintypes.RECT), ("dwFlags", wintypes.DWORD)]
             hm = u.MonitorFromPoint(wintypes.POINT(int(tm["left"]) + 5, int(tm["top"]) + 5), 2)
             mi = _MI(); mi.cbSize = ctypes.sizeof(_MI)
             if not u.GetMonitorInfoW(hm, ctypes.byref(mi)):
                 return False
+            if u.MonitorFromWindow(hwnd, 2) == hm:
+                return True          # 이미 노치가 있는 모니터에 떴다(기본 모니터여도 윈도우가 마우스·앞 창 쪽 모니터에 열 때가 있어, 늘 확인한다)
             r = wintypes.RECT()
             if not u.GetWindowRect(hwnd, ctypes.byref(r)):
                 return False
             work = (mi.rcWork.left, mi.rcWork.top, mi.rcWork.right, mi.rcWork.bottom)
-            u.MonitorFromWindow.restype = ctypes.c_void_p
-            u.MonitorFromWindow.argtypes = [wintypes.HWND, wintypes.DWORD]
-            u.MonitorFromPoint.restype = ctypes.c_void_p
             x, y, w, h = center_rect_on(work, (r.right - r.left, r.bottom - r.top))
             ok = False
             for _try in range(4):          # 윈도우가 열리는 애니메이션 중에 자리를 다시 잡아 버리면 되돌아가므로, 옮긴 뒤 확인하고 어긋나면 다시 옮긴다
@@ -163,8 +175,6 @@ def move_center_to(number, timeout=2.5, log=None):
             return ok
         finally:
             u.SetThreadDpiAwarenessContext(ctypes.c_void_p(old))
-            if u.MonitorFromWindow(hwnd, 2) == hm:
-                return True          # 이미 노치가 있는 모니터에 떴다(기본 모니터여도 윈도우가 마우스·앞 창 쪽 모니터에 열 때가 있어, 늘 확인한다)
     except Exception as e:
         log(f"move_center_to failed: {e!r}")
         return False
@@ -280,14 +290,14 @@ class NotificationWatch:
         st = listener.get_access_status()
         if st == UserNotificationListenerAccessStatus.UNSPECIFIED:
             try:
-                st = await listener.request_access_async()
+                st = await asyncio.wait_for(listener.request_access_async(), 15)          # 알림 서비스가 응답하지 않아도 감시 스레드가 멈추지 않게
             except Exception as e:
                 self._log(f"winnotif: request access failed: {e!r}")
                 st = listener.get_access_status()
         return st == UserNotificationListenerAccessStatus.ALLOWED
 
     async def _fetch_winrt(self, listener):
-        items = await listener.get_notifications_async(NotificationKinds.TOAST)
+        items = await asyncio.wait_for(listener.get_notifications_async(NotificationKinds.TOAST), 10)
         out = []
         for n in items:
             try:

@@ -64,6 +64,8 @@ def parse_lrc(text):
         words = []
         if _LRC_WORD.search(body):
             parts = _LRC_WORD.split(body)       # [텍스트0, m, s, f, 텍스트1, m, s, f, ...]
+            if parts[0].strip():                # 줄 시각 뒤, 첫 단어 태그 앞의 글자도 첫 단어다(줄 시각에 시작)
+                words.append({"text": parts[0].strip(), "start": starts[-1], "end": 0.0})
             for i in range(1, len(parts) - 3, 4):
                 w_text = parts[i + 3].strip()
                 if w_text:
@@ -223,6 +225,8 @@ def fetch_netease(queries, album, duration, http=None):
         for q in ((title + " " + artist).strip(), title) if artist else (title,):
             res = http("https://music.163.com/api/search/get?" + urllib.parse.urlencode(
                 {"s": q, "type": 1, "limit": 20, "offset": 0}), hdr)
+            if isinstance(res, dict) and res.get("code") not in (None, 200):          # -460 같은 오류 응답을 '가사 없음'으로 굳혀 하루 동안 다시 묻지 않던 것
+                raise RuntimeError("netease error %s" % res.get("code"))
             cands = []
             for s in ((res or {}).get("result") or {}).get("songs") or []:
                 d = (s.get("duration") or s.get("dt") or 0) / 1000.0
@@ -235,6 +239,8 @@ def fetch_netease(queries, album, duration, http=None):
             continue
         lyr = http("https://music.163.com/api/song/lyric?" + urllib.parse.urlencode(
             {"id": song["id"], "lv": -1, "kv": -1, "tv": -1, "yv": -1}), hdr) or {}
+        if isinstance(lyr, dict) and lyr.get("code") not in (None, 200):
+            raise RuntimeError("netease error %s" % lyr.get("code"))
         yrc = ((lyr.get("yrc") or {}).get("lyric")) or ""
         if yrc:
             lines = parse_yrc(yrc)
@@ -329,7 +335,8 @@ def quality(lyrics):
 
 # ---------------------------------------------------------------- 캐시
 def _cache_path(title, artist, cache_dir):
-    key = hashlib.sha1((clean_name(title) + "|" + clean_name(artist)).encode("utf-8")).hexdigest()[:20]
+    variant = " ".join(re.findall(r"[\(\[]\s*([^\)\]]*(?:live|remix|acoustic|inst|ver|edit|demo|cover|mix)[^\)\]]*)[\)\]]", (title or "").lower()))          # (Live)·(Remix) 같은 표시는 다른 녹음이라 가사 타이밍이 달라 캐시 키에 넣는다
+    key = hashlib.sha1((clean_name(title) + "|" + clean_name(artist) + "|" + variant).encode("utf-8")).hexdigest()[:20]
     return os.path.join(cache_dir, key + ".json")
 
 
@@ -351,8 +358,19 @@ def cache_store(title, artist, lyrics, cache_dir=None):
     d = cache_dir or CACHE_DIR
     try:
         os.makedirs(d, exist_ok=True)
-        with open(_cache_path(title, artist, d), "w", encoding="utf-8") as f:
+        path = _cache_path(title, artist, d)
+        tmp = path + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:          # 쓰다 꺼져도 캐시 파일이 반쪽이 되지 않게 임시 파일에 쓰고 바꾼다
             json.dump({"t": time.time(), "lyrics": lyrics}, f, ensure_ascii=False)
+        os.replace(tmp, path)
+        names = [n for n in os.listdir(d) if n.endswith(".json")]          # 캐시가 끝없이 늘지 않게 오래된 것부터 정리한다
+        if len(names) > 1500:
+            names.sort(key=lambda n: os.path.getmtime(os.path.join(d, n)))
+            for n in names[:len(names) - 1200]:
+                try:
+                    os.remove(os.path.join(d, n))
+                except OSError:
+                    pass
     except Exception:
         pass
 

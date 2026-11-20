@@ -77,6 +77,7 @@ function reorderPointerDown(e, tab) {
   window.addEventListener('pointerup', reorderUp, true);
   window.addEventListener('pointercancel', reorderUp, true);
   window.addEventListener('keydown', reorderKey, true);
+  window.addEventListener('blur', reorderBlur);          // 누른 채 다른 창으로 옮겨 가면 pointerup 이 오지 않는다: 끌기를 취소한다
 }
 
 function reorderBegin(d) {
@@ -140,6 +141,12 @@ function reorderUnlisten() {
   window.removeEventListener('pointerup', reorderUp, true);
   window.removeEventListener('pointercancel', reorderUp, true);
   window.removeEventListener('keydown', reorderKey, true);
+  window.removeEventListener('blur', reorderBlur);
+}
+
+function reorderBlur() {
+  const d = reorderDrag; if (!d) return;
+  reorderUp({ pointerId: d.pid, type: 'pointercancel' });
 }
 
 function reorderFinish(d, save) {
@@ -152,8 +159,9 @@ function reorderFinish(d, save) {
   // 놓은 버튼은 포인터 위치에서 자기 자리로 미끄러져 들어간다
   const animate = !(typeof PREF !== 'undefined' && PREF.animOff);
   if (animate) {
-    el.style.transition = 'translate 0.18s cubic-bezier(0.2, 0.9, 0.3, 1.05)'; el.style.translate = '0px 0px';
-    setTimeout(() => { el.style.transition = ''; el.style.translate = ''; el.classList.remove('reorder-lift'); }, 200);
+    el.classList.add('reorder-drop');          // 들어올린 타일은 transition: none !important 라서, 놓을 때만 미끄러지게 허용하는 표시를 단다
+    el.style.translate = '0px 0px';
+    setTimeout(() => { el.style.translate = ''; el.classList.remove('reorder-lift', 'reorder-drop'); }, 200);
   } else { el.style.translate = ''; el.classList.remove('reorder-lift'); }
   grid.classList.remove('reorder-on');
   reorderSwallowUntil = Date.now() + 450;

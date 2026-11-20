@@ -23,7 +23,7 @@ def _read_position():
 
     async def go():
         try:
-            access = await Geolocator.request_access_async()
+            access = await asyncio.wait_for(Geolocator.request_access_async(), TIMEOUT_SECONDS)          # 권한 창이 응답하지 않아도 영원히 기다리지 않는다
         except Exception:
             access = None
         if access is not None and access != GeolocationAccessStatus.ALLOWED:
@@ -68,6 +68,8 @@ class Locator:
         with self._lock:
             if out["status"] == "ok":
                 self._val, self._at = out, self._clock()
+            elif out["status"] in ("denied", "unavailable"):
+                self._val = None          # 권한이 거부되면 예전에 읽은 좌표를 계속 내주지 않는다
             elif out["status"] in ("timeout", "error") and self._val is not None and self._clock() - self._at < self._ttl * 6:
                 # 잠깐 못 읽었을 뿐이면 한 시간쯤은 마지막으로 알던 위치를 쓴다(거부·미지원이면 그대로 알린다)
                 return dict(self._val)

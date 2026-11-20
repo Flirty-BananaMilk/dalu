@@ -204,7 +204,7 @@ function renderWater(grow) {
   if (key !== chartKey) {
     chartKey = key;
     chart.textContent = '';
-    const bw = 8;
+    const bw = hours.length > 1 ? Math.min(8, Math.max(2, (176 - (hours.length - 1) * 2) / hours.length)) : 8;          // 시간 범위가 길면(18시간 이상) 막대를 가늘게 해서 176px 안에 넣는다(노치 밖으로 잘리던 것)
     const gap = hours.length > 1 ? Math.max(2, (176 - hours.length * bw) / (hours.length - 1)) : 0;
     hours.forEach((h, i) => {
       const bar = document.createElement('i');
@@ -577,6 +577,7 @@ function shelfAdd(paths) {
 
 function shelfRemove(path) {
   store.shelf = store.shelf.filter((p) => p !== path);
+  shelfThumbs.delete(path); shelfThumbAsked.delete(path); shelfInfoCache.delete(path);          // 빠진 파일의 캐시를 남기지 않는다
   saveStoreSoon();
   renderShelf();
 }
@@ -594,7 +595,7 @@ async function fetchThumbs(paths) {
     const info = shelfInfoCache.get(p);
     // 파이썬이 못 만든 작은 SVG 만 원본을 그대로 쓴다
     if (!uri && /\.svg$/i.test(p) && info && info.size > 0 && info.size < 300 * 1024) uri = fileUrl(p);
-    if (!uri) continue;
+    if (!uri) { if (/\.svg$/i.test(p) && !info) shelfThumbAsked.delete(p); continue; }          // 파일 정보가 아직 없어서 못 쓴 SVG 는 다음에 다시 시도할 수 있게 '물어봄' 표시를 지운다(영영 아이콘으로 남던 것)
     shelfThumbs.set(p, uri);
     for (const card of $('shCards').children) {
       if (card.dataset.path !== p) continue;
@@ -660,6 +661,7 @@ function renderShelf() {
 
 // 선반 카드: 클릭하면 열고, 누른 채 움직이면 다른 앱으로 끌어낸다(네이티브 드래그)
 let cardDrag = null;
+let cardDragEndAt = 0;
 function initShelfCards() {
   const cards = $('shCards');
   cards.addEventListener('mousedown', (e) => {
@@ -675,12 +677,14 @@ function initShelfCards() {
       const path = cardDrag.path;
       if (api && api.start_file_drag) api.start_file_drag([path]);   // 놓을 때까지 반환되지 않는다
       cardDrag = null;
+      cardDragEndAt = Date.now();          // 끌기가 끝난 직후의 click 은 파일 열기가 아니다
     }
   });
   window.addEventListener('mouseup', () => { setTimeout(() => { cardDrag = null; }, 0); });
   cards.addEventListener('click', (e) => {
     const card = e.target.closest('.shcard');
     if (!card || e.target.closest('.rm')) return;
+    if (Date.now() - cardDragEndAt < 500) return;
     const api = getApi();
     const info = shelfInfoCache.get(card.dataset.path);
     if (info && info.exists === false) { showToast(t('shMissing')); return; }
@@ -945,7 +949,12 @@ function initBuds() {
 // ---------------------------------------------------------------- 시스템 알림 (볼륨/밝기/Caps Lock/입력 언어/전원/네트워크/오디오 장치)
 let insertOverwrite = false;           // Insert 키 알림이 번갈아 보여 주는 상태(윈도우가 알려 주지 않는다)
 function handleSysEvent(e) {
-  if (!notifyAllowed(store.settings, e.type)) return;       // 설정에서 끈 알림 종류
+  if (!notifyAllowed(store.settings, e.type)) {       // 설정에서 끈 알림 종류
+    // 팝업만 끈 것이다: 열려 있는 시스템 탭·볼륨 팝오버의 슬라이더는 계속 따라가야 한다(예전에는 여기서 끝나서 동기화까지 멈췄다)
+    if (e.type === 'volume') { if (!(typeof sysFollow === 'function' && sysFollow('volume', e)) && typeof volFromSystem === 'function') volFromSystem(e); }
+    else if (e.type === 'brightness' && typeof sysFollow === 'function') sysFollow('brightness', e);
+    return;
+  }
   switch (e.type) {
     case 'agenda':
       agendaAlert(e);
@@ -1246,7 +1255,7 @@ function onPageShown(p) {
   if (p === 'launcher') launcherLoad();
   else if (p === 'sys') sysLoad();
   else if (p === 'perf') perfLoad();
-  else if (p === 'phone') { if (typeof phoneLoad === 'function') phoneLoad(); }
+  else if (p === 'phone') { if (typeof renderPhone === 'function') renderPhone(); if (typeof phoneLoad === 'function') phoneLoad(); }          // 먼저 지금 값으로 그린다(읽어 오는 동안 노치 크기가 틀어졌다 튀던 것)
   else if (p === 'weather') wxLoad(false);
   else if (p === 'power') { if (typeof pwrResetConfirm === 'function') pwrResetConfirm(); }
   else if (p === 'plugins') { pluginsLoad(); pluginStatusRefresh(); }
@@ -1325,7 +1334,7 @@ function initFeatures() {
     else if (e.key === 'Enter') { e.preventDefault(); $('tpOk').click(); }
   });
   $('todoText').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') todoSave();
+    if (e.key === 'Enter' && !e.isComposing) todoSave();          // 한글·일본어·중국어 입력 중(조합 중)의 Enter 는 글자 확정이다
     else if (e.key === 'Escape') { e.stopPropagation(); todoCloseAdd(); }
   });
 

@@ -271,6 +271,7 @@ class BudsService:
         self._running = False
         self._control_addr = None      # 삼성 제어 채널이 있는 클래식 장치 주소(int)
         self._control_cache = {}       # 이름 -> 주소(int) | None
+        self._control_neg = {}         # 이름 -> 못 찾은 시각(찾지 못한 것은 잠깐만 기억한다: 연결 직후 캐시가 비어 있어 못 찾은 것을 영영 '없음'으로 굳히지 않게)
         self._low_sent = set()
         self.low_battery = LOW_BATTERY    # 배터리 부족 알림 기준(%): 설정에서 바꾼다
         self._was_connected = False
@@ -280,6 +281,7 @@ class BudsService:
         self._target_svc = None
         self._target_addr = None
         self._sess = None              # 열려 있는 제어 연결
+        self._sess_dropped = False     # 제어 연결이 방금 끊겼다(스캔 루프가 기다리지 않고 바로 다시 확인하게 알리는 표시)
         self._idle_handle = None
         self._busy = False             # 연결/명령 중에는 배터리 스캔을 건너뛴다 (블루투스 라디오 경합 방지)
         self._pos_cache = {}           # (장치 id, 서비스 핸들) -> 배터리 위치: 디스크립터는 한 번만 읽는다
@@ -449,6 +451,7 @@ class BudsService:
 
     async def _scan_loop(self):
         while self._running:
+            self._sess_dropped = False
             try:
                 stale = self._session_alive() and self._last_status > 0 and (time.time() - self._last_status) >= STATUS_FRESH          # 연결은 열려 있는데 상태가 오래 끊겼다
                 # 연결이 열려 있고 상태가 들어오는 동안에는 GATT 스캔을 하지 않는다 (배터리는 상태 패킷에 들어 있고, 블루투스 라디오 경합도 피한다)
@@ -465,7 +468,7 @@ class BudsService:
                 if not self._running:
                     return
                 await asyncio.sleep(0.25)
-                if self.watch and snap["connected"] and not self._session_alive() and self._sess is not None:
+                if self.watch and snap["connected"] and not self._session_alive() and self._sess_dropped:
                     break          # 연결이 방금 끊겼다: 기다리지 않고 바로 다시 확인
 
     async def _watch_connect(self):
@@ -561,7 +564,11 @@ class BudsService:
         if name in self._control_cache:
             self._control_addr = self._control_cache[name]
             return self._control_addr is not None
+        if time.time() - self._control_neg.get(name, 0.0) < 45.0:
+            self._control_addr = None
+            return False
         addr = None
+        failed = False
         try:
             infos = await DeviceInformation.find_all_async_aqs_filter(BluetoothDevice.get_device_selector_from_pairing_state(True))
             sid = RfcommServiceId.from_uuid(uuid.UUID(SAMSUNG_CONTROL_UUID))
@@ -579,8 +586,12 @@ class BudsService:
                 finally:
                     d.close()
         except Exception as e:
+            failed = True
             self._log(f"buds: control lookup error {e!r}")
-        self._control_cache[name] = addr
+        if addr is not None:
+            self._control_cache[name] = addr
+        else:
+            self._control_neg[name] = time.time()          # 오류든 못 찾았든 45초 뒤에 다시 찾아본다
         self._control_addr = addr
         return addr is not None
 
@@ -619,6 +630,8 @@ class BudsService:
         if self._target is not None and self._target_addr == addr and not uncached:
             return self._target
         dev = await BluetoothDevice.from_bluetooth_address_async(addr)
+        if dev is None:
+            raise RuntimeError("control device not found")          # None 이면 아래 finally 의 dev.close() 가 AttributeError 로 원인을 가렸다
         sid = RfcommServiceId.from_uuid(uuid.UUID(SAMSUNG_CONTROL_UUID))
         try:
             res = await dev.get_rfcomm_services_for_id_with_cache_mode_async(
@@ -719,6 +732,13 @@ class BudsService:
                 if not fut.done():
                     fut.set_exception(ConnectionError("control session closed"))
             sess["waiters"].clear()
+            if self._sess is sess:          # 끊긴 연결을 계속 들고 있으면 스캔 루프가 0.25초마다 전체 스캔을 되풀이한다: 소켓을 닫고 비운 뒤 '방금 끊김' 표시만 남긴다
+                self._sess = None
+                self._sess_dropped = True
+                try:
+                    sess["sock"].close()
+                except Exception:
+                    pass
             for fut in sess["replies"].values():          # 같은 번호의 응답을 기다리던 요청도 끊김을 알아야 시간 초과까지 붙들리지 않는다
                 if not fut.done():
                     fut.set_exception(ConnectionError("control session closed"))

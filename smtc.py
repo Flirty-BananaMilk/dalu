@@ -26,6 +26,7 @@ from winrt.windows.storage.streams import DataReader
 POLL_SEC = 0.5
 POLL_BOOST_SEC = 0.1     # 컨트롤을 누른 직후 잠시 더 자주 읽는다
 ART_SIZE = 192            # 섬에서 가장 큰 앨범 아트가 76px (x2 배율) 이므로 이 정도면 충분하다
+WINRT_TIMEOUT = 5.0         # WinRT 비동기 호출을 기다리는 최대 시간(초)
 ART_RETRIES = 6           # 곡 정보가 먼저 오고 썸네일이 조금 늦게 오는 앱이 있다
 TICKS_PER_SEC = 10_000_000
 EXCLUDE_APPS = ("cider",)  # Cider 는 REST API 로 읽는다 (가사/반복/셔플까지 있음)
@@ -134,7 +135,10 @@ def _to_data_uri(data):
         im.save(out, "JPEG", quality=86)
         return "data:image/jpeg;base64," + base64.b64encode(out.getvalue()).decode("ascii")
     except Exception:
-        return "data:image/png;base64," + base64.b64encode(data).decode("ascii")
+        if len(data) > 400_000:
+            return ""          # 줄이지 못한 큰 원본을 매 폴링마다 화면으로 보내지 않는다
+        mime = "image/jpeg" if data[:2] == b"\xff\xd8" else ("image/gif" if data[:3] == b"GIF" else "image/png")
+        return "data:" + mime + ";base64," + base64.b64encode(data).decode("ascii")
 
 
 class MediaSessionService:
@@ -167,7 +171,10 @@ class MediaSessionService:
     def stop(self):
         self._running = False
         if self._loop is not None:
-            self._loop.call_soon_threadsafe(self._loop.stop)
+            try:
+                self._loop.call_soon_threadsafe(self._loop.stop)
+            except RuntimeError:          # 이미 멈춘(닫힌) 루프: 두 번 불려도 괜찮다
+                pass
 
     def snapshot(self):
         """지금 위치까지 투영한 곡 정보. 재생할 미디어 세션이 없으면 None."""
@@ -207,13 +214,28 @@ class MediaSessionService:
             self._log(f"smtc control_app {match}/{action} failed: {e!r}")
             return False
 
+    def _on_loop(self, fn, timeout=2.0):
+        """WinRT 세션 객체는 이벤트 루프 스레드에서만 만진다(다른 스레드에서 읽으면 스레드 규칙 위반이나 화면 멈춤이 생긴다). 루프에서 fn 을 실행해 결과를 받는다. 안 되면 None."""
+        loop = self._loop
+        if loop is None or not self._running:
+            return None
+
+        async def _call():
+            return fn()
+        try:
+            return asyncio.run_coroutine_threadsafe(_call(), loop).result(timeout)
+        except Exception:
+            return None
+
     def find_app(self, match):
         """match 에 해당하는 세션이 지금 있는가 (플러그인 상태 표시용)."""
-        s = self._snap_of(match)
-        return s
+        return self._on_loop(lambda: self._snap_of(match))
 
     def app_playback(self, match):
         """match 앱 세션의 {playing, repeat('none'|'one'|'all'|None), shuffle(bool|None)} 또는 None (플러그인 상태 표시용)."""
+        return self._on_loop(lambda: self._app_playback_now(match))
+
+    def _app_playback_now(self, match):
         mgr = self._manager
         if mgr is None:
             return None
@@ -256,7 +278,7 @@ class MediaSessionService:
         while self._running:
             try:
                 if manager is None:
-                    manager = await SessionManager.request_async()
+                    manager = await asyncio.wait_for(SessionManager.request_async(), WINRT_TIMEOUT)          # 응답 없는 미디어 앱 때문에 폴링이 영영 멈추지 않게
                     self._manager = manager
                 await self._poll_once(manager)
                 last_err = None
@@ -272,10 +294,13 @@ class MediaSessionService:
     async def _poll_once(self, manager):
         entries, sessions = [], {}
         for s in manager.get_sessions():
-            app_id = s.source_app_user_model_id
-            if is_excluded(app_id, self._exclude) or not passes_filter(app_id, self.filter_mode, self.filter_names):
+            try:          # 세션 하나가 막 사라지는 중이라 읽기에 실패해도 다른 세션까지 못 보지 않게
+                app_id = s.source_app_user_model_id
+                if is_excluded(app_id, self._exclude) or not passes_filter(app_id, self.filter_mode, self.filter_names):
+                    continue
+                playing = s.get_playback_info().playback_status == PlaybackStatus.PLAYING
+            except Exception:
                 continue
-            playing = s.get_playback_info().playback_status == PlaybackStatus.PLAYING
             entries.append((app_id, playing))
             if app_id not in sessions or playing:
                 sessions[app_id] = s          # 같은 앱의 세션이 여럿이면 재생 중인 것을 쓴다(뒤의 것이 앞의 것을 덮어쓰지 않게)
@@ -288,7 +313,7 @@ class MediaSessionService:
         session = sessions[chosen]
         self._session, self._app_id = session, chosen
 
-        props = await session.try_get_media_properties_async()
+        props = await asyncio.wait_for(session.try_get_media_properties_async(), WINRT_TIMEOUT)
         if props is None:          # 앱이 끝나는 순간 등: 곡 정보를 못 읽었다
             with self._lock:
                 self._snap = None
@@ -316,7 +341,11 @@ class MediaSessionService:
             age = (datetime.now(timezone.utc) - tl.last_updated_time).total_seconds()
         except Exception:
             pass
-        pos = project_position(tl.position.total_seconds(), age, is_playing, duration)
+        try:
+            pos_raw = (tl.position - tl.start_time).total_seconds()          # 타임라인이 0 에서 시작하지 않는 앱도 있다
+        except Exception:
+            pos_raw = tl.position.total_seconds()
+        pos = project_position(pos_raw, age, is_playing, duration)
         ctrl = info.controls
         snap = {
             "key": key, "app": chosen, "appName": app_label(chosen),
@@ -325,8 +354,8 @@ class MediaSessionService:
             "position": pos, "duration": duration, "read_perf": time.perf_counter(),
             "repeat": _MODE_TO_REPEAT.get(info.auto_repeat_mode) if info.auto_repeat_mode is not None else None,
             "shuffle": info.is_shuffle_active,
-            "canSeek": bool(ctrl.is_playback_position_enabled), "canNext": bool(ctrl.is_next_enabled),
-            "canPrev": bool(ctrl.is_previous_enabled),
+            "canSeek": bool(getattr(ctrl, "is_playback_position_enabled", False)), "canNext": bool(getattr(ctrl, "is_next_enabled", False)),
+            "canPrev": bool(getattr(ctrl, "is_previous_enabled", False)),
         }
         with self._lock:
             self._snap = snap
@@ -335,12 +364,15 @@ class MediaSessionService:
     async def _read_thumbnail(ref):
         stream = reader = None
         try:
-            stream = await ref.open_read_async()
+            stream = await asyncio.wait_for(ref.open_read_async(), WINRT_TIMEOUT)
             size = int(stream.size)
             if size <= 0 or size > 8 * 1024 * 1024:
                 return ""
             reader = DataReader(stream)
-            await reader.load_async(size)
+            got = await asyncio.wait_for(reader.load_async(size), WINRT_TIMEOUT)
+            size = min(size, int(got))          # 실제로 읽은 만큼만 쓴다(부분만 읽힌 채 뒤가 0 으로 채워진 깨진 그림이 가던 것)
+            if size <= 0:
+                return ""
             data = bytearray(size)
             reader.read_bytes(data)
             return _to_data_uri(bytes(data))

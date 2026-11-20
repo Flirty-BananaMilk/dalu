@@ -22,6 +22,7 @@ kernel32.GlobalLock.argtypes = [ctypes.c_void_p]
 kernel32.GlobalLock.restype = ctypes.c_void_p
 kernel32.GlobalUnlock.argtypes = [ctypes.c_void_p]
 kernel32.GlobalSize.argtypes = [ctypes.c_void_p]
+kernel32.GlobalSize.restype = ctypes.c_size_t          # 기본 32비트 정수로 받으면 2GiB 이상 블록이 음수가 되어 크기 제한을 빠져나간다
 
 CF_UNICODETEXT = 13
 MAX_ITEMS = 30
@@ -35,15 +36,18 @@ def _excluded():
     fmt = user32.RegisterClipboardFormatW(EXCLUDE_FORMATS[0])
     if fmt and user32.IsClipboardFormatAvailable(fmt):
         return True
-    fmt = user32.RegisterClipboardFormatW(EXCLUDE_FORMATS[1])
-    if fmt and user32.IsClipboardFormatAvailable(fmt):
-        h = user32.GetClipboardData(fmt)
-        if h and kernel32.GlobalSize(h) >= 4:
-            p = kernel32.GlobalLock(h)
-            try:
-                return ctypes.c_uint32.from_address(p).value == 0 if p else False
-            finally:
-                kernel32.GlobalUnlock(h)
+    for name in EXCLUDE_FORMATS[1:]:          # 기록(CanIncludeInClipboardHistory)·클라우드 동기화(CanUploadToCloudClipboard) 금지 표시: 값이 0 일 때만 제외
+        fmt = user32.RegisterClipboardFormatW(name)
+        if fmt and user32.IsClipboardFormatAvailable(fmt):
+            h = user32.GetClipboardData(fmt)
+            if h and kernel32.GlobalSize(h) >= 4:
+                p = kernel32.GlobalLock(h)
+                try:
+                    if p and ctypes.c_uint32.from_address(p).value == 0:
+                        return True
+                finally:
+                    if p:
+                        kernel32.GlobalUnlock(h)
     return False
 
 
@@ -67,7 +71,8 @@ def read_text():
         if not p:
             return None, False
         try:
-            return ctypes.wstring_at(p), False
+            n = kernel32.GlobalSize(h) // 2          # 블록 크기까지만 읽는다(끝의 NUL 이 없는 이상한 데이터로 범위를 넘어 읽지 않게)
+            return ctypes.wstring_at(p, n).split("\0", 1)[0], False
         finally:
             kernel32.GlobalUnlock(h)
     finally:
@@ -173,6 +178,7 @@ class ClipWatcher:
         self._interval = interval
         self._last_seq = user32.GetClipboardSequenceNumber()
         self._skip_next = False
+        self._extra_skip = None          # (순번, 기한): 우리가 쓴 변경은 순번을 두 번 올린다(비우기 + 넣기). 두 번째 증가분도 우리 것으로 보고 건너뛴다
         self._running = False
 
     def start(self):
@@ -191,6 +197,13 @@ class ClipWatcher:
         if seq == self._last_seq:
             return False
         self._last_seq = seq
+        ex = self._extra_skip
+        if ex is not None:
+            self._extra_skip = None
+            if ex[0] == seq and time.monotonic() <= ex[1]:
+                again, _ex = read_text()
+                if again == ex[2]:
+                    return False          # 우리가 쓴 변경의 두 번째 순번 증가이고 내용도 같다: 새 복사가 아니다(폰으로 되돌려 보내거나 기록에 또 넣던 것). 내용이 다르면 그 사이의 진짜 복사다
         want_sync = self.on_text is not None and (self.sync_when is None or bool(self.sync_when()))
         if not self.enabled and not want_sync:
             self._skip_next = False          # 이번 변경을 읽지 않으니 '다음 변경 건너뛰기'도 쓴 것이다(안 지우면 나중의 진짜 복사가 건너뛰어진다)
@@ -201,10 +214,14 @@ class ClipWatcher:
             return False
         if text is None:
             skip, self._skip_next = self._skip_next, False
+            if skip:
+                self._extra_skip = (seq + 1, time.monotonic() + 1.0, None)
             if want_sync and self.on_image is not None and not skip:
                 self._maybe_image()
             return False
         skip, self._skip_next = self._skip_next, False
+        if skip:
+            self._extra_skip = (seq + 1, time.monotonic() + 1.0, text)
         if want_sync and not skip:     # 우리가 직접 넣은 변경(폰에서 받은 글, 기록에서 다시 복사)은 되돌려 보내지 않는다
             try:
                 self.on_text(text)

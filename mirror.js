@@ -158,7 +158,7 @@ async function ensureDecoder(keyData) {
   closeDecoder();
   const gen = decoderGen;
   if (typeof VideoDecoder === 'undefined') { showMsg(S.nodecoder, S.nodecoderSub, false); return false; }
-  const cfgs = [{ codec, hardwareAcceleration: 'prefer-hardware', optimizeForLatency: true, avc: { format: 'annexb' } }, { codec, optimizeForLatency: true, avc: { format: 'annexb' } }, { codec, optimizeForLatency: true }];
+  const cfgs = [{ codec, hardwareAcceleration: 'prefer-hardware', optimizeForLatency: true, avc: { format: 'annexb' } }, { codec, optimizeForLatency: true, avc: { format: 'annexb' } }];          // 마지막 후보(avc 형식 미지정)는 뺐다: 기본이 AVCC 라서 Annex-B 스트림을 잘못 읽어 깨진 화면이 나왔다
   let cfg = null;
   for (const c of cfgs) {
     try { const r = await VideoDecoder.isConfigSupported(c); if (r && r.supported) { cfg = r.config || c; break; } } catch (e) { /* 다음 설정 */ }
@@ -174,6 +174,7 @@ async function ensureDecoder(keyData) {
   return true;
 }
 
+let chainPending = 0;
 let frameChain = Promise.resolve();          // 프레임은 한 줄로 차례대로 처리한다(디코더를 만드는 동안 뒤따라 온 프레임이 먼저 처리되지 않게)
 
 async function onFrame(isKey, data) {
@@ -221,13 +222,15 @@ function connect() {
       try { onState(JSON.parse(new TextDecoder().decode(buf.subarray(1)))); } catch (e) { /* 깨진 상태는 무시 */ }
     } else if (buf[0] === 2 || buf[0] === 3) {
       const isKey = buf[0] === 3, data = buf.subarray(9);
-      frameChain = frameChain.then(() => onFrame(isKey, data)).catch(() => {});
+      if (chainPending > 40 && !isKey) return;          // 디코딩이 밀리면 보통 프레임은 버린다(메모리에 끝없이 쌓이지 않게). 키프레임은 항상 처리한다
+      chainPending++;
+      frameChain = frameChain.then(() => onFrame(isKey, data)).catch(() => {}).then(() => { chainPending--; });
     }
   };
-  ws.onclose = () => { if (state.state !== 'stopped' && state.state !== 'idle') reconnectTimer = setTimeout(async () => { info = (await getInfo()) || info; connect(); }, 1200); };
+  ws.onclose = () => { if (state.state !== 'stopped' && state.state !== 'idle') reconnectTimer = setTimeout(async () => { try { info = (await getInfo()) || info; } catch (e) { /* 이전 정보로 다시 시도 */ } connect(); }, 1200); };
 }
 
-async function mirrorReconnect() { info = (await getInfo()) || info; gotFrame = false; closeDecoder(); showMsg(S.waiting, S.waitingSub, true); connect(); }
+async function mirrorReconnect() { try { info = (await getInfo()) || info; } catch (e) { /* 이전 정보로 */ } gotFrame = false; closeDecoder(); showMsg(S.waiting, S.waitingSub, true); connect(); }
 window.mirrorReconnect = mirrorReconnect;
 
 // ---------------------------------------------------------------- 조작(PC 마우스 → 폰 손가락)
@@ -297,13 +300,13 @@ setInterval(() => { if (state.state === 'running' && gotFrame && frames === 0) n
 
 (async function init() {
   const lang = new URLSearchParams(location.search).get('lang');
-  S = STR[lang] || STR.ko;
+  S = (Object.prototype.hasOwnProperty.call(STR, lang) && STR[lang]) || STR.ko;
   applyStrings();
   setControlUi();
   showMsg(S.connecting, S.connectingSub, true);
   info = await getInfo();
   if (!info) { showMsg(S.error, S.errorSub, false); return; }
-  S = STR[info.lang] || STR.en;
+  S = (Object.prototype.hasOwnProperty.call(STR, info.lang) && STR[info.lang]) || STR.en;
   control = !!info.control;
   applyStrings();
   setControlUi();

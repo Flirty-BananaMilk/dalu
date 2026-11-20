@@ -79,11 +79,12 @@ def disable(state_path, subkey=SUBKEY):
             restored = True
         else:
             restored = False
-    finally:
-        try:
-            os.remove(state_path)
-        except OSError:
-            pass
+    except Exception:
+        return False                           # 되돌리지 못했으면 상태 파일을 남긴다(다음 실행 때 다시 시도할 수 있게)
+    try:
+        os.remove(state_path)
+    except OSError:
+        pass
     return restored
 
 

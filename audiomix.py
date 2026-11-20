@@ -161,6 +161,14 @@ def _sessions(dev):
         return [], None
     n = ctypes.c_int()
     _vcall(en, 3, ctypes.c_long, ctypes.POINTER(ctypes.c_int))(en, ctypes.byref(n))
+    try:
+        return _collect_sessions(en, n, out), (mgr, en)
+    except Exception:
+        _free(out, (mgr, en))          # 도중에 예외가 나도 이미 모은 COM 포인터를 돌려 준다
+        raise
+
+
+def _collect_sessions(en, n, out):
     for i in range(n.value):
         ctl = ctypes.c_void_p()
         if _vcall(en, 4, ctypes.c_long, ctypes.c_int, ctypes.POINTER(ctypes.c_void_p))(en, i, ctypes.byref(ctl)) != 0 or not ctl.value:
@@ -175,7 +183,7 @@ def _sessions(dev):
             _vcall(ctl2, 14, ctypes.c_long, ctypes.POINTER(wintypes.DWORD))(ctl2, ctypes.byref(pid))
             system = _vcall(ctl2, 15, ctypes.c_long)(ctl2) == 0       # IsSystemSoundsSession: S_OK(0) = 시스템 소리
         out.append({"pid": pid.value, "state": state.value, "system": system, "ctl": ctl, "ctl2": ctl2, "vol": vol})
-    return out, (mgr, en)
+    return out
 
 
 def _free(sessions, holders):
@@ -242,11 +250,12 @@ def set_app(app_id, volume=None, muted=None):
                 key = "system" if s["system"] else f"pid:{s['pid']}"
                 if key != app_id or not s["vol"] or s["state"] == 2:
                     continue
-                hit = True
+                okv = True          # COM 결과를 확인한다(실패해도 성공으로 답하던 것)
                 if volume is not None:
-                    _vcall(s["vol"], 3, ctypes.c_long, ctypes.c_float, ctypes.c_void_p)(s["vol"], ctypes.c_float(max(0.0, min(1.0, float(volume)))), None)
+                    okv = _vcall(s["vol"], 3, ctypes.c_long, ctypes.c_float, ctypes.c_void_p)(s["vol"], ctypes.c_float(max(0.0, min(1.0, float(volume)))), None) == 0 and okv
                 if muted is not None:
-                    _vcall(s["vol"], 5, ctypes.c_long, ctypes.c_int, ctypes.c_void_p)(s["vol"], 1 if muted else 0, None)
+                    okv = _vcall(s["vol"], 5, ctypes.c_long, ctypes.c_int, ctypes.c_void_p)(s["vol"], 1 if muted else 0, None) == 0 and okv
+                hit = hit or okv
             return hit
         except Exception:
             return False

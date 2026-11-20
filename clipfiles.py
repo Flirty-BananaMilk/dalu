@@ -45,6 +45,11 @@ def _dib_of(path):
         with Image.open(path) as img:
             if img.width * img.height > MAX_PIXELS:
                 return None
+            try:
+                from PIL import ImageOps
+                img = ImageOps.exif_transpose(img)          # 폰 사진의 회전 정보를 적용한다(세로 사진이 눕혀 붙던 것)
+            except Exception:
+                pass
             if img.mode in ("RGBA", "LA", "P"):
                 rgba = img.convert("RGBA")
                 bg = Image.new("RGB", rgba.size, (255, 255, 255))

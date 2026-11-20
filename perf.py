@@ -12,6 +12,16 @@ import threading
 import time
 from ctypes import wintypes
 
+_dlls = {}
+
+
+def _wd(name, last_error=True):
+    """WinDLL 은 한 번만 만들어 쓴다(폴링 루프에서 매번 새로 만들던 것)."""
+    d = _dlls.get(name)
+    if d is None:
+        d = _dlls[name] = ctypes.WinDLL(name, use_last_error=last_error)
+    return d
+
 kernel32 = ctypes.windll.kernel32
 
 MIB_IF_TYPE_ETHERNET = 6
@@ -80,7 +90,7 @@ def read_memory():
 def read_net_octets():
     """(받은 바이트 합, 보낸 바이트 합) — 실제 어댑터만. 읽지 못하면 None."""
     try:
-        ip = ctypes.WinDLL("iphlpapi")
+        ip = _wd("iphlpapi", False)
         size = wintypes.ULONG(0)
         ip.GetIfTable(None, ctypes.byref(size), False)
         if not size.value:
@@ -148,7 +158,7 @@ class GpuReader:
 
     def _open(self):
         try:
-            pdh = ctypes.WinDLL("pdh")
+            pdh = _wd("pdh", False)
             q = ctypes.c_void_p()
             if pdh.PdhOpenQueryW(None, 0, ctypes.byref(q)) != 0:
                 return False
@@ -160,6 +170,16 @@ class GpuReader:
             return True
         except Exception:
             return False
+
+    def close(self):
+        """열어 둔 PDH 질의를 닫는다(앱이 끝날 때)."""
+        try:
+            if self._pdh is not None and self._q is not None:
+                self._pdh.PdhCloseQuery(self._q)
+        except Exception:
+            pass
+        self._q = self._c = None
+        self._dead = True
 
     def read(self):
         if self._dead:

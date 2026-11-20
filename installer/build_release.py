@@ -60,7 +60,7 @@ def dependency_dists():
     for line in (ROOT / "requirements.txt").read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if line and not line.startswith("#"):
-            need.append(norm(line))
+            need.append(norm(re.split(r"[\s;<>=!~\[(#]", line)[0]))          # 'pywebview==5.1  # 설명' 처럼 버전 지정이나 뒤 설명이 있어도 패키지 이름만 쓴다
     seen, q = {}, list(need)
     while q:
         n = q.pop()
@@ -227,7 +227,7 @@ def write_notices(path, dists, base):
               "Dalu is an unofficial project, not affiliated with Apple, Cider, Spotify, Samsung, Discord or Microsoft. Trademarks belong to their owners.\n",
               "Samsung Galaxy Buds 제어: 패킷 구조는 공개 프로젝트 GalaxyBudsClient(GPL-3.0)를 참고해 직접 구현했고, 그 코드를 포함하지 않습니다 / The Buds protocol was re-implemented from public documentation of GalaxyBudsClient (GPL-3.0); none of its code is included.\n\n"]
     py_lic = base / "LICENSE.txt"
-    lines += ["Python 3.10 (Python Software Foundation License)\n", "-" * 78 + "\n", py_lic.read_text(encoding="utf-8", errors="ignore") if py_lic.exists() else "", "\n\n"]
+    lines += ["Python %d.%d (Python Software Foundation License)\n" % sys.version_info[:2], "-" * 78 + "\n", py_lic.read_text(encoding="utf-8", errors="ignore") if py_lic.exists() else "", "\n\n"]
     for n, d in sorted(dists.items()):
         lines += [f"{d.metadata.get('Name', n)} {d.version}  ({(d.metadata.get('License') or d.metadata.get('License-Expression') or '').splitlines()[0][:60] if (d.metadata.get('License') or d.metadata.get('License-Expression')) else 'see below'})\n", "-" * 78 + "\n"]
         found = False
@@ -278,7 +278,7 @@ def make_setup(ver, portable_zip):
     cmd = [CSC, "/nologo", "/optimize+", "/debug-", "/target:winexe", f"/out:{target}", f"/win32icon:{work / 'dalu.ico'}", f"/win32manifest:{work / 'Setup.manifest'}", f"/resource:{work / 'payload.zip'},payload.zip",
            "/reference:System.IO.Compression.FileSystem.dll", "/reference:System.IO.Compression.dll", "/reference:System.Windows.Forms.dll", "/reference:System.Drawing.dll", str(work / "SetupStub.cs")]
     r = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
-    if not target.exists():
+    if r.returncode != 0 or not target.exists():          # 컴파일러가 오류를 냈는데 예전 파일이 남아 성공처럼 보이는 일이 없게 종료 코드도 본다
         sys.exit(f"Setup.exe 를 만들지 못했어요: {r.stdout} {r.stderr}")
     shutil.rmtree(work, ignore_errors=True)
     return target

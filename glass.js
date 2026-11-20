@@ -162,6 +162,8 @@ const LG = (() => {
     if (!defs) return;
     const used = new Set();
     document.querySelectorAll('.lg').forEach((el) => { const m = (el.style.backdropFilter || '').match(/#([\w-]+)/); if (m) used.add(m[1]); });
+    const rs = document.documentElement.style;          // defineStatic 이 CSS 변수(--lg-이름)로 건네는 고정 필터도 쓰는 중이다(지우면 손잡이·스위치 유리가 사라진다)
+    for (let i = 0; i < rs.length; i++) { if (rs[i].indexOf('--lg-') === 0) { const m = (rs.getPropertyValue(rs[i]) || '').match(/#([\w-]+)/); if (m) used.add(m[1]); } }
     for (const [key, id] of Array.from(cache)) {
       if (used.has(id)) continue;
       const f = defs.querySelector('#' + id);

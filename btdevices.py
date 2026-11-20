@@ -212,7 +212,8 @@ class AirpodsTracker:
 
     def feed(self, rssi, payload, now=None):
         with self._mu:
-            had = self._last is not None
+            t_now = time.monotonic() if now is None else now
+            had = self._last is not None and t_now - self._last[0] <= self.KEEP          # 보관 시간이 지난 값은 '없는 것'으로 본다(다시 잡혀도 새로 감지된 것으로 깨운다)
             ok = self._feed(rssi, payload, now)
             fresh = ok and not had and self._last is not None
         if fresh and self.on_new is not None:
@@ -422,7 +423,7 @@ class BtDevices:
                 except Exception as e:
                     self._log(f"btdevices read failed: {e!r}")
                     devs = None
-                if devs is not None and self.enabled:          # 읽는 사이에 껐다면 결과를 버린다
+                if devs is not None and self.enabled and not self._stop.is_set():          # 읽는 사이에 껐거나 멈췄다면 결과를 버린다(광고 듣기를 새로 시작하지 않는다)
                     devs = self._with_airpods(devs)
                     changed = False
                     with self._lock:

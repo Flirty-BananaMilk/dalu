@@ -48,6 +48,13 @@ def _crescent_mask(cx, cy, r, bite_dx, bite_dy, bite_r):
     return m
 
 
+def _over(base, color, mask):
+    """반투명 색을 마스크 모양으로 얹는다. paste 는 알파 채널까지 섞어서 반투명한 곳에 구멍이 생기므로 alpha_composite 를 쓴다."""
+    ov = Image.new("RGBA", base.size, color)
+    ov.putalpha(ImageChops.multiply(ov.getchannel("A"), mask.convert("L")))
+    return Image.alpha_composite(base, ov)
+
+
 def render(size=256):
     tile = _tile_mask()
     base = _vgrad((S, S), (58, 48, 128), (16, 16, 46))                           # 밤하늘: 위 보랏빛 -> 아래 짙은 남색
@@ -61,16 +68,17 @@ def render(size=256):
     base.paste(moon, (0, 0), cm)
     # 달 가장자리 안쪽 빛
     rim = ImageChops.subtract(cm, cm.filter(ImageFilter.MinFilter(9)))
-    base.paste(Image.new("RGBA", (S, S), (255, 255, 255, 70)), (0, 0), rim)
+    base = _over(base, (255, 255, 255, 70), rim)
     # 작은 별 둘
     d = ImageDraw.Draw(base)
     for (x, y, rr) in ((762, 520, 22), (820, 690, 14)):
         d.ellipse((x - rr, y - rr, x + rr, y + rr), fill=(255, 246, 220, 255))
     # 노치(검정) + 가는 테두리 빛
     nm = _notch_mask()
-    base.paste(Image.new("RGBA", (S, S), (0, 0, 0, 255)), (0, 0), nm)
+    base = _over(base, (0, 0, 0, 255), nm)
     edge = ImageChops.subtract(nm, nm.filter(ImageFilter.MinFilter(9)))
-    base.paste(Image.new("RGBA", (S, S), (255, 255, 255, 90)), (0, 0), edge)
+    base = _over(base, (255, 255, 255, 90), edge)
+    d = ImageDraw.Draw(base)
     # 알림 점(노치 가운데): 달과 함께 '소리가 나는 중'이라는 느낌
     d.ellipse((512 - 28, 176 - 28, 512 + 28, 176 + 28), fill=(255, 214, 140, 255))
     out = Image.new("RGBA", (S, S), (0, 0, 0, 0))

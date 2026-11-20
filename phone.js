@@ -191,7 +191,15 @@ function initPhone() {
 
 
 // ---------------------------------------------------------------- 폰 알림: 노치에 띄우고, 카드에서 답장한다
-function phoneCardActive() { return !!(phoneS.card && Date.now() < phoneS.cardUntil); }
+function phoneCardActive() {
+  if (!phoneS.card) return false;
+  if (Date.now() >= phoneS.cardUntil) {
+    const inp = $('phCardIn');
+    if (inp && inp.value.trim()) phoneS.cardUntil = Date.now() + PHONE_CARD_SHOW_MS;          // 답장을 쓰는 중이면 60초가 지나도 카드를 거두지 않는다(쓰던 글이 사라지던 것)
+    else return false;
+  }
+  return true;
+}
 // 폰 알림 카드가 떠 있으면 휴대폰 탭이 커진다(내용이 길수록 더 크게): 알림을 마우스로 가리켰을 때 내용을 다 읽을 수 있게
 function phoneCardBig(base) {
   if (((phoneS.media && phoneS.media.open) || (phoneS.sms && phoneS.sms.open)) && island.dataset.pmed === '1') return { w: Math.max(base.w, 480), h: Math.max(base.h, 226), e: base.e };
@@ -246,7 +254,7 @@ function phoneNotifyIn(e) {
 // 폰 앱에서 알림이 지워졌다(폰에서 읽거나 지움): 같은 알림의 답장 카드는 닫는다
 // 같은 채팅방(같은 앱·같은 이름)에서 알림이 이어서 오면 카드 하나에 대화로 이어 붙인다(카카오톡·Discord 는 메시지마다 알림이 따로 오기도 한다)
 function phoneMergeCard(old, nu) {
-  if (!old || Date.now() >= phoneS.cardUntil || old.app !== nu.app || !((old.key && old.key === nu.key) || old.sender === nu.sender)) return nu;          // 같은 알림 키(= 같은 채팅방; 방 안에서 말하는 사람이 바뀌어도) 또는 같은 이름
+  if (!old || Date.now() >= phoneS.cardUntil || old.app !== nu.app || !((old.key && old.key === nu.key) || (old.sender && old.sender === nu.sender))) return nu;          // 같은 알림 키(= 같은 채팅방; 방 안에서 말하는 사람이 바뀌어도) 또는 같은 이름
   const seed = Array.isArray(old.messages) && old.messages.length ? old.messages.slice() : (old.body ? [{ sender: old.sender, text: old.body }] : []);
   let add = nu.messages.length ? nu.messages : (nu.body ? [{ sender: nu.sender, text: nu.body }] : []);
   const sig = (m) => (m.sender || '') + '' + (m.text || '');
@@ -269,6 +277,7 @@ function phoneLinkState(e) {
 }
 // 알림을 보고 노치를 펼치면 휴대폰 탭(답장 카드)으로 바로 간다
 function phoneOnExpand() {
+  if (phoneS.noAutoUntil && Date.now() < phoneS.noAutoUntil) return;          // 다른 보조 노치를 눌러서 펼친 것
   if (page === 'phone' && phoneS.newMedia && Date.now() - phoneS.newMedia.t < PHONE_CARD_HOVER_MS && !(phoneS.media && phoneS.media.open) && !(phoneS.sms && phoneS.sms.open) && !phoneS.dial && !phoneCallVisible()) { const pre = phoneS.newMedia.items; phoneS.newMedia = null; phoneMediaOpen(pre); return; }
   if (phoneS.newMedia && Date.now() - phoneS.newMedia.t < PHONE_CARD_HOVER_MS && !phoneCallVisible() && !phoneCardActive()) {          // 새 사진 알림을 보고 노치를 펼치면 '폰 사진'이 그 사진을 골라 둔 채 열린다
     const pre = phoneS.newMedia.items; phoneS.newMedia = null;
@@ -326,6 +335,8 @@ function phoneRenderCard() {
     const csig = 'b|' + (c.body || '');
     if (bd._sig !== csig) { bd._sig = csig; setText(bd, c.body); bd.scrollTop = 0; }
   }
+  const sz = $('phSnz');          // 임시 차단 단추(패키지 이름을 아는 알림만)
+  if (sz) { sz.hidden = !c.pkg; for (const b of $$('#phSnz .ph-snz')) { b.textContent = t('phoneSnooze' + b.dataset.h); b.setAttribute('aria-label', t('phoneSnoozeAria', { h: b.dataset.h })); } }
   const mb = $('phCardMute'); if (mb) mb.hidden = !c.pkg;          // 패키지 이름을 아는 알림(폰 앱 연결)만 '이 앱 끄기'
   card.classList.toggle('no-reply', !!c.noReply);          // 답장 동작이 없는 알림: 답장 칸 없이 내용만 크게
   card.classList.toggle('long', (c.body || '').length > 90 || msgs.length > 1);
@@ -335,10 +346,17 @@ async function phoneMuteApp() {
   const c = phoneS.card, api = getApi();
   if (!c || !c.pkg || !api || !api.phone_notify_app_set) return;
   let r = null;
-  const sz = $('phSnz');          // 임시 차단 단추(패키지 이름을 아는 알림만)
-  if (sz) { sz.hidden = !c.pkg; for (const b of $$('#phSnz .ph-snz')) { b.textContent = t('phoneSnooze' + b.dataset.h); b.setAttribute('aria-label', t('phoneSnoozeAria', { h: b.dataset.h })); } }
   try { r = await api.phone_notify_app_set(c.pkg, false); } catch (e) { r = null; }
   if (r && r.ok) { showToast(t('phoneMutedApp', { app: c.app || r.app || c.pkg })); phoneCardClose(); }
+  else showToast(t('phoneFail'));
+}
+// 카드의 '1시간/6시간/24시간 차단': 이 앱의 알림을 그 시간 동안만 띄우지 않는다(시간이 지나면 저절로 풀린다)
+async function phoneSnoozeApp(h) {
+  const c = phoneS.card, api = getApi();
+  if (!c || !c.pkg || !api || !api.phone_notify_snooze) return;
+  let r = null;
+  try { r = await api.phone_notify_snooze(c.pkg, h); } catch (e) { r = null; }
+  if (r && r.ok) { showToast(t('phoneSnoozedApp', { app: c.app || r.app || c.pkg, h })); phoneCardClose(); }
   else showToast(t('phoneFail'));
 }
 function phoneCardClose() {
@@ -350,26 +368,19 @@ const PHONE_REPLY_ERR = { empty: 'phoneReplyFail', toolong: 'phoneReplyFail', no
 async function phoneSendReply() {
   const c = phoneS.card, inp = $('phCardIn'), row = document.querySelector('.ph-card-reply');
   if (!c || !inp || phoneS.sending) return;
-// 카드의 '1시간/6시간/24시간 차단': 이 앱의 알림을 그 시간 동안만 띄우지 않는다(시간이 지나면 저절로 풀린다)
-async function phoneSnoozeApp(h) {
-  const c = phoneS.card, api = getApi();
-  if (!c || !c.pkg || !api || !api.phone_notify_snooze) return;
-  let r = null;
-  try { r = await api.phone_notify_snooze(c.pkg, h); } catch (e) { r = null; }
-  if (r && r.ok) { showToast(t('phoneSnoozedApp', { app: c.app || r.app || c.pkg, h })); phoneCardClose(); }
-  else showToast(t('phoneFail'));
-}
   const text = inp.value.trim();
   if (!text) return;
   const api = getApi(); if (!api || !api.link_reply) return;
   phoneS.sending = true; row.classList.add('busy'); row.classList.remove('err');
+  const sentCard = c;
   let r = null;
   try {
     if (c.key) r = await api.link_reply(c.key, text);          // 폰 앱이 그 알림의 답장 동작을 실행한다
     else r = { ok: false, error: 'gone' };
   } catch (e) { r = null; }
   phoneS.sending = false; row.classList.remove('busy');
-  if (r && r.ok) { showToast(t('phoneReplySent')); phoneCardClose(); return; }
+  if (r && r.ok) { showToast(t('phoneReplySent')); if (phoneS.card === sentCard) phoneCardClose(); return; }          // 기다리는 사이 새 알림이 카드를 바꿨다면 그 새 알림을 닫지 않는다
+  if (phoneS.card !== sentCard) { showToast(t(PHONE_REPLY_ERR[r && r.error] || 'phoneReplyFail')); return; }
   row.classList.add('err');
   showToast(t(PHONE_REPLY_ERR[r && r.error] || 'phoneReplyFail'));
 }
@@ -566,7 +577,8 @@ async function phoneCallAudio(kind) {
   let r = null;
   try { r = await api.phone_call_audio(kind === 'speaker' ? !cur.speaker : null, kind === 'mute' ? !cur.mute : null); } catch (e) { r = null; }
   btn.classList.remove('busy');
-  if (r && typeof r.speaker === 'boolean') c.audio = { speaker: !!r.speaker, mute: !!r.mute };
+  const live = phoneS.call || c;          // 기다리는 사이 2초 폴링이 통화 객체를 새로 만들었을 수 있다: 지금 것에 반영한다
+  if (r && typeof r.speaker === 'boolean') live.audio = { speaker: !!r.speaker, mute: !!r.mute };
   if (!r || !r.ok) showToast(t(phoneCallErr(r)));
   renderPhone();
 }
@@ -585,7 +597,8 @@ async function phoneCallRecord() {
   let r = null;
   try { r = await api.phone_call_record(typeof c.rec === 'boolean' ? !c.rec : null); } catch (e) { r = null; }
   btn.classList.remove('busy');
-  if (r && typeof r.on === 'boolean') { if (r.on && !c.rec) c.recT0 = Date.now(); c.rec = r.on; if (!r.on) c.recT0 = 0; }
+  const live = phoneS.call || c;
+  if (r && typeof r.on === 'boolean') { if (r.on && !live.rec) live.recT0 = Date.now(); live.rec = r.on; if (!r.on) live.recT0 = 0; }
   if (!r || !r.ok) showToast(t(phoneCallErr(r)));
   phoneCallMini();
   renderPhone();
@@ -684,6 +697,12 @@ function phoneXferList() {
 function phoneXferH(rows) { return Math.max(132, Math.min(232, 62 + 50 * Math.max(1, rows))); }
 function phoneXferActive() { return Object.values(phoneS.files).some((f) => PHONE_FILE_ACTIVE.includes(f.state)); }
 
+function phoneXferM1(m1, f, active, pct) {
+  m1.className = '';
+  if (active) m1.textContent = f.state === 'waiting' ? t('phoneFileWaiting') : t(f.dir === 'in' ? 'phoneFileReceiving' : 'phoneFileSending') + ' · ' + pct + '%' + (f.bps > 0 ? ' · ' + phoneFmtSize(f.bps) + '/s' : '');
+  else if (f.state === 'done') { m1.className = 'ok'; m1.textContent = t(f.dir === 'in' ? 'phoneFileGot' : 'phoneFileSent') + ' · ' + phoneFmtSize(f.size); }
+  else { m1.className = 'err'; m1.textContent = t(phoneFileErrKey(f.error)); }
+}
 function phoneRenderXfer() {
   const box = $('phXfer'), grid = $('phGrid');
   if (!box) return;
@@ -701,7 +720,17 @@ function phoneRenderXfer() {
     if (on) island.style.setProperty('--pxh', sig + 'px');
     if (typeof scheduleRegion === 'function') scheduleRegion();
   }
-  if (!on) { box.textContent = ''; return; }
+  if (!on) { box.textContent = ''; box._sig = ''; return; }
+  const xsig = list.map((f) => f.fid + ':' + f.state + ':' + (f.path ? 1 : 0)).join('|') + '|' + lang;
+  if (box._sig === xsig && box.children.length === list.length) {          // 줄 구성이 그대로면 진행률 글자·막대만 바꾼다(통째로 다시 그리면 누르는 사이 단추가 사라져 클릭이 증발했다)
+    list.forEach((f, i) => {
+      const row = box.children[i], active = PHONE_FILE_ACTIVE.includes(f.state), pct = f.size > 0 ? Math.min(100, Math.floor(f.done * 100 / f.size)) : (f.state === 'done' ? 100 : 0);
+      if (row._fill) row._fill.style.width = pct + '%';
+      if (row._m1) phoneXferM1(row._m1, f, active, pct);
+    });
+    return;
+  }
+  box._sig = xsig;
   box.textContent = '';
   for (const f of list) {
     const active = PHONE_FILE_ACTIVE.includes(f.state), pct = f.size > 0 ? Math.min(100, Math.floor(f.done * 100 / f.size)) : (f.state === 'done' ? 100 : 0);
@@ -718,9 +747,8 @@ function phoneRenderXfer() {
     const bar = document.createElement('div'); bar.className = 'ph-xbar'; const fill = document.createElement('i'); fill.style.width = pct + '%'; bar.appendChild(fill); row.appendChild(bar);
     const meta = document.createElement('div'); meta.className = 'ph-xmeta';
     const m1 = document.createElement('span');
-    if (active) m1.textContent = f.state === 'waiting' ? t('phoneFileWaiting') : t(f.dir === 'in' ? 'phoneFileReceiving' : 'phoneFileSending') + ' · ' + pct + '%' + (f.bps > 0 ? ' · ' + phoneFmtSize(f.bps) + '/s' : '');
-    else if (f.state === 'done') { m1.className = 'ok'; m1.textContent = t(f.dir === 'in' ? 'phoneFileGot' : 'phoneFileSent') + ' · ' + phoneFmtSize(f.size); }
-    else { m1.className = 'err'; m1.textContent = t(phoneFileErrKey(f.error)); }
+    phoneXferM1(m1, f, active, pct);
+    row._fill = fill; row._m1 = m1;
     meta.appendChild(m1); row.appendChild(meta);
     box.appendChild(row);
   }
@@ -817,7 +845,7 @@ phoneS.media = { open: false, kind: 'all', items: [], sel: new Set(), more: fals
 function phoneMediaOpen(pre) {
   phoneCloseOthers('media');
   const m = phoneS.media;
-  m.open = true; m.items = Array.isArray(pre) ? pre.slice() : []; m.sel = new Set(m.items.map((_, i) => i)); m.err = ''; m.more = false;          // pre: 방금 찍은 사진(미리 골라 둔다)
+  m.open = true; m.kind = 'all'; m.pulling = false; m.items = Array.isArray(pre) ? pre.slice() : []; m.sel = new Set(m.items.map((_, i) => i)); m.err = ''; m.more = false;          // pre: 방금 찍은 사진(미리 골라 둔다)
   phoneMediaLoad(true);
   renderPhone();
 }
@@ -866,7 +894,7 @@ function phoneRenderMedia() {
   for (let i = 0; i < m.items.length; i++) {
     const it = m.items[i], b = document.createElement('button');
     b.type = 'button'; b.className = 'pm-it' + (m.sel.has(i) ? ' sel' : ''); b.dataset.i = String(i); b.title = it.name;
-    if (it.th) { const im = document.createElement('img'); im.src = it.th; im.alt = ''; b.appendChild(im); }
+    if (it.th && /^data:image\/[a-z+.-]+;base64,[A-Za-z0-9+/=]+$/.test(it.th)) { const im = document.createElement('img'); im.src = it.th; im.alt = ''; b.appendChild(im); }
     if (it.k === 'v') { const d = document.createElement('span'); d.className = 'pm-dur'; d.textContent = phoneFmtDurMs(it.dur); b.appendChild(d); }
     const c = document.createElement('i'); c.className = 'pm-chk'; b.appendChild(c);
     g.appendChild(b);
@@ -876,8 +904,8 @@ function phoneRenderMedia() {
   const text = m.loading && !m.items.length ? t('pmLoading') : (m.err ? t(m.err) : (!m.items.length && !m.loading ? t('pmEmpty') : ''));
   msg.hidden = !text; msg.textContent = text;
   const n = m.sel.size, gb = $('pmGet'), cb = $('pmCopy');
-  gb.disabled = n === 0; gb.textContent = t('pmGet') + (n ? ' ' + n : '');
-  cb.disabled = n === 0; cb.textContent = t('pmCopy') + (n ? ' ' + n : '');
+  gb.disabled = n === 0 || !!m.pulling; gb.textContent = t('pmGet') + (n ? ' ' + n : '');
+  cb.disabled = n === 0 || !!m.pulling; cb.textContent = t('pmCopy') + (n ? ' ' + n : '');
 }
 
 function initPhoneMedia() {
@@ -900,11 +928,13 @@ function initPhoneMedia() {
   const pull = async (e, copy) => {
     e.stopPropagation();
     const m = phoneS.media, api = getApi();
-    if (!api || !api.phone_media_pull || !m.sel.size) return;
+    if (!api || !api.phone_media_pull || !m.sel.size || m.pulling) return;
+    m.pulling = true;          // 요청 중에는 2초 폴링이 단추를 다시 켜서 같은 요청이 두 번 가지 않게
     const items = Array.from(m.sel).sort((a, b) => a - b).map((i) => ({ id: m.items[i].id, k: m.items[i].k }));
     $('pmGet').disabled = true; $('pmCopy').disabled = true;
     let r = null;
     try { r = copy ? await api.phone_media_pull(items, true) : await api.phone_media_pull(items); } catch (err) { r = null; }
+    m.pulling = false;
     if (r && r.ok) { showToast(t(copy ? 'pmCopying' : 'pmPulling', { n: r.started })); phoneMediaClose(); }
     else { showToast(t(r && r.error === 'perm' ? 'pmPerm' : (r && r.error === 'nolink' ? 'phoneFileNoLink' : 'pmFail'))); renderPhone(); }
   };
@@ -973,6 +1003,7 @@ async function phoneSmsLoadThreads() {
 async function phoneSmsOpenThread(tid, addr, name) {
   const m = phoneS.sms, api = getApi();
   Object.assign(m, { view: 'chat', tid, addr, name, msgs: [], isNew: false, err: '' });
+  { const di = $('smIn'); if (di) di.value = ''; }          // 다른 대화로 옮기면 쓰던 글을 가져가지 않는다
   const seq = ++m.seq; m.loading = true; renderPhone();
   if (!api || !api.phone_sms_messages) return;
   let r = null;
@@ -988,7 +1019,7 @@ function phoneSmsNew() {
   for (const id of ['smTo', 'smIn']) { const e = $(id); if (e) e.value = ''; }
   const sg = $('smSug'); if (sg) sg.textContent = '';
   const mm = $('smMsgs'); if (mm) mm._sig = undefined;
-  m.seq++; renderPhone();
+  m.seq++; m.loading = false; renderPhone();          // 목록을 읽던 요청을 무효로 만들었으니 '불러오는 중' 표시도 내린다(안 내리면 영영 남는다)
   setTimeout(() => { const i = $('smTo'); if (i) i.focus(); }, 50);
 }
 let smSugTimer = null;
@@ -999,6 +1030,7 @@ async function phoneSmsSuggest() {
   let r = null;
   try { r = await api.phone_contacts(q); } catch (e) { r = null; }
   if (!phoneS.sms.open || phoneS.sms.view !== 'chat' || $('smTo').value.trim() !== q || !r || !r.ok) return;          // 그 사이에 패널을 닫았거나 다른 화면으로 갔다면 그리지 않는다
+  box.textContent = '';          // 응답이 겹쳐 도착해도 같은 연락처가 두 번 붙지 않게 다시 비운다
   for (const c of (r.items || []).slice(0, 4)) {
     const b = document.createElement('button'); b.type = 'button';
     const a = document.createElement('span'); a.textContent = c.name; const n = document.createElement('span'); n.textContent = c.number; n.style.color = 'var(--dim)';
@@ -1014,9 +1046,14 @@ async function phoneSmsSend() {
   const to = m.isNew ? $('smTo').value.trim() : m.addr;
   if (!to) { showToast(t('smNoAddr')); return; }
   m.sending = true; $('smGo').disabled = true;
+  const seq = m.seq;          // 보내는 동안 다른 대화나 '새 문자'로 옮겼는지 알아본다
   let r = null;
   try { r = await api.phone_sms_send(to, text); } catch (e) { r = null; }
   m.sending = false; $('smGo').disabled = false;
+  if (seq !== m.seq || !m.open) {          // 옮겨 갔다: 입력칸·대화·수신자는 건드리지 않고 결과만 알린다(엉뚱한 대화에 끼어들거나 다음 문자가 옛 수신자에게 가던 것)
+    showToast(t(r && r.ok ? 'smSent' : 'smSendFail'));
+    return;
+  }
   if (r && r.ok) {
     inp.value = '';
     m.msgs.push({ id: 0, out: true, body: text, t: Date.now() });

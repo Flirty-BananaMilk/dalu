@@ -102,7 +102,7 @@ class MirrorHub:
         try:
             origin = ws.request.headers.get("Origin", "") or ""
         except Exception:
-            pass
+            origin = "?"          # Origin 이 둘 이상이거나 읽지 못하면 검사를 건너뛰지 않고 거부한다
         if path != "/v/" + self.token or origin not in ("", "null", "file://"):          # 토큰을 모르거나, 다른 웹 페이지가 연결하려는 경우
             await ws.close(code=4403, reason="forbidden")
             return
@@ -174,7 +174,10 @@ class MirrorHub:
                                 st["need_key"] = False
                         except asyncio.QueueFull:
                             pass
-        loop.call_soon_threadsafe(put)
+        try:
+            loop.call_soon_threadsafe(put)
+        except RuntimeError:
+            pass          # 서버 루프가 이미 닫혔다(종료 중)
 
     def set_state(self, state):
         """상태(JSON 가능한 dict)를 기억하고 모든 창에 알린다."""

@@ -109,7 +109,7 @@ const UI_ICON_NAMES = Object.keys(UI_ICONS);
 
 // 이름 -> <svg> 문자열. 모르는 이름이면 null (호출한 쪽이 글자 배지로 대신한다)
 function uiIconSvg(name, size) {
-  const inner = UI_ICONS[name];
+  const inner = Object.prototype.hasOwnProperty.call(UI_ICONS, name) ? UI_ICONS[name] : null;          // 'toString' 같은 이름이 객체 기본 속성으로 잡히지 않게
   if (!inner) return null;
   const s = size ? ` width="${size}" height="${size}"` : '';
   return `<svg class="uic" viewBox="0 0 24 24"${s} fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;

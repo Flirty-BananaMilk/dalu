@@ -107,6 +107,8 @@ class LevelMonitor:
 
     # -- 외부 API ---------------------------------------------------------
     def start(self):
+        if self._thread is not None and self._thread.is_alive() and self._running:
+            return          # 이미 돌고 있다: 스레드를 하나 더 띄우지 않는다
         self._running = True
         self._thread = threading.Thread(target=self._run, daemon=True, name="audiolevels")
         self._thread.start()
@@ -130,6 +132,15 @@ class LevelMonitor:
             ole32.CoInitializeEx(None, 0)   # 이 스레드는 MTA
         except Exception:
             pass
+        try:
+            self._loop()
+        finally:
+            try:
+                ole32.CoUninitialize()          # 이 스레드가 끝나면 COM 도 정리한다
+            except Exception:
+                pass
+
+    def _loop(self):
         failures = 0
         while self._running:
             try:

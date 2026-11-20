@@ -30,6 +30,7 @@ DISCOVERY_PORT = 53823        # 폰이 'Dalu 가 어디 있지?' 하고 묻는 U
 PAIR_SECONDS = 300
 LINE_LIMIT = 1 << 20
 HELLO_TIMEOUT = 10.0
+MAX_UNAUTH = 24                # 아직 인증하지 못한 동시 연결 상한(같은 네트워크의 누군가가 연결만 잔뜩 열어 두는 것을 막는다)
 IDLE_TIMEOUT = 60.0
 PROTOCOL = 1
 RELAY_DEFAULT = "wss://dalu-link-relay.dalu-link-relay.workers.dev"   # 설정에서 주소를 비워 두고 '모바일 데이터에서도 연결'을 켰을 때 쓰는 기본 중계 서버(제작자의 Cloudflare Worker, dalu-relay 프로젝트; 암호문만 지나간다)
@@ -264,6 +265,8 @@ class ApkServer:
         self._httpd = None
         self._thread = None
         self._timer = None
+        self._mu = threading.RLock()          # start/stop 이 서로 다른 스레드(화면·타이머)에서 불린다
+        self._page = b""
         self.port = 0
         self.sha256 = ""
         self.size = 0
@@ -273,28 +276,40 @@ class ApkServer:
 
     def start(self):
         """켜고 포트를 돌려준다(이미 켜져 있으면 시간만 연장). APK 가 없으면 0."""
+        with self._mu:
+            return self._start()
+
+    def _start(self):
         if not self.available():
             return 0
         with open(self._path, "rb") as f:
             data = f.read()
         self.sha256 = hashlib.sha256(data).hexdigest()
         self.size = len(data)
-        if self._httpd is None:
-            outer = self
+        outer = self
+        if True:
             page = ("<!doctype html><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><title>Dalu Link</title>"
                     "<body style='font-family:sans-serif;padding:24px;max-width:480px;margin:auto'><h2>Dalu Link</h2>"
                     "<p>Dalu(윈도우 노치)와 이 폰을 잇는 앱이에요. 아래 버튼으로 받아 설치하세요. 설치할 때 '출처를 알 수 없는 앱' 허용이 필요할 수 있어요.</p>"
                     "<p><a href='/" + APK_NAME + "' style='display:inline-block;padding:14px 22px;background:#222;color:#fff;border-radius:10px;text-decoration:none'>앱 받기 (%.1f MB)</a></p>"
                     "<p style='font-size:12px;color:#666;word-break:break-all'>SHA-256: " % (self.size / 1048576.0) + self.sha256 + "</p></body>").encode("utf-8")
+            self._page = page          # 다시 켤 때마다 새로 만든다(앱 파일이 바뀌었는데 옛 해시가 안내 페이지에 남던 것)
 
+        if self._httpd is None:
             class H(http.server.BaseHTTPRequestHandler):
+                timeout = 15          # 응답 없는 연결이 스레드를 영영 붙잡지 않게
+
                 def log_message(self, *a):
                     pass
+
+                def do_HEAD(self):
+                    self._head = True          # 본문 없이 머리글만 돌려준다
+                    self.do_GET()
 
                 def do_GET(self):
                     path = self.path.split("?", 1)[0]
                     if path in ("/", "/index.html"):
-                        self._send(200, "text/html; charset=utf-8", page)
+                        self._send(200, "text/html; charset=utf-8", outer._page)
                     elif path == "/" + APK_NAME:
                         try:
                             with open(outer._path, "rb") as f:
@@ -313,7 +328,8 @@ class ApkServer:
                     for k, v in (extra or {}).items():
                         self.send_header(k, v)
                     self.end_headers()
-                    self.wfile.write(body)
+                    if not getattr(self, "_head", False):
+                        self.wfile.write(body)
 
             httpd = None
             for p in range(APK_PORT, APK_PORT + 10):
@@ -337,6 +353,10 @@ class ApkServer:
         return self.port
 
     def stop(self):
+        with self._mu:
+            self._stop()
+
+    def _stop(self):
         if self._timer is not None:
             self._timer.cancel()
             self._timer = None
@@ -373,6 +393,8 @@ class LinkServer:
         self._room_lock = threading.Lock()
         self._relay_task = None
         self._relay_pipes = 0
+        self._unauth = 0                              # 인증 전인 연결 수
+        self._relay_pipe_tasks = set()                # 열려 있는 중계 데이터 연결 작업(중계를 끄면 함께 끊는다)
         self.relay_state = "off"                      # off | connecting | online | offline | error
         self._loop = None
         self._server = None
@@ -427,6 +449,7 @@ class LinkServer:
             return
         self._disc_ready.set()
         recent = []
+        per_src = {}
         try:
             while not self._disc_stop.is_set():
                 try:
@@ -437,8 +460,14 @@ class LinkServer:
                     break
                 now = time.time()
                 recent = [t for t in recent if now - t < 1.0]
-                if len(recent) >= 20:
+                src = addr[0] if addr else ""
+                mine = [t for t in per_src.get(src, []) if now - t < 1.0]
+                if len(per_src) > 512:
+                    per_src = {k: v for k, v in per_src.items() if v and now - v[-1] < 1.0}
+                if len(mine) >= 20 or len(recent) >= 100:          # 한 주소가 전체 한도를 다 쓰지 못하게 주소별로도 센다(브로드캐스트 폭주로 진짜 폰이 못 찾던 것)
                     continue
+                mine.append(now)
+                per_src[src] = mine
                 recent.append(now)
                 try:
                     m = json.loads(data.decode("utf-8"))
@@ -556,6 +585,9 @@ class LinkServer:
         if self._relay_task is not None:
             self._relay_task.cancel()
             self._relay_task = None
+        for t in list(self._relay_pipe_tasks):          # 중계를 끄거나 주소를 바꿨으면 이미 이어진 중계 연결도 끊는다(꺼도 옛 연결이 남던 것)
+            t.cancel()
+        self._relay_pipe_tasks.clear()
         if self._relay_url and self.port:
             self.relay_state = "connecting"
             self._relay_task = self._loop.create_task(self._relay_main(self._relay_url, self._room_id()))
@@ -585,7 +617,9 @@ class LinkServer:
                             continue
                         sid = m.get("sid") if isinstance(m, dict) and m.get("t") == "open" else None
                         if isinstance(sid, str) and len(sid) == 16 and all(c in "0123456789abcdef" for c in sid) and self._relay_pipes < RELAY_MAX_PIPES:
-                            self._loop.create_task(self._relay_pipe(base, room, sid))
+                            pt = self._loop.create_task(self._relay_pipe(base, room, sid))
+                            self._relay_pipe_tasks.add(pt)
+                            pt.add_done_callback(self._relay_pipe_tasks.discard)
                 self.relay_state = "offline"
             except asyncio.CancelledError:
                 raise
@@ -702,6 +736,14 @@ class LinkServer:
     async def _handle(self, reader, writer):
         peer = writer.get_extra_info("peername")
         sess = None
+        if self._unauth >= MAX_UNAUTH:
+            try:
+                writer.close()
+            except Exception:
+                pass
+            return
+        self._unauth += 1
+        counted = True
         try:
             line = await asyncio.wait_for(reader.readline(), HELLO_TIMEOUT)
             hello = json.loads(line.decode("utf-8")) if line else {}
@@ -731,6 +773,7 @@ class LinkServer:
                         self._devices[dev_id] = {"name": name, "hash": hashlib.sha256(new_secret.encode()).hexdigest()}
                         self._save_devices()
                 if not ok:
+                    await asyncio.sleep(0.5)          # 틀린 토큰을 연달아 시도하는 속도를 늦춘다
                     await _write(writer, {"t": "deny", "reason": "token"})
                     return
                 welcome["secret"] = new_secret
@@ -740,10 +783,13 @@ class LinkServer:
                     d = self._devices.get(dev_id)
                 ok = bool(d) and bool(secret) and hmac.compare_digest(hashlib.sha256(str(secret).encode()).hexdigest(), d["hash"])
                 if not ok:
+                    await asyncio.sleep(0.5)
                     await _write(writer, {"t": "deny", "reason": "unknown"})
                     return
                 name = d["name"] or name
             await _write(writer, welcome)
+            self._unauth -= 1          # 인증을 마쳤다: 이제 인증 전 연결 수에서 뺀다
+            counted = False
             old = self._sessions.get(dev_id)
             sess = _Session(dev_id, name, writer)
             try:                                                  # 폰 앱의 버전(없으면 0: 업데이트 기능이 없는 옛 버전)
@@ -772,6 +818,8 @@ class LinkServer:
                     pass
                 elif sess.deliver(m):
                     pass
+                elif t in ("link_connected", "link_disconnected"):
+                    pass                                          # 이 두 종류는 서버가 스스로 만드는 안내다: 상대가 같은 이름으로 보내도 받지 않는다(파일 전송 취소·화면 공유 종료를 일으키지 못하게)
                 else:
                     m["device"] = dev_id
                     self._on_event(m)
@@ -785,6 +833,8 @@ class LinkServer:
                     del self._sessions[sess.id]
                     self._on_event({"t": "link_disconnected", "id": sess.id, "name": sess.name})
                 sess.close()
+            if counted:
+                self._unauth -= 1
             try:
                 writer.close()
             except Exception:
@@ -827,6 +877,12 @@ class _Session:
 
     def close(self):
         """바로 끊는다(abort): TLS 정상 종료는 상대가 응답할 때까지 기다려서, 응답 없는 폰이면 한참 걸린다."""
+        for _, fut in list(self._waiters.values()):          # 답을 기다리던 요청은 시간 초과를 기다리지 않고 바로 풀어 준다
+            try:
+                if not fut.done():
+                    fut.set_result(None)
+            except Exception:
+                pass
         try:
             self._writer.transport.abort()
         except Exception:

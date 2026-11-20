@@ -83,7 +83,8 @@ def run_program(target, args=""):
     if not t or "\n" in t:
         return err("empty target")
     try:
-        argv = [os.path.expandvars(t)] + (shlex.split(args, posix=False) if args else [])
+        # posix=False 는 따옴표를 토큰에 그대로 남긴다 -> 공백이 든 경로 인자가 따옴표째 전달돼 깨진다: 양끝 따옴표를 벗긴다(윈도 경로의 역슬래시는 그대로)
+        argv = [os.path.expandvars(t)] + ([a[1:-1] if len(a) >= 2 and a[0] == a[-1] and a[0] in "\"'" else a for a in shlex.split(args, posix=False)] if args else [])
         subprocess.Popen(argv, close_fds=True, creationflags=0x00000008)      # DETACHED_PROCESS: 노치가 꺼져도 계속 실행
         return ok()
     except FileNotFoundError:
@@ -231,7 +232,10 @@ def _discord_plugin():
         if not found:
             return err("Discord is not making sound")
         apps = {a["id"]: a for a in (audiomix.list_apps() or [])}
-        muted = not all(apps[i]["muted"] for i in found if i in apps)
+        states = [apps[i]["muted"] for i in found if i in apps]
+        if not states:
+            return err("Discord is not making sound")          # 목록이 비면 all([]) 이 True 가 돼 엉뚱하게 '음소거 해제'로 답하던 것
+        muted = not all(states)
         for i in found:
             audiomix.set_app(i, muted=muted)
         return ok(message=(L("Discord 음소거", "Discord muted") if muted else L("Discord 음소거 해제", "Discord unmuted")))
@@ -475,8 +479,8 @@ def _s(v, n):
 
 def _loc(v, n=40):
     if isinstance(v, dict):
-        ko = _s(v.get("ko") or v.get("en"), n)
-        return L(ko, _s(v.get("en") or v.get("ko"), n), _s(v.get("zh"), n) or None, _s(v.get("ja"), n) or None)      # zh/ja 는 있으면 쓴다
+        first = _s(v.get("ko") or v.get("en") or v.get("zh") or v.get("ja"), n)          # 중국어·일본어 라벨만 있어도 버리지 않는다
+        return L(_s(v.get("ko"), n) or first, _s(v.get("en"), n) or first, _s(v.get("zh"), n) or None, _s(v.get("ja"), n) or None)      # zh/ja 는 있으면 쓴다
     t = _s(v, n)
     return L(t, t)
 
@@ -490,16 +494,16 @@ def _user_action(raw, idx):
         return None
     icon = _s(raw.get("icon"), 16)
     aid = f"a{idx}"
-    if raw.get("open"):
+    if _s(raw.get("open"), 500):          # 공백뿐인 값은 없는 것으로 본다
         tgt = _s(raw["open"], 500)
         return action(aid, label, icon, lambda ctx, t=tgt: open_target(t))
-    if raw.get("run"):
+    if _s(raw.get("run"), 500):
         tgt, args = _s(raw["run"], 500), _s(raw.get("args"), 300)
         return action(aid, label, icon, lambda ctx, t=tgt, a=args: run_program(t, a))
-    if raw.get("copy"):
+    if _s(raw.get("copy"), 2000):
         text = _s(raw["copy"], 2000)
         return action(aid, label, icon, lambda ctx, t=text: ok() if clipwatch.write_text(t) else err("clipboard busy"))
-    if raw.get("keys"):
+    if _s(raw.get("keys"), 40):
         combo = _s(raw["keys"], 40)
         if not keys.parse_combo(combo):
             return None
@@ -514,7 +518,10 @@ def parse_user_plugin(data, builtin_ids=()):
     pid = _s(data.get("id"), 32).lower()
     if not ID_RE.match(pid) or pid in builtin_ids:
         return None
-    acts = [a for a in (_user_action(r, i) for i, r in enumerate((data.get("actions") or [])[:MAX_ACTIONS])) if a]
+    raw_acts = data.get("actions")
+    if not isinstance(raw_acts, list):
+        return None          # actions 가 목록이 아니면(문자열·객체) 이 플러그인만 건너뛴다(예외로 목록 전체가 멈추지 않게)
+    acts = [a for a in (_user_action(r, i) for i, r in enumerate(raw_acts[:MAX_ACTIONS])) if a]
     if not acts:
         return None
     return Plugin(pid, _loc(data.get("name") or pid, 30), _loc(data.get("desc"), 160), _s(data.get("icon"), 16) or "plug", acts, None, builtin=False)
@@ -532,7 +539,7 @@ def load_user_plugins(folder, builtin_ids=(), log=None):
         try:
             if os.path.getsize(path) > 64 * 1024:
                 continue
-            with open(path, encoding="utf-8") as f:
+            with open(path, encoding="utf-8-sig") as f:          # 메모장이 붙이는 BOM 이 있어도 읽는다
                 p = parse_user_plugin(json.load(f), builtin_ids)
         except Exception as e:
             log(f"plugin {n} skipped: {e!r}")

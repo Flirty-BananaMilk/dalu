@@ -289,9 +289,9 @@ class IslandAPI:
         self._apk_seen = 0               # 폰 앱이 옛 버전이라고 PC 화면에 알린 앱 파일 버전(같은 버전은 실행당 한 번만 알린다)
         self._app_sent_at = 0.0          # 폰 앱 파일을 마지막으로 보내기 시작한 시각(연타 방지)
         self._data_lock = threading.Lock()
+        self._link_lock = threading.RLock()          # 폰 연결 서버를 켜고 끄는 동안(설정 변경과 QR 페어링이 겹쳐도) 서버가 둘 뜨지 않게
         self._monitor = sysmon.SysMonitor(push=self._push_event, on_fullscreen=self._on_fullscreen,
                                          own_hwnd=self._get_hwnd, on_game=self._on_game, game_check=self._game_check)
-        self._monitor.start()
         # 비주얼라이저용 오디오 레벨 (루프백). 화면이 get_levels() 를 호출할 때만 계산한다.
         self._buds = None
         if buds is not None:
@@ -429,7 +429,8 @@ class IslandAPI:
             self._capwatch = capturewatch.CaptureWatch(lambda sec, why: self._capture_auto(sec, why),
                                                       enabled=lambda: self._prefs.get("captureNotch") == "auto" and self._desk._on, log=log)
             self._capwatch.start()
-        self._apply_prefs()            # 위에서 만든 서비스(클립보드/캘린더/단축키/버즈/SMTC)에 설정을 반영
+        self._apply_prefs()            # 위에서 만든 서비스(클립보드/캘린더/버즈/SMTC)에 설정을 반영
+        self._monitor.start()          # 시스템 감시는 맨 나중에 시작한다: 시작하자마자 부르는 콜백이 아직 안 만들어진 필드(_peek_hide_timer, _desk 등)를 건드리지 않게
         threading.Thread(target=self._monitor_watch, daemon=True, name="monitor-watch").start()
 
         # Start low-latency background polling thread
@@ -848,8 +849,11 @@ class IslandAPI:
     # ------------------------------------------------------------------
     # JS bridge
     # ------------------------------------------------------------------
-    def get_state(self, known_lyrics_version=None):
+    def get_state(self, known_lyrics_version=None, want_events=True):
         """Instantaneous in-memory projected lookup.
+
+        want_events=False: 이벤트 큐를 비우지 않는다. 설정 창처럼 노치 창이 아닌 쪽에서 상태만 볼 때 쓴다
+        (같은 API 를 두 창이 공유하므로, 비워 버리면 노치가 받을 이벤트가 사라진다).
 
         가사는 크기가 커서(수백 줄 x 단어) 매 폴링마다 직렬화하면 낭비이므로,
         프론트가 가진 버전과 다를 때만 포함시킨다.
@@ -858,10 +862,10 @@ class IslandAPI:
             state = dict(self._last_state)  # 복사본: 락 밖에서 직렬화돼도 안전
             state["currentTime"] = self._projected_time_locked()
             state["lyricsVersion"] = self._lyrics_version
-            if known_lyrics_version != self._lyrics_version:
+            if known_lyrics_version != self._lyrics_version and want_events:          # 상태만 보는 호출(설정 창)은 가사를 받지 않는다
                 state["lyrics"] = self._cached_lyrics
-        state["events"] = self._drain_events()
-        state["buds"] = self._buds.snapshot() if self._buds else {"available": False, "connected": False}
+        state["events"] = self._drain_events() if want_events else []
+        state["buds"] =self._buds.snapshot() if self._buds else {"available": False, "connected": False}
         state["btdevices"] = self._bt.snapshot() if self._bt else {"enabled": False, "devices": []}
         state["update"] = self._update_state()
         state["idleSec"] = sysmon.read_idle_sec()   # 입력이 없었던 시간(초): 캐릭터(눈) 상태에 사용
@@ -1108,17 +1112,17 @@ class IslandAPI:
                 st = data.get("settings")
                 if isinstance(st, dict):
                     st["monitorScheme"] = 2      # 노치가 보내는 저장본에는 이 표시가 없다: 지워지면 다음 실행 때 모니터 번호를 또 새 체계로 옮겨 버려 고른 모니터가 바뀔 수 있다(_migrate_monitor_numbering)
-                if "launcher" not in data:
-                    keep = self.load_data().get("launcher")
-                    if keep is not None:
-                        data["launcher"] = keep
+                keep = self.load_data().get("launcher")          # 바로가기는 설정 창(launcher_set)에서만 바뀐다: 노치가 들고 있던 옛 값(기본 빈 목록 포함)으로 덮어쓰지 않는다
+                if keep is not None:
+                    data["launcher"] = keep
                 if "dday" not in data:
                     keep = self.load_data().get("dday")
                     if keep is not None:
                         data["dday"] = keep
                 res = self._write_data(data)
+                if res.get("status") == "ok":
+                    self._prefs.update_from_data(data)          # 파일과 같은 순서로 메모리 설정도 바꾼다(락 밖에서 하면 두 저장이 엇갈려 메모리와 파일이 어긋날 수 있다)
             if res.get("status") == "ok":
-                self._prefs.update_from_data(data)
                 self._apply_prefs()
                 self._sync_settings_window(data)
             return res
@@ -1209,8 +1213,9 @@ class IslandAPI:
             with self._data_lock:
                 data = prefs.deep_merge(self.load_data(), patch)
                 res = self._write_data(data)
+                if res.get("status") == "ok":
+                    self._prefs.update_from_data(data)          # 파일과 같은 순서로(락 안에서) 메모리 설정도 바꾼다
             if res.get("status") == "ok":
-                self._prefs.update_from_data(data)
                 self._apply_prefs()
                 self._push_event({"type": "prefs", "patch": patch})
                 try:   # 다음 폴링(최대 200ms)을 기다리지 않고 노치가 바로 가져가게 한다 (설정을 바꾸고 노치에 반영되기까지 한 박자 느리던 것)
@@ -1240,8 +1245,9 @@ class IslandAPI:
                         for k in keys:
                             data[sec].pop(k, None)
                 res = self._write_data(data)
+                if res.get("status") == "ok":
+                    self._prefs.update_from_data(data)
             if res.get("status") == "ok":
-                self._prefs.update_from_data(data)
                 self._apply_prefs()
                 self._push_event({"type": "prefs_reset"})
             return res
@@ -1618,7 +1624,7 @@ class IslandAPI:
             path = res if isinstance(res, str) else res[0]
             if os.path.getsize(path) > 256 * 1024:
                 return {"status": "error", "message": "file too large"}
-            with open(path, encoding="utf-8") as f:
+            with open(path, encoding="utf-8-sig") as f:          # 메모장 등이 붙인 BOM 이 있어도 읽는다
                 payload = json.load(f)
             return self.apply_imported(payload)
         except Exception as e:
@@ -2167,7 +2173,7 @@ class IslandAPI:
                     return {"status": "ok", "stale": True}
                 hwnd = self._get_hwnd()
                 if hwnd:
-                    if rect and isinstance(rect, dict):
+                    if rect and isinstance(rect, dict) and 'left' in rect:
                         dpr = float(rect.get('dpr') or self._notch_scale())
                         phys_l = int((float(rect['left']) - 4) * dpr)
                         phys_r = int((float(rect['right']) + 4) * dpr)
@@ -2636,6 +2642,7 @@ class IslandAPI:
         if linkserver is None:
             return
         try:
+          with self._link_lock:
             want = bool(self._prefs.get("linkOn"))
             if want and self._link is None:
                 srv = linkserver.LinkServer(os.path.join(ISLAND_DIR, "link"), on_event=self._on_link_event, log=log, pc_name=os.environ.get("COMPUTERNAME") or "PC")
@@ -3736,14 +3743,14 @@ class IslandAPI:
 
     def _phone_notify_allowed(self, pkg, imp=None):
         """이 폰 알림을 노치에 띄울까. 표시 방식 all: 끈 앱만 뺀다 / picked: 고른 앱만. '소리·진동 없는 알림 제외'는 안드로이드 중요도 1·2(최소·낮음)를 거른다."""
+        if pkg in self._snoozed():
+            return False          # 임시 차단 중인 앱
         if self._prefs.get("phoneNotifyQuiet") and isinstance(imp, int) and not isinstance(imp, bool) and imp in (1, 2):
             return False
         if self._prefs.get("phoneNotifyMode") == "picked":
             return pkg in self._phone_apps_on()
         return pkg not in self._phone_apps_off()
 
-        if pkg in self._snoozed():
-            return False          # 임시 차단 중인 앱
     def _link_filter_msg(self):
         return {"t": "notif_filter", "mode": "picked" if self._prefs.get("phoneNotifyMode") == "picked" else "all",
                 "on": sorted(self._phone_apps_on() - self._snoozed())[:400], "off": sorted(self._phone_apps_off() | self._snoozed())[:400], "quiet": bool(self._prefs.get("phoneNotifyQuiet"))}
@@ -3841,12 +3848,6 @@ class IslandAPI:
             log(f"phone_notify_app_set error: {type(e).__name__}")
             return {"ok": False, "error": "exception"}
 
-    def phone_fetch_apps(self):
-        """설정에서 '폰의 앱 불러오기': 폰에 설치된(실행할 수 있는) 앱의 이름을 받아 목록에 더한다. 이름과 패키지 이름만 받는다. -> {ok, added, apps}"""
-        try:
-            r, err = self._link_command({"t": "apps_list"}, "apps_result", timeout=20)
-            if r is None:
-                return {"ok": False, "error": err, "apps": []}
     # ---- 앱 알림 임시 차단(노치 알림 카드의 1시간·6시간·24시간): 시간이 지나면 저절로 풀린다. 폰에도 알려서 차단 중에는 내용이 PC 로 오지 않는다
     SNOOZE_HOURS = (1, 6, 24)
 
@@ -3932,6 +3933,12 @@ class IslandAPI:
             log(f"phone_notify_snooze error: {type(e).__name__}")
             return {"ok": False, "error": "exception"}
 
+    def phone_fetch_apps(self):
+        """설정에서 '폰의 앱 불러오기': 폰에 설치된(실행할 수 있는) 앱의 이름을 받아 목록에 더한다. 이름과 패키지 이름만 받는다. -> {ok, added, apps}"""
+        try:
+            r, err = self._link_command({"t": "apps_list"}, "apps_result", timeout=20)
+            if r is None:
+                return {"ok": False, "error": err, "apps": []}
             self._note_phone_app("", "", True)                # 파일에서 읽어 둔다
             added = 0
             for it in (r.get("apps") if isinstance(r.get("apps"), list) else [])[:600]:
@@ -4128,6 +4135,23 @@ class IslandAPI:
         try:
             if self._files is not None:
                 self._files.link_lost()          # 받는 중이던 파일 조각을 정리한다(종료해도 .part 가 남지 않게)
+        except Exception:
+            pass
+        try:
+            if getattr(self, "_link", None) is not None:
+                self._mirror_send({"t": "scr_stop"})          # 종료하면 폰이 화면 공유를 계속하지 않게
+        except Exception:
+            pass
+        for name in ("_link", "_apk", "_smtc", "_winnotif", "_capwatch", "_update"):          # 종료 때 서버·감시·스레드를 정리한다(os._exit 로 끝나기 전에 소켓·잠금을 풀어 준다)
+            svc = getattr(self, name, None)
+            fn = getattr(svc, "stop", None)
+            if callable(fn):
+                try:
+                    fn()
+                except Exception:
+                    pass
+        try:
+            self._desk.enable(False)          # 화면 캡처에서 노치를 뺀 설정을 되돌린다
         except Exception:
             pass
         self._monitor.stop()

@@ -92,7 +92,7 @@ const ICONS = {
   repeatOne: 'M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4zm-4-2V9h-1l-2 1v1h1.5v4H13z'
 };
 function iconSvg(name) {
-  if (ICONS[name]) return `<svg viewBox="0 0 24 24"><path d="${ICONS[name]}"/></svg>`;
+  if (Object.prototype.hasOwnProperty.call(ICONS, name) && ICONS[name]) return `<svg viewBox="0 0 24 24"><path d="${ICONS[name]}"/></svg>`;
   const u = typeof uiIconSvg === 'function' ? uiIconSvg(name, 18) : null;          // 이 목록에 없는 이름(folder, image, callring 등)은 선 그림 모음(icons.js)에서 가져온다(없으면 빈 그림: d="undefined" 가 되지 않게)
   return u || '<svg viewBox="0 0 24 24"></svg>';
 }
@@ -241,7 +241,7 @@ function mergeDeep(base, extra) {
     if (base && typeof base[k] === 'object' && !Array.isArray(base[k]) && base[k] !== null
         && typeof extra[k] === 'object' && !Array.isArray(extra[k]) && extra[k] !== null) {
       out[k] = mergeDeep(base[k], extra[k]);
-    } else if (k in base || Array.isArray(base)) {
+    } else if ((k in base || Array.isArray(base)) && !(extra[k] === null && base[k] && typeof base[k] === 'object')) {          // 손상된 파일의 null 이 중첩 설정 객체를 지우지 않게
       out[k] = extra[k];
     }
   }
@@ -258,14 +258,27 @@ function saveStoreSoon() {
   }, 400);
 }
 
+let loadStoreTries = 0;
 async function loadStore() {
   const api = getApi();
-  if (!api || !api.load_data) return;
-  try {
-    const data = await api.load_data();
-    store = mergeDeep(DEFAULT_STORE, data || {});
-    storeLoaded = true;
-  } catch (e) { console.error(e); }
+  if (api && api.load_data) {
+    try {
+      const data = await api.load_data();
+      store = mergeDeep(DEFAULT_STORE, data || {});
+      if (data && data.settings && !('fullscreenMode' in data.settings) && data.settings.fullscreenYield === false) store.settings.fullscreenMode = 'show';          // 예전 '전체화면 양보 끔' 설정: 기본값 'yield' 로 덮어 저장하지 않게 새 방식으로 옮긴다
+      storeLoaded = true;
+      return;
+    } catch (e) { console.error(e); }
+  }
+  // 브리지가 늦거나 한 번 실패해도 기본값으로 세션을 끝내지 않는다(저장도 막혀 있다): 잠시 뒤 다시 읽고 반영한다
+  if (!storeLoaded && ++loadStoreTries <= 6) {
+    setTimeout(async () => {
+      if (storeLoaded) return;
+      await loadStore();
+      if (!storeLoaded) return;
+      try { lang = normLang(store.settings.lang); compactMode = !!store.settings.compact; island.classList.toggle('compact', compactMode); applyPrefs(); if (typeof updateView === 'function') updateView(); } catch (e) { console.error(e); }
+    }, 1500);
+  }
 }
 
 // ========================================================
@@ -648,8 +661,9 @@ function setPage(p, dir) {
 
 function stepPage(dir) {
   const list = availablePages();
-  const i = Math.max(0, list.indexOf(page));
-  setPage(list[(i + dir + list.length) % list.length], dir);
+  const at = list.indexOf(page);
+  if (at < 0) { setPage(dir > 0 ? list[0] : list[list.length - 1], dir); return; }          // 지금 탭이 숨김 처리돼 목록에 없으면 처음(또는 끝) 탭으로 간다(첫 탭을 건너뛰던 것)
+  setPage(list[(at + dir + list.length) % list.length], dir);
 }
 
 // ========================================================
@@ -928,6 +942,7 @@ function updateArtColor(url) {
       const c = best.w > 0
         ? { h: Math.round(((Math.atan2(best.hy, best.hx) * 180 / Math.PI) + 360) % 360), s: best.s / best.w }
         : { h: 215, s: 0.35 };   // 흑백 아트는 차분한 푸른 회색
+      if (artColorCache.size >= 24) artColorCache.delete(artColorCache.keys().next().value);          // 키가 앨범 아트 data URI 전체라 무한히 쌓이지 않게 오래된 것부터 버린다
       artColorCache.set(url, c);
       if (url === state.artworkUrl) applyAmbient(c);
     } catch (e) {
@@ -1664,8 +1679,10 @@ function renderList(lines, nowSec) {
 lyList.addEventListener('click', (e) => {
   const li = e.target.closest('li');
   if (!li || li._i === undefined || !hasLyricLines() || state.lyrics.unsynced) return;
+  const ln = state.lyrics.lines[li._i];
+  if (!ln) return;          // 곡이 막 바뀌어 줄 목록이 달라졌다
   e.stopPropagation();
-  seekTo(state.lyrics.lines[li._i].start);
+  seekTo(ln.start);
 });
 
 // ========================================================
@@ -1702,6 +1719,11 @@ function animationFrame(ts) {
     }
     setTextAll(elapsedEls, formatTime(nowSec));
     setTextAll(remainEls, `-${formatTime(state.duration - nowSec)}`);
+  } else if (isPlayerView() && !(state.duration > 0) && !scrub.active && lastProgressW !== '0.00%') {          // 길이를 모르는 곡: 앞 곡의 진행 바·시간이 남지 않게 비운다
+    lastProgressW = '0.00%';
+    for (const f of fillEls) f.style.width = '0%';
+    setTextAll(elapsedEls, formatTime(0));
+    setTextAll(remainEls, `-${formatTime(0)}`);
   }
 
   // 가사 싱크 보정(설정 › 가사): + 면 가사가 더 일찍 나온다. 폰에서 재생하는 곡에는 폰 전용 보정(설정 › Dalu Link)을 더한다
@@ -1763,12 +1785,13 @@ function pollLevels(now) {
     viz.pending = false;
     if (r && r.available && Array.isArray(r.levels)) {
       viz.real = true;
+      viz.fails = 0;
       viz.lastRealAt = performance.now();
       viz.target = r.levels;
     } else {
       viz.real = false;
     }
-  }).catch(() => { viz.pending = false; viz.noApi = true; viz.real = false; });
+  }).catch(() => { viz.pending = false; viz.real = false; viz.fails = (viz.fails || 0) + 1; if (viz.fails >= 5) viz.noApi = true; });          // 한 번 실패했다고 세션 내내 끄지 않는다(연달아 5번 실패할 때만)
 }
 
 // 대체 움직임: 막대마다 100~260ms 간격으로 새 목표를 무작위로 잡고, 일정 간격으로 저음 막대에 박자 펄스를 준다
@@ -1878,6 +1901,7 @@ function triggerCollapse(delayMs) {      // delayMs: 접기 유예를 이 값으
       triggerCollapse(); return;
     }
     if (typeof tmrPickClose === 'function') tmrPickClose();
+    if (typeof spkClose === 'function') spkClose();          // 접히면 Wi-Fi 비밀번호 입력칸의 글자를 지운다(화면에 남지 않게)
     editWaitSince = 0;
     if (isEditing() && typeof todoCloseAdd === 'function') todoCloseAdd();
     { const ae = document.activeElement; if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA') && ae.blur) ae.blur(); }      // 열려 있던 입력 창은 닫는다(다시 펼쳤을 때 입력 창이 그대로 남지 않게)
@@ -1987,7 +2011,7 @@ function openContextMenu(e) {
 
   const api = getApi();
   if (api) {
-    if (api.expand_window) api.expand_window();   // rect 없이 호출: 창 전체를 상호작용 가능하게
+    if (api.expand_window) api.expand_window({ seq: ++regionSeq });   // 영역 없이(순번만) 호출: 창 전체를 상호작용 가능하게. 순번이 있어야 늦게 도착한 옛 영역 요청이 메뉴를 가리지 않는다
     if (api.resize_window) api.resize_window(top + menuH + 22, window.devicePixelRatio || 1);
   }
 }

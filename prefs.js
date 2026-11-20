@@ -83,7 +83,7 @@ function mergePatch(dst, patch) {
   for (const k of Object.keys(patch || {})) {
     const v = patch[k];
     if (v && typeof v === 'object' && !Array.isArray(v) && dst[k] && typeof dst[k] === 'object') mergePatch(dst[k], v);
-    else if (k in dst) dst[k] = v;
+    else if (k in dst && !(v === null && dst[k] && typeof dst[k] === 'object')) dst[k] = v;          // null 로 중첩 객체를 지우지 않는다
   }
 }
 

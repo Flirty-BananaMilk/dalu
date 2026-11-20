@@ -141,7 +141,9 @@ class FrameStream:
                 self.send_response(200)
                 self.send_header("Content-Type", "multipart/x-mixed-replace; boundary=" + outer.BOUNDARY)
                 self.send_header("Cache-Control", "no-store")
+                self.send_header("Connection", "close")          # 스트림이 끝나면 연결과 스레드도 끝나게(HTTP/1.1 유지 연결로 남지 않게)
                 self.end_headers()
+                self.close_connection = True
                 seen = 0
                 try:
                     while True:
@@ -149,6 +151,8 @@ class FrameStream:
                             outer._cv.wait_for(lambda: not outer._open or outer._seq != seen, timeout=5)
                             if not outer._open:
                                 return
+                            if outer._seq == seen:
+                                continue          # 5초 대기가 시간 초과로 끝났을 뿐 새 프레임이 없다: 같은 프레임을 다시 보내지 않는다
                             frame, seen = outer._frame, outer._seq
                         if frame is None:
                             continue
@@ -226,11 +230,16 @@ class DeskCapture:
         self._frozen = False
         self._frozen_until = 0.0
         self._thaw_timer = None
+        self._lock = threading.RLock()          # enable/freeze/thaw 가 서로 다른 스레드(화면·캡처 감시·타이머)에서 불린다
         self._t_first = None          # '표시'에서 첫 화면이 온 시각
         self._visible = False        # 설정 '캡처·영상 녹화에서 노치: 표시' — 캡처 모드를 계속 켜 둔다(뒤 화면은 정지 화면)
         self.supported = True
 
     def enable(self, on):
+        with self._lock:
+            return self._enable(on)
+
+    def _enable(self, on):
         """켜면 노치 창을 캡처에서 빼고 찍기 시작, 끄면 되돌리고 멈춘다. 켜기에 성공했는지 돌려준다."""
         if on and not self._on:
             hwnd = self._get_hwnd()
@@ -266,6 +275,10 @@ class DeskCapture:
         return self._on or not on
 
     def freeze(self, seconds):
+        with self._lock:
+            return self._freeze(seconds)
+
+    def _freeze(self, seconds):
         """캡처 모드: 지금 화면을 얼려 두고(뒤 화면 갱신 멈춤) 노치 창을 화면 캡처에 다시 보이게 한다. seconds 뒤에 자동으로 원래대로.
         노치가 자기 자신을 비추는 되먹임은 화면을 얼려 두는 동안 생기지 않는다. 캡처가 꺼져 있으면(전체 모드가 아니면) 할 일이 없다 -> False."""
         if not self._on or not self._excluded_hwnd:
@@ -309,6 +322,10 @@ class DeskCapture:
         set_excluded(self._excluded_hwnd, False)
 
     def thaw(self):
+        with self._lock:
+            self._thaw()
+
+    def _thaw(self):
         if self._visible and self._on and self._excluded_hwnd:
             return                  # '표시' 설정이면 캡처 모드가 끝나지 않는다
         if self._thaw_timer is not None:

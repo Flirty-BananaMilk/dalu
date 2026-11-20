@@ -58,7 +58,7 @@ try {
     function Start-Removal {
         $un = Join-Path $existing 'uninstall.ps1'
         if (-not (Test-Path $un)) { throw (T "제거 프로그램을 찾지 못했어요. 설정 › 앱 에서 제거해 주세요." "Could not find the uninstaller. Please remove it from Settings > Apps." "找不到卸载程序。请在 设置 › 应用 中卸载。" "アンインストーラーが見つかりません。設定 › アプリ から削除してください。") }
-        $q = { param($v) '"' + $v + '"' }
+        $q = { param($v) '"' + ([string]$v -replace '(\\+)$', '$1$1') + '"' }          # 끝의 역슬래시를 두 배로(닫는 따옴표를 가리지 않게)
         $ua = '-NoProfile -ExecutionPolicy Bypass -File ' + (& $q $un) + ' -InstallDir ' + (& $q $existing) + ' -StartMenuDir ' + (& $q $StartMenuDir) + ' -RegistryRoot ' + (& $q $RegistryRoot) + ' -RunKey ' + (& $q $RunKey) + ' -LockName ' + (& $q $LockName) + ' -FromSetup'
         if ($Quiet) { $ua += ' -Quiet' }
         Log "starting uninstall: $ua"
@@ -88,6 +88,7 @@ try {
         Log "installed $oldVer, installing $newVer"
         $o = $null; $n = $null
         if ([version]::TryParse($oldVer, [ref]$o) -and [version]::TryParse($newVer, [ref]$n) -and $o -gt $n) {
+            if ($Quiet) { Log 'older installer in quiet mode: not downgrading'; exit 0 }          # 조용한 모드는 묻지 않으므로 옛 설치 파일이 새 버전을 말없이 덮어쓰지 않는다
             $ans = Say (T "이미 더 새 버전($oldVer)이 설치되어 있어요. 이전 버전($newVer)으로 바꿀까요?" "A newer version ($oldVer) is already installed. Replace it with the older $newVer?" "已经安装了更新的版本 ($oldVer)。要换成较旧的 $newVer 吗？" "新しいバージョン ($oldVer) がすでにインストールされています。古い $newVer に置き換えますか？") $AppName 'YesNo' 'Question'
             if ($ans -ne 'Yes') { Log 'downgrade declined'; exit 0 }
         }
@@ -110,7 +111,11 @@ try {
     Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.ExecutablePath -and $_.ExecutablePath.ToLowerInvariant().StartsWith($prefix) } | ForEach-Object {
         Log "stopping pid $($_.ProcessId)"; Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
     }
-    Start-Sleep -Milliseconds 700
+    for ($w = 0; $w -lt 40; $w++) {          # 프로세스가 실제로 끝날 때까지 기다린다(고정 0.7초로는 파일이 아직 잠겨 복사가 실패할 수 있다)
+        $still = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.ExecutablePath -and $_.ExecutablePath.ToLowerInvariant().StartsWith($prefix) }
+        if (-not $still) { break }
+        Start-Sleep -Milliseconds 250
+    }
 
     # --- 파일 복사 (robocopy /MIR: 업데이트 때 옛 파일이 남지 않는다. 사용자 데이터는 이 폴더 밖에 있다)
     New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
@@ -163,9 +168,12 @@ try {
             $ans = Say (T 'Microsoft Edge WebView2 런타임이 필요해요. 지금 Microsoft 에서 내려받아 설치할까요? (약 2분, 인터넷 연결 필요)' 'The Microsoft Edge WebView2 Runtime is required. Download and install it from Microsoft now? (about 2 minutes, needs internet)' '需要 Microsoft Edge WebView2 运行时。现在从 Microsoft 下载并安装吗？（约 2 分钟，需要联网）' 'Microsoft Edge WebView2 ランタイムが必要です。今すぐ Microsoft からダウンロードしてインストールしますか？（約 2 分、インターネット接続が必要）') $AppName 'YesNo' 'Question'
             if ($ans -eq 'Yes') {
                 try {
+                    try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 } catch {}          # 순정 윈도우 10 의 PowerShell 5.1 은 TLS 1.2 를 기본으로 쓰지 않아 내려받기에 실패할 수 있다
                     $bs = Join-Path $env:TEMP 'MicrosoftEdgeWebview2Setup.exe'
                     Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' -OutFile $bs -UseBasicParsing
-                    $null = Start-Process -FilePath $bs -ArgumentList '/silent', '/install' -Wait -PassThru
+                    $wp = Start-Process -FilePath $bs -ArgumentList '/silent', '/install' -Wait -PassThru
+                    Remove-Item $bs -Force -ErrorAction SilentlyContinue          # 임시 파일을 남기지 않는다
+                    if ($wp.ExitCode -ne 0) { throw "WebView2 setup exit code $($wp.ExitCode)" }          # 설치 실패를 조용히 넘기지 않는다
                 } catch { Log "webview2 install failed: $_" ; $null = Say (T 'WebView2 설치에 실패했어요. https://developer.microsoft.com/microsoft-edge/webview2 에서 직접 설치해 주세요.' 'Could not install WebView2. Please install it from https://developer.microsoft.com/microsoft-edge/webview2' '无法安装 WebView2。请从 https://developer.microsoft.com/microsoft-edge/webview2 手动安装。' 'WebView2 をインストールできませんでした。https://developer.microsoft.com/microsoft-edge/webview2 から手動でインストールしてください。') $AppName 'OK' 'Warning' }
             }
         }
@@ -190,4 +198,7 @@ catch {
     Log "install FAILED: $_"
     $null = Say ((T '설치하지 못했어요: ' 'Installation failed: ' '安装失败：' 'インストールに失敗しました：') + $_.Exception.Message + "`n`n" + (T "자세한 내용: $Log" "Details: $Log" "详细信息：$Log" "詳細：$Log")) $AppName 'OK' 'Error'
     exit 1
+}
+finally {
+    if ($script:LockMutex) { try { $script:LockMutex.ReleaseMutex() } catch {} }          # 잠금을 놓는다(같은 PowerShell 창에서 이어서 -Uninstall 을 하면 기다리다 막히던 것)
 }

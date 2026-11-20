@@ -438,9 +438,8 @@ def convert_assets():
             lang, wp, scene = f.stem[5:].split("_", 2)
             im = Image.open(f).convert("RGB")
             for w in (1140, 2280, W3):
-                if w > im.width:
-                    w = im.width
-                im.resize((w, round(im.height * w / im.width)), Image.LANCZOS).save(ASSETS / f"{scene}-{wp}-{lang}-{w}.webp", "WEBP", quality=84, method=6)
+                tw = min(w, im.width)          # 원본이 더 작으면 그 크기로 줄이되 파일 이름은 정해진 폭으로 둔다(HTML 의 srcset 이 늘 이 이름을 가리킨다)
+                im.resize((tw, round(im.height * tw / im.width)), Image.LANCZOS).save(ASSETS / f"{scene}-{wp}-{lang}-{w}.webp", "WEBP", quality=84, method=6)
     shots = os.environ.get("SETTINGS_SHOTS")
     if shots:
         for k in ("buds_eq", "look"):

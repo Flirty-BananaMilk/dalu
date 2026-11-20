@@ -30,7 +30,7 @@ const STR = {
   ko: { lkTitle: '폰 앱 (Dalu Link)', lkNone: '연결된 폰이 없어요', lkConnected: '연결됨: {n}', lkBatt: '배터리 {p}%', lkCharging: '충전 중', lkOff: '먼저 위의 “폰 앱으로 연결” 스위치를 켜 주세요', lkStep1: '1. 폰에 앱 설치', lkStep1d: '폰이 이 PC와 같은 와이파이에 있어야 해요. 버튼을 누르고 폰 카메라로 QR을 찍으면 앱을 받을 수 있어요. 설치할 때 “출처를 알 수 없는 앱” 허용이 필요할 수 있어요.', lkStep2: '2. 폰과 연결', lkStep2d: '폰에서 Dalu Link를 열고 “QR로 PC와 연결”을 눌러 이 QR을 비춰 주세요. 알림 접근 허용과 배터리 최적화 제외도 앱 안에서 안내해요.', lkShowInstall: '설치 QR 보기', lkShowPair: '연결 QR 보기', lkOpenFor: '{m}분 동안만 열려 있어요', lkExpires: '{s}초 뒤 만료돼요', lkExpired: '만료됐어요. 다시 눌러 주세요', lkNoApk: '이 Dalu에는 폰 앱 파일이 들어 있지 않아요', lkNoNet: '같은 네트워크 주소를 찾지 못했어요', lkErr: '열지 못했어요', lkForget: '연결 해제', lkFirewall: '처음 켤 때 Windows 방화벽이 물으면 “개인 네트워크”를 허용해 주세요. 폰과 PC가 같은 와이파이일 때만 연결돼요. 알림 내용은 폰과 이 PC 사이에서만 오가고 저장하지 않아요. 연결이 안 되면: 학교·학원·회사 와이파이는 같은 와이파이여도 기기끼리의 접속을 막는 경우가 있어요. 그럴 땐 폰의 핫스팟을 켜고 PC를 그 핫스팟에 연결한 뒤 다시 해 보세요. 모바일 데이터에서도 쓰려면 위의 “모바일 데이터에서도 연결(중계 서버)”을 켜세요(앱 설치용 QR 은 그래도 같은 와이파이에서만 받을 수 있어요).', lkJustConnected: '폰이 연결됐어요', lkServerErr: '연결을 받을 수 없어요(포트가 막혀 있을 수 있어요)', lkRelay_off: '중계 서버: 꺼짐', lkRelay_connecting: '중계 서버에 연결하는 중…', lkRelay_online: '중계 서버에 연결됨 · 모바일 데이터의 폰도 연결할 수 있어요', lkRelay_offline: '중계 서버에 닿지 않아요(인터넷과 주소를 확인하세요). 계속 다시 시도해요', lkRelay_error: '중계 서버를 쓸 수 없어요(필요한 구성 요소가 없어요)', lkRelayNeedUrl: '중계 서버 주소를 입력해 주세요(wss:// 로 쓸 수 있는 주소만 돼요)', lkRelayQr: '이 QR에는 중계 서버 정보가 들어 있어요(모바일 데이터에서도 연결돼요)', wxTitle: '날씨', wxPrivacy: 'Open-Meteo(무료 날씨 서비스)에서 받아요. 도시를 고르기 전에는 아무것도 보내지 않고, 고른 뒤에는 그 도시의 위도·경도(약 1km 로 뭉뚱그림)만 보내요. 계정이 필요 없고 내 위치를 자동으로 알아내지 않아요. 미세먼지는 관측소 값이 아니라 모델 추정값이에요.', wxCityTitle: '도시', wxPick: '선택', ddTitle: '내 D-day', ddDone2: '완료', ddHint: '일정 탭에서 일정 옆 별 버튼을 눌러도 D-day 로 추가돼요.', ddDoneTag: '완료함', ddRestore: '되돌리기', ddDel: '삭제', swWarnMany: '켠 항목이 많아요. 작은 노치는 최대 네 칸이라 시계·타이머 같은 다른 보조 노치가 밀려서 안 보일 수 있어요.', swWarnOff: '보조 노치가 꺼져 있어요. “모양·동작 > 보조 노치”를 켜야 여기서 고른 항목이 보여요.', wxSearchPh: '도시 이름 (예: 서울, Tokyo)', wxSearchBtn: '검색', wxSearching: '찾는 중…', wxNoResult: '찾지 못했어요', wxClearCity: '지우기', wxCityNone: '고른 도시가 없어요', wxCityNow: '지금: {c}', wxSearchFail: '검색하지 못했어요', ddName: '이름', ddAdd: '추가', ddFull: 'D-day 는 40개까지예요', ddEmpty: '직접 만든 D-day 가 없어요', ddSaved: '저장했어요', search: '설정 검색', searchTitle: '검색 결과', noResults: '일치하는 설정이 없어요', ver: '버전', reset: '기본값으로', copied: '완료',
         aUpdate: '업데이트', updAvail: (v) => `${v} 받을 수 있어요`, updNew: (v) => `새 버전 ${v}이 있어요. 다운로드 페이지를 열었어요`, updLatest: '최신 버전이에요', updFail: '확인하지 못했어요 (인터넷 연결을 확인해 주세요)',
         updReady: (v) => `새 버전 ${v}이 있어요. 아래 "지금 업데이트"를 눌러 주세요`, updProgress: (p) => `받는 중 ${p}%`, updInstalling: '설치 중…', updNoDirect: '앱 안에서 받을 수 없는 버전이라 다운로드 페이지를 열었어요',
-        updErrVerify: '받은 파일이 올바르지 않아 멈췄어요. 다운로드 페이지에서 직접 받아 주세요', updErrNet: '받지 못했어요 (인터넷 연결을 확인해 주세요)', updErrRun: '설치 프로그램을 실행하지 못했어요. 백신이 막았을 수 있어요', updErrStuck: '설치가 시작되지 않았어요. 다운로드 페이지에서 직접 받아 주세요',
+        updErrVerify: '받은 파일이 올바르지 않아 멈췄어요. 다운로드 페이지에서 직접 받아 주세요', updErrNet: '받지 못했어요 (인터넷 연결을 확인해 주세요)', updErrRun: '설치 프로그램을 실행하지 못했어요. 백신이 막았을 수 있어요', updErrStuck: '설치가 시작되지 않았어요. 다운로드 페이지에서 직접 받아 주세요', updErrDisk: '파일을 저장하지 못했어요 (디스크 공간이나 폴더 권한을 확인해 주세요)',
         removed: (n) => `가사 캐시 ${n}개를 지웠어요`, sent: '테스트 알림을 보냈어요', soundBad: '이 파일은 쓸 수 없어요 (.wav, 10MB·30초 이내)', armed: '정말 초기화할까요?', resetDone: '모든 설정을 초기화했어요',
         restarting: '다시 시작합니다…', failed: '실패했어요', on: '사용 가능', off: '사용 불가',
         eqTitle: '이퀄라이저', eqDesc: '이어버드의 소리 성향을 골라요. 이어버드에 직접 적용되는 설정이라 삼성 Galaxy Buds 앱과 같아요.', eqNormal: '일반', eqBass: '베이스 부스트', eqSoft: '소프트', eqDynamic: '다이내믹', eqClear: '클리어', eqTreble: '트레블 부스트', eqFailed: '적용하지 못했어요', eqInUse: '다른 앱이 이어버드를 쓰고 있어요 (Galaxy Buds 앱을 닫아 주세요)', eqNoDevice: '이어버드가 연결돼 있지 않거나 제어를 쓸 수 없어요',
@@ -54,7 +54,7 @@ const STR = {
   en: { lkTitle: 'Phone app (Dalu Link)', lkNone: 'No phone connected', lkConnected: 'Connected: {n}', lkBatt: 'Battery {p}%', lkCharging: 'charging', lkOff: 'Turn on “Connect with the phone app” above first', lkStep1: '1. Install the app on the phone', lkStep1d: 'The phone must be on the same Wi-Fi as this PC. Press the button and scan the QR with the phone camera to get the app. You may need to allow “unknown sources” to install it.', lkStep2: '2. Connect the phone', lkStep2d: 'Open Dalu Link on the phone, tap “Connect to PC with QR” and scan this QR. The app also guides you through the notification access and battery settings.', lkShowInstall: 'Show install QR', lkShowPair: 'Show connect QR', lkOpenFor: 'Open for {m} minutes only', lkExpires: 'Expires in {s} s', lkExpired: 'Expired. Press again', lkNoApk: 'This Dalu does not contain the phone app file', lkNoNet: 'Could not find a network address', lkErr: 'Could not open it', lkForget: 'Disconnect', lkFirewall: 'If Windows Firewall asks the first time, allow “Private networks”. It only connects when the phone and PC are on the same Wi-Fi. Notification content only travels between the phone and this PC and is never stored. If it does not connect: school, academy or office Wi-Fi may block devices from reaching each other even on the same network. Turn on the phone\'s hotspot, connect the PC to it and try again. To use it on mobile data, turn on “Also connect over mobile data (relay server)” above (the install QR still needs the same Wi-Fi).', lkJustConnected: 'Phone connected', lkServerErr: 'Cannot accept connections (a port may be blocked)', lkRelay_off: 'Relay server: off', lkRelay_connecting: 'Connecting to the relay server…', lkRelay_online: 'Connected to the relay server · phones on mobile data can connect too', lkRelay_offline: 'Cannot reach the relay server (check the internet and the address). Retrying', lkRelay_error: 'The relay server cannot be used (a required component is missing)', lkRelayNeedUrl: 'Enter the relay server address (only addresses that work over wss:// are accepted)', lkRelayQr: 'This QR includes the relay server (it also connects over mobile data)', wxTitle: 'Weather', wxPrivacy: 'Comes from Open-Meteo, a free weather service. Nothing is sent until you pick a city; after that only that city\'s latitude and longitude (rounded to about 1 km) are sent. No account, and your location is never detected automatically. Air quality is a modelled estimate, not a station reading.', wxCityTitle: 'City', wxPick: 'Choose', ddTitle: 'My D-days', ddDone2: 'Done', ddHint: 'You can also star an event in the Agenda tab to add it here.', ddDoneTag: 'Done', ddRestore: 'Restore', ddDel: 'Delete', swWarnMany: 'You turned on a lot. The small notch has four slots at most, so other pills such as the clock or timers may be pushed out.', swWarnOff: 'The small notch is off. Turn it on under “Look & Behavior > Satellite pill” to see these.', wxSearchPh: 'City name (e.g. Seoul, Tokyo)', wxSearchBtn: 'Search', wxSearching: 'Searching…', wxNoResult: 'Nothing found', wxClearCity: 'Clear', wxCityNone: 'No city chosen', wxCityNow: 'Now: {c}', wxSearchFail: 'Search failed', ddName: 'Name', ddAdd: 'Add', ddFull: 'Up to 40 D-days', ddEmpty: 'No D-days of your own yet', ddSaved: 'Saved', search: 'Search settings', searchTitle: 'Search results', noResults: 'No matching settings', ver: 'Version', reset: 'Reset to default', copied: 'Done',
         aUpdate: 'Update', updAvail: (v) => `${v} is available`, updNew: (v) => `Version ${v} is out. Opened the download page`, updLatest: 'You are up to date', updFail: 'Could not check (please check your internet connection)',
         updReady: (v) => `Version ${v} is out. Press "Update now" below`, updProgress: (p) => `Downloading ${p}%`, updInstalling: 'Installing…', updNoDirect: 'This version cannot be downloaded inside the app, so the download page was opened',
-        updErrVerify: 'The downloaded file did not match, so it was stopped. Please download it from the page', updErrNet: 'Download failed (please check your internet connection)', updErrRun: 'Could not start the installer. Antivirus may have blocked it', updErrStuck: 'The installer did not start. Please download it from the page',
+        updErrVerify: 'The downloaded file did not match, so it was stopped. Please download it from the page', updErrNet: 'Download failed (please check your internet connection)', updErrRun: 'Could not start the installer. Antivirus may have blocked it', updErrStuck: 'The installer did not start. Please download it from the page', updErrDisk: 'Could not save the file (check free disk space and folder permissions)',
         removed: (n) => `Cleared ${n} cached lyric file(s)`, sent: 'Sent a test alert', soundBad: 'This file cannot be used (.wav, up to 10 MB and 30 s)', armed: 'Really reset?', resetDone: 'All settings were reset',
         restarting: 'Restarting…', failed: 'Failed', on: 'Available', off: 'Unavailable',
         eqTitle: 'Equalizer', eqDesc: 'Pick the sound profile. It is applied to the earbuds themselves, same as in the Samsung Galaxy Buds app.', eqNormal: 'Normal', eqBass: 'Bass boost', eqSoft: 'Soft', eqDynamic: 'Dynamic', eqClear: 'Clear', eqTreble: 'Treble boost', eqFailed: 'Could not apply', eqInUse: 'Another app is using the earbuds (close the Galaxy Buds app)', eqNoDevice: 'Earbuds are not connected or control is unavailable',
@@ -148,6 +148,7 @@ let LANG = 'ko';      // 'ko' | 'en' | 'zh' | 'ja' (LANGS: i18n_cjk.js)
 let ABOUT = {};
 let AUTOSTART = false;
 let currentPage = null;
+let lastPage = null;          // 검색을 시작하기 전에 보던 페이지(검색을 지우면 여기로 돌아간다)
 let renderedRows = [];                   // 지금 화면의 행들: { item, el, update() }
 let CATALOG = [], LAUNCHER = [], PRESETS = [];
 let MONITORS = { monitors: [], current: null };   // 파이썬이 알려 주는 연결된 모니터 (식별 번호는 윈도우 설정의 '식별'과 같다)
@@ -163,7 +164,7 @@ function mergeInto(base, extra) {
   for (const k of Object.keys(extra || {})) {
     const v = extra[k];
     if (v && typeof v === 'object' && !Array.isArray(v) && base[k] && typeof base[k] === 'object') mergeInto(base[k], v);
-    else if (k in base) base[k] = v;
+    else if (k in base && !(v === null && base[k] && typeof base[k] === 'object')) base[k] = v;          // null 로 중첩 객체를 지우지 않는다
   }
   return base;
 }
@@ -205,6 +206,7 @@ function queuePatch(path, key, value, fast) {
 // 한 번에 하나만 보낸다: 파이썬은 요청마다 다른 스레드에서 처리해서, 연달아 보내면 순서가 뒤바뀌어 마지막 값이 옛 값으로 덮일 수 있다.
 // 보내는 동안 바뀐 값은 모아 두었다가 응답이 오면 이어서 보낸다(같은 키는 마지막 값만 남는다). 창을 닫을 때 등 직접 부르면(인자 없음) 바로 보낸다.
 let patchInflight = false;
+let patchWait = Promise.resolve();          // 보내는 중인 설정 패치(초기화가 끝나기를 기다린다)
 function flushPatch(viaTimer) {
   clearTimeout(flushTimer);
   flushTimer = null;
@@ -220,7 +222,7 @@ function flushPatch(viaTimer) {
   const done = () => { patchInflight = false; if (pending) { clearTimeout(flushTimer); flushTimer = setTimeout(() => flushPatch(true), 0); } };
   try {
     const r = api.settings_patch(patch);
-    if (r && typeof r.then === 'function') r.then(done, done); else done();
+    if (r && typeof r.then === 'function') patchWait = r.then(done, done); else done();
   } catch (e) { done(); }
 }
 
@@ -470,7 +472,7 @@ function makeRow(item, opts) {
     };
   } else if (item.type === 'text') {
     const inp = document.createElement('input');
-    inp.type = item.secret ? 'password' : 'text'; inp.className = 'txt' + (item.wide ? ' wide' : ''); inp.maxLength = 160; inp.spellcheck = false; inp.autocomplete = 'off';
+    inp.type = item.secret ? 'password' : 'text'; inp.className = 'txt' + (item.wide ? ' wide' : ''); inp.maxLength = 600; inp.spellcheck = false; inp.autocomplete = 'off';
     inp.addEventListener('input', () => commit(item, inp.value));
     ctl.appendChild(inp);
     updateCtl = () => { inp.placeholder = tr(item.placeholder); if (document.activeElement !== inp) inp.value = String(valueOf(item) || ''); };
@@ -622,7 +624,7 @@ function runAction(item, btn) {
       api.start_update().then((r) => {
         if (r && r.status === 'none') { if (api.open_update_page) api.open_update_page(); toast(S('updNoDirect')); return; }
         if (!r || (r.status !== 'started' && r.status !== 'busy')) { toast(S('updErrNet')); return; }
-        const label = tr(item.btn), errKey = { hash: 'updErrVerify', size: 'updErrVerify', format: 'updErrVerify', host: 'updErrVerify', run: 'updErrRun', stuck: 'updErrStuck' };
+        const label = tr(item.btn), errKey = { hash: 'updErrVerify', size: 'updErrVerify', format: 'updErrVerify', host: 'updErrVerify', run: 'updErrRun', stuck: 'updErrStuck', disk: 'updErrDisk' };
         btn._armed = true; btn.disabled = true;                          // 진행 중에는 글자를 우리가 바꾼다(updateAll 이 덮어쓰지 않게)
         const end = () => { btn._armed = false; btn.disabled = false; btn.textContent = label; };
         const tick = () => api.update_status().then((st) => {
@@ -635,8 +637,8 @@ function runAction(item, btn) {
         tick();
       });
       break;
-    case 'openFileFolder': if (api && api.phone_file_folder) api.phone_file_folder().then(() => done()); break;
-    case 'clearCache': if (api) api.clear_lyrics_cache().then((r) => done(S('removed')(r ? r.removed : 0))); break;
+    case 'openFileFolder': if (api && api.phone_file_folder) api.phone_file_folder().then(() => done(), () => done()); break;
+    case 'clearCache': if (api) api.clear_lyrics_cache().then((r) => done(S('removed')(r ? r.removed : 0)), () => done()); break;
     case 'testChime': if (api && api.chime) { const st = D.settings; api.chime('pomo', { type: st.soundType, volume: st.soundVolume, file: st.soundFile, system: st.soundSystem }); done(); } break;
     case 'pickSound':
       if (api && api.pick_sound_file) api.pick_sound_file().then((r) => {
@@ -644,8 +646,8 @@ function runAction(item, btn) {
         else if (r && r.status === 'invalid') toast(S('soundBad'));
       });
       break;
-    case 'testNotify': if (api) api.test_notify().then(() => done(S('sent'))); break;
-    case 'clipClear': if (api) api.clip_clear().then(() => done(S('cleared'))); break;
+    case 'testNotify': if (api) api.test_notify().then(() => done(S('sent')), () => done()); break;
+    case 'clipClear': if (api) api.clip_clear().then(() => done(S('cleared')), () => done()); break;
     case 'calendarTest':
       if (api) { flushPatch(); setTimeout(() => api.calendar_test().then((r) => (r && r.status === 'ok' ? done(S('calOk')(r.count)) : toast(S('calFail')))), 250); }
       break;
@@ -667,7 +669,7 @@ function runAction(item, btn) {
       btn._armed = false; btn.classList.remove('armed');
       if (api) {
         flushPatch();
-        api.settings_reset().then(() => api.settings_get()).then((res) => { loadData(res); rebuild(); toast(S('resetDone')); });
+        Promise.resolve(patchWait).then(() => api.settings_reset()).then(() => api.settings_get()).then((res) => { loadData(res); rebuild(); toast(S('resetDone')); }).catch(() => {});          // 보내던 패치가 끝난 뒤에 초기화한다(옛 패치가 초기화를 덮어쓰지 않게)
       }
       break;
   }
@@ -730,7 +732,7 @@ const COMPONENTS = {
     const poll = async () => {
       const api = getApi();
       if (!api || !api.get_state) return;
-      try { const s = await api.get_state(null); BUDS_CACHE.snap = s && s.buds; render(s && s.buds); } catch (e) { /* 다음 주기에 다시 */ }
+      try { const s = await api.get_state(null, false); BUDS_CACHE.snap = s && s.buds; render(s && s.buds); } catch (e) { /* 다음 주기에 다시 */ }
     };
     render(BUDS_CACHE.snap);
     poll();
@@ -860,7 +862,7 @@ COMPONENTS.budsEq = function () {
     const api = getApi();
     if (!api || !api.get_state) return;
     try {
-      const s = await api.get_state(null);
+      const s = await api.get_state(null, false);
       snap = s && s.buds; BUDS_CACHE.snap = snap;
       if (snap && Array.isArray(snap.eq_custom) && snap.eq_custom.length === N && !busy && Date.now() - editedAt > 3000) { bands = snap.eq_custom.slice(); BUDS_CACHE.bands = bands.slice(); tableLoaded = true; }       // 파이썬이 기억해 둔 사용자 곡선
       if (snap && snap.eq != null && !busy && Date.now() - pickedAt > 4000) cur = snap.eq;      // 이어버드가 알려 주는 현재 값 (삼성 앱에서 바꾼 것도 따라간다)
@@ -913,7 +915,7 @@ COMPONENTS.budsAdvanced = function () {
   const poll = async () => {
     const api = getApi();
     if (!api || !api.get_state || busy) return;
-    try { const s = await api.get_state(null); snap = s && s.buds; BUDS_CACHE.snap = snap; render(); } catch (e) { /* 다음 주기에 다시 */ }
+    try { const s = await api.get_state(null, false); snap = s && s.buds; BUDS_CACHE.snap = snap; render(); } catch (e) { /* 다음 주기에 다시 */ }
   };
   render();
   poll();
@@ -941,7 +943,7 @@ COMPONENTS.winApps = function () {
   box.className = 'winapps';
   box.innerHTML = '<div class="wa-head"><div class="row-title"></div><div class="row-desc"></div></div><div class="wa-list"></div>';
   const title = box.querySelector('.row-title'), desc = box.querySelector('.row-desc'), list = box.querySelector('.wa-list');
-  let apps = WINAPPS_CACHE.apps;
+  let apps = WINAPPS_CACHE.apps, lastSg = '';
   const render = () => {
     title.textContent = tr(L('알림을 보낸 앱', 'Apps that sent notifications'));
     desc.textContent = tr(L('알림을 한 번이라도 보낸 앱이 여기에 나타나요. 끄면 그 앱의 알림은 알리지 않아요.', 'Apps appear here once they have sent a notification. Turn one off to stop its notifications.'));
@@ -971,12 +973,14 @@ COMPONENTS.winApps = function () {
     if (!api || !api.winnotif_apps) return;
     let d; try { d = await api.winnotif_apps(); } catch (e) { return; }
     if (!d) return;
-    apps = d.apps || []; WINAPPS_CACHE.apps = apps;
+    const next = d.apps || [], sg = JSON.stringify(next);
+    if (sg === lastSg) return;          // 목록이 그대로면 다시 그리지 않는다(3초마다 스위치를 새로 만들어 누르는 도중의 클릭이 사라지던 것)
+    lastSg = sg; apps = next; WINAPPS_CACHE.apps = apps;
     render();
   };
   refresh();
   const timer = setInterval(() => { if (!document.body.contains(box)) { clearInterval(timer); return; } refresh(); }, 3000);
-  return { el: box, update: () => { box.classList.toggle('disabled', !D.settings.winNotify); render(); } };
+  return { el: box, update: () => { box.classList.toggle('disabled', !D.settings.winNotify); lastSg = ''; render(); } };
 };
 
 // 폰 앱별로 노치에 알림을 띄울지 고른다: 알림을 한 번이라도 보낸 앱이 목록에 나타난다(끄면 그 앱의 알림은 노치에 띄우지 않는다). 설정 'phoneNotifyOff'(패키지 이름 쉼표 목록)
@@ -986,7 +990,7 @@ COMPONENTS.phoneApps = function () {
   box.className = 'winapps';
   box.innerHTML = '<div class="wa-head"><div class="row-title"></div><div class="row-desc"></div></div><div class="wa-list"></div>';
   const title = box.querySelector('.row-title'), desc = box.querySelector('.row-desc'), list = box.querySelector('.wa-list');
-  let apps = PHONEAPPS_CACHE.apps;
+  let apps = PHONEAPPS_CACHE.apps, lastSg = "";
   let query = '', loading = false;
   const bar = document.createElement('div');
   box.insertBefore(bar, list);
@@ -1056,12 +1060,14 @@ COMPONENTS.phoneApps = function () {
     if (!api || !api.phone_notify_apps) return;
     let d; try { d = await api.phone_notify_apps(); } catch (e) { return; }
     if (!d) return;
-    apps = d.apps || []; PHONEAPPS_CACHE.apps = apps;
+    const next = d.apps || [], sg = JSON.stringify(next);
+    if (sg === lastSg) return;
+    lastSg = sg; apps = next; PHONEAPPS_CACHE.apps = apps;
     render();
   };
   refresh();
   const timer = setInterval(() => { if (!document.body.contains(box)) { clearInterval(timer); return; } refresh(); }, 3000);
-  return { el: box, update: () => { box.classList.toggle('disabled', D.settings.phoneNotify === false); render(); } };
+  return { el: box, update: () => { box.classList.toggle('disabled', D.settings.phoneNotify === false); lastSg = ''; render(); } };
 };
 
 COMPONENTS.tabs = function () {
@@ -1309,7 +1315,7 @@ COMPONENTS.linkPair = function () {
   const render = () => {
     const on = !!D.settings.linkOn;
     s1.row.hidden = s2.row.hidden = !on; if (!on) { qr1.hidden = qr2.hidden = true; }
-    if (!on) { stat.title.textContent = S('lkOff'); stat.desc.textContent = ''; devs.textContent = ''; upd.row.hidden = true; return; }
+    if (!on) { stat.title.textContent = S('lkOff'); stat.desc.textContent = ''; devs.textContent = ''; devs._sig = ''; upd.row.hidden = true; return; }
     if (st && st.enabled && !st.listening) { stat.title.textContent = S('lkServerErr'); stat.desc.textContent = ''; return; }
     if (st && st.connected) {
       const d = (st.devices || []).find((x) => x.connected) || (st.devices || [])[0];
@@ -1333,11 +1339,15 @@ COMPONENTS.linkPair = function () {
         else { upd.title.textContent = S('lkAppOld'); upd.desc.textContent = fmt('lkAppOldD', { v: apk.name }); bu.hidden = true; }
       } else upd.row.hidden = true;
     }
-    devs.textContent = '';
-    for (const d of (st && st.devices) || []) {
-      const r = compRow(d.name, '');
-      const f = compBtn(S('lkForget')); f.addEventListener('click', async () => { const api = getApi(); if (api && api.link_forget) { await api.link_forget(d.id); refresh(); } });
-      r.ctl.appendChild(f); devs.appendChild(r.row);
+    const dsig = JSON.stringify(((st && st.devices) || []).map((d) => [d.id, d.name])) + S('lkForget');
+    if (devs._sig !== dsig) {          // 기기 목록이 그대로면 다시 만들지 않는다(2초마다 '잊기' 단추가 새로 만들어져 클릭이 씹히던 것)
+      devs._sig = dsig;
+      devs.textContent = '';
+      for (const d of (st && st.devices) || []) {
+        const r = compRow(d.name, '');
+        const f = compBtn(S('lkForget')); f.addEventListener('click', async () => { const api = getApi(); if (api && api.link_forget) { await api.link_forget(d.id); refresh(); } });
+        r.ctl.appendChild(f); devs.appendChild(r.row);
+      }
     }
   };
   const refresh = async () => {
@@ -1412,11 +1422,14 @@ COMPONENTS.weatherCity = function () {
     locUi();
   };
   const msgRow = (text) => { const r = compRow(text, ''); r.title.style.fontWeight = '400'; r.title.style.color = 'var(--dim)'; res.appendChild(r.row); };
+  let searchSeq = 0;
   const search = async () => {
     const q = inp.value.trim(); if (q.length < 2) return;
+    const seq = ++searchSeq;          // 검색을 연달아 하면 늦게 도착한 앞의 응답이 뒤의 결과를 덮지 않게 한다
     const api = getApi(); if (!api || !api.weather_search) return;
     res.textContent = ''; msgRow(S('wxSearching'));
     let r = null; try { r = await api.weather_search(q); } catch (e) { r = null; }
+    if (seq !== searchSeq) return;
     res.textContent = '';
     if (!r || r.status !== 'ok') { msgRow(S('wxSearchFail')); return; }
     if (!r.items.length) { msgRow(S('wxNoResult')); return; }
@@ -1475,7 +1488,7 @@ COMPONENTS.ddayEditor = function () {
     if (!items.length) { const e = compRow(S('ddEmpty'), ''); e.title.style.cssText = 'font-weight:400;color:var(--dim)'; box.appendChild(e.row); }
   };
   const api = getApi();
-  if (api && api.dday_get) api.dday_get().then((d) => { items = ((d && d.items) || []).map((x) => Object.assign({}, x)); render(); }, () => render());
+  if (api && api.dday_get) api.dday_get().then((d) => { const got = ((d && d.items) || []).map((x) => Object.assign({}, x)); items = got.concat(items.filter((x) => !got.some((g) => g.id === x.id))); render(); }, () => render());          // 읽어 오는 사이에 '+ 추가'로 만든 항목이 응답에 덮여 사라지지 않게 합친다
   render();
   return { el: box, update: () => {} };
 };
@@ -1532,7 +1545,7 @@ COMPONENTS.launcher = function () {
     box.append(rows, foot, pres);
   };
   render();
-  return { el: box, update: () => { items = LAUNCHER.map((x) => Object.assign({}, x)); render(); } };
+  return { el: box, update: () => { if (PENDING_SAVES.has(flushLn) || box.contains(document.activeElement)) return; items = LAUNCHER.map((x) => Object.assign({}, x)); render(); } };          // 입력 중이거나 저장 대기 중이면 외부 갱신으로 쓰던 글을 지우지 않는다
 };
 let previewHandle = null;
 let previewTimer = null;
@@ -1674,7 +1687,7 @@ function gotoPage(id) {
   const prevIdx = SETTINGS_PAGES.findIndex((p) => p.id === currentPage);
   const idx = SETTINGS_PAGES.findIndex((p) => p.id === id);
   if (id === currentPage && !searchQuery) return;
-  currentPage = id;
+  currentPage = id; lastPage = id;
   const page = SETTINGS_PAGES[idx];
   $('pageTitle').textContent = tr(page.title);
   placeNav();
@@ -1683,7 +1696,7 @@ function gotoPage(id) {
 
 function onSearch(q) {
   searchQuery = q.trim();
-  if (!searchQuery) { const id = currentPage; currentPage = null; gotoPage(id || SETTINGS_PAGES[0].id); return; }
+  if (!searchQuery) { const id = lastPage; currentPage = null; gotoPage(id || SETTINGS_PAGES[0].id); return; }          // 검색 중에는 currentPage 가 비어 있어서 늘 첫 페이지로 튕기던 것
   currentPage = null;
   $('pageTitle').textContent = S('searchTitle');
   placeNav();
@@ -1727,7 +1740,8 @@ function initGlass() {
   applyGlass(document);
   // 페이지가 다시 그려지거나 팝업이 생기면 새로 생긴 컨트롤에도 건다 (한 프레임에 한 번만)
   let raf = 0;
-  new MutationObserver(() => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; applyGlass(document); }); }).observe(document.body, { childList: true, subtree: true });
+  let gcT = 0;
+  new MutationObserver(() => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; applyGlass(document); clearTimeout(gcT); gcT = setTimeout(() => { if (LG.gc) LG.gc(); }, 1500); }); }).observe(document.body, { childList: true, subtree: true });          // 페이지를 오갈 때 쓰지 않는 유리 필터가 쌓이지 않게 잠잠해지면 치운다
 }
 
 // ---------------------------------------------------------------- 외부와의 연결
@@ -1801,5 +1815,5 @@ async function start() {
   const go = () => { if (!started) { started = true; start(); } };
   window.addEventListener('pywebviewready', go);
   const t0 = performance.now();
-  (function wait() { if (getApi()) go(); else if (performance.now() - t0 > 2500) go(); else setTimeout(wait, 40); })();
+  (function wait() { const a = getApi(); if (a && a.settings_get) go(); else if (performance.now() - t0 > 2500) go(); else setTimeout(wait, 40); })();          // api 객체만 먼저 생기고 메서드가 아직 없을 수 있다
 })();

@@ -125,7 +125,7 @@ def clean_dday(items):
     return out
 
 
-MAX_STRING = 200
+MAX_STRING = 600          # 캘린더 주소(Outlook 등)나 긴 .wav 경로가 잘리지 않게
 LONG_KEYS = {"phoneNotifyOff": 30000, "phoneNotifyOn": 30000}      # 폰 앱 목록(패키지 이름 쉼표 목록)은 길 수 있다: 이 키들만 더 긴 글을 허용한다
 
 

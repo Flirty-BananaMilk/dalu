@@ -259,6 +259,7 @@ function renderSat(nextView) {
     if (split[i].length && !slotSettled) nextWake = Math.max(nextWake, slotReady - now + 30);
     if (satRenderSlot(slot, slotSettled ? split[i] : [], v, g, h)) anyChanged = true;
   });
+  satSlots.forEach((slot) => { slot.shownPx = satShownPxOf(slot); });          // 안쪽 칸의 폭·표시가 위에서 정해졌으니 바깥 칸의 거리를 다시 계산한다(처음 그릴 때 안쪽 칸이 비어 있어 두 칸이 같은 자리에 겹치던 것)
   satSlots.forEach((slot) => {          // 자리 잡은 보조 노치의 거리가 바뀌면(안쪽 보조 노치의 폭이 바뀜) 부드럽게 옮긴다
     if (slot.shown && !satAnims.has(slot) && Math.abs(slot.px - slot.shownPx) > 0.5) { satSetPx(slot, slot.shownPx); anyChanged = true; }
   });
@@ -360,9 +361,12 @@ const _outQ = (t) => 1 - (1 - t) * (1 - t);
 const satMapP = (q, off) => (off ? q + off * _smooth((q - SAT_PX_HIDDEN) / (SAT_PX_SHOWN - SAT_PX_HIDDEN)) : q);
 function satUnmapP(p, off) {
   if (!off) return p;
-  let q = p;
-  for (let i = 0; i < 8; i++) q = p - off * _smooth((q - SAT_PX_HIDDEN) / (SAT_PX_SHOWN - SAT_PX_HIDDEN));
-  return q;
+  let lo = Math.min(p, p - off), hi = Math.max(p, p - off);          // satMapP 는 q 에 대해 늘기만 하므로 이분법으로 푼다(고정점 반복은 바깥 자리에서 두 값을 오가며 수렴하지 않았다)
+  for (let i = 0; i < 30; i++) {
+    const mid = (lo + hi) / 2;
+    if (satMapP(mid, off) < p) lo = mid; else hi = mid;
+  }
+  return (lo + hi) / 2;
 }
 
 // u(0~1) -> { p, pull, thick }
@@ -554,6 +558,7 @@ function initSatellite() {
       if (id === 'phone-call-answer') { if (typeof phoneCallAct === 'function') phoneCallAct('answer'); return; }          // 받기 / 끊기: 노치를 펼치지 않고 바로
       if (id === 'phone-call-end') { if (typeof phoneCallAct === 'function') phoneCallAct('end'); return; }
       if (id === 'notif') { satNotifOpen(); return; }      // 알림 동그라미: 누르면 윈도우 알림 센터가 열리고 동그라미는 사라진다
+      if (!/^phone/.test(id) && typeof phoneS !== 'undefined') phoneS.noAutoUntil = Date.now() + 900;          // 다른 보조 노치를 눌러 펼쳤다: 새 사진 알림이 이 펼침을 가로채 휴대폰 탭을 열지 않게
       if (typeof triggerExpand === 'function') triggerExpand();
       if (id === 'timer' || id === 'stopwatch') { tmrSetMode(id); setPage('timer'); }
       else if (/^perf/.test(id)) setPage('perf');

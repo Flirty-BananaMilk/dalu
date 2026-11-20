@@ -84,7 +84,8 @@ def read_idle_sec():
     if not user32.GetLastInputInfo(ctypes.byref(info)):
         return None
     # 둘 다 32비트 틱 카운트라 49일마다 한 바퀴 돈다 -> 뺄셈 결과를 32비트로 맞춘다
-    return ((kernel32.GetTickCount() - info.dwTime) & 0xFFFFFFFF) / 1000.0
+    d = (kernel32.GetTickCount() - info.dwTime) & 0xFFFFFFFF
+    return 0.0 if d > 0x7FFFFFFF else d / 1000.0          # 입력 시각이 지금보다 아주 약간 앞서 읽히면(틱 어긋남) 49일 유휴로 보이던 것
 
 
 # ----------------------------------------------------------------------
@@ -164,9 +165,17 @@ def read_brightness():
                                              ctypes.c_void_p, wintypes.DWORD, ctypes.POINTER(wintypes.DWORD), ctypes.c_void_p]
         if not kernel32.DeviceIoControl(h, IOCTL_VIDEO_QUERY_DISPLAY_BRIGHTNESS, None, 0,
                                         ctypes.byref(out), ctypes.sizeof(out), ctypes.byref(got), None):
+            try:
+                kernel32.CloseHandle.argtypes = [ctypes.c_void_p]
+                kernel32.CloseHandle(h)          # 장치가 사라졌거나 오류: 핸들을 닫고 다음에 다시 연다(영영 복구되지 않던 것)
+            except Exception:
+                pass
+            _lcd_state['handle'] = None
             return None
         pw = read_power()
         on_ac = (pw or {}).get('ac', True)
+        if on_ac is None:
+            on_ac = True          # 전원 상태를 모르면 직류(배터리) 밝기로 단정하지 않는다
         return int(out.ucACBrightness if on_ac else out.ucDCBrightness)
     except Exception:
         return None
@@ -384,6 +393,8 @@ class SysMonitor:
 
     # -- 수명 ---------------------------------------------------------
     def start(self):
+        if getattr(self, "_thread", None) is not None and self._thread.is_alive() and self._running:
+            return
         self._running = True
         self._thread = threading.Thread(target=self._run, daemon=True, name="sysmon")
         self._thread.start()
@@ -396,12 +407,19 @@ class SysMonitor:
             ole32.CoInitialize(None)   # 이 스레드에서 쓰는 COM(오디오)용
         except Exception:
             pass
-        while self._running:
+        try:
+            while self._running:
+                try:
+                    self.tick(time.monotonic())
+                except Exception:
+                    pass
+                time.sleep(0.08)
+        finally:
+            _online_cache['ptr'] = None          # 이 스레드의 COM 에 묶인 포인터는 스레드가 끝나면 쓸 수 없다(다시 시작하면 새로 만든다)
             try:
-                self.tick(time.monotonic())
+                ole32.CoUninitialize()
             except Exception:
                 pass
-            time.sleep(0.08)
 
     # -- 한 번의 점검 ---------------------------------------------------
     def _due(self, key, now):
@@ -431,6 +449,14 @@ class SysMonitor:
                 if v is not None and self._changed(key, bool(v)):
                     self._push({'type': key, 'on': bool(v)})
 
+        if not getattr(self, '_mk_primed', False):          # 시작하자마자 한 번은 읽고 버린다: '누른 적 있음' 비트에 시작 전 입력이 남아 가짜 이벤트가 나가던 것
+            self._mk_primed = True
+            for k in ('insert', 'mediakeys'):
+                if k in r:
+                    try:
+                        r[k]()
+                    except Exception:
+                        pass
         if 'insert' in r and self._due('insert', now):          # Insert 키: 누르는 순간 한 번(꾹 눌러도 한 번)
             down, pressed = r['insert']() or (False, False)
             was = 'insert' in self._mk_down
