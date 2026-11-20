@@ -50,8 +50,7 @@ const STR = {
         pluginHelp: '직접 만들려면 플러그인 폴더에 .json 파일을 넣으세요(예: 프로그램 실행, 주소 열기, 글 복사, 키 보내기). 설명은 README의 “플러그인 만들기”에 있어요.',
         lnAdd: '바로가기 추가', lnBrowse: '찾아보기', lnPresets: '자주 쓰는 것', lnName: '이름', lnTarget: '프로그램·파일·폴더·주소', lnArgs: '인수(선택)', lnIcon: '아이콘', lnEmpty: '아직 바로가기가 없어요. 아래 “자주 쓰는 것”에서 골라 보세요.', lnSaved: '저장했어요', lnFull: '바로가기는 24개까지 만들 수 있어요',
         exported: '설정을 저장했어요', imported: (n) => `설정 ${n}개를 가져왔어요`, importFail: '가져오지 못했어요: 올바른 설정 파일이 아니에요', cleared: '기록을 지웠어요',
-        calOk: (n) => `일정 ${n}개를 불러왔어요 (앞으로 7일)`, calFail: '캘린더를 읽지 못했어요. 주소를 확인해 주세요',
-        hkOk: '사용 중', hkInvalid: '조합 형식이 올바르지 않아요 (예: Ctrl+Alt+N)', hkConflict: '다른 프로그램이 이미 쓰는 조합이에요', hkOff: '꺼짐' },
+        calOk: (n) => `일정 ${n}개를 불러왔어요 (앞으로 7일)`, calFail: '캘린더를 읽지 못했어요. 주소를 확인해 주세요' },
   en: { lkTitle: 'Phone app (Dalu Link)', lkNone: 'No phone connected', lkConnected: 'Connected: {n}', lkBatt: 'Battery {p}%', lkCharging: 'charging', lkOff: 'Turn on “Connect with the phone app” above first', lkStep1: '1. Install the app on the phone', lkStep1d: 'The phone must be on the same Wi-Fi as this PC. Press the button and scan the QR with the phone camera to get the app. You may need to allow “unknown sources” to install it.', lkStep2: '2. Connect the phone', lkStep2d: 'Open Dalu Link on the phone, tap “Connect to PC with QR” and scan this QR. The app also guides you through the notification access and battery settings.', lkShowInstall: 'Show install QR', lkShowPair: 'Show connect QR', lkOpenFor: 'Open for {m} minutes only', lkExpires: 'Expires in {s} s', lkExpired: 'Expired. Press again', lkNoApk: 'This Dalu does not contain the phone app file', lkNoNet: 'Could not find a network address', lkErr: 'Could not open it', lkForget: 'Disconnect', lkFirewall: 'If Windows Firewall asks the first time, allow “Private networks”. It only connects when the phone and PC are on the same Wi-Fi. Notification content only travels between the phone and this PC and is never stored. If it does not connect: school, academy or office Wi-Fi may block devices from reaching each other even on the same network. Turn on the phone\'s hotspot, connect the PC to it and try again. To use it on mobile data, turn on “Also connect over mobile data (relay server)” above (the install QR still needs the same Wi-Fi).', lkJustConnected: 'Phone connected', lkServerErr: 'Cannot accept connections (a port may be blocked)', lkRelay_off: 'Relay server: off', lkRelay_connecting: 'Connecting to the relay server…', lkRelay_online: 'Connected to the relay server · phones on mobile data can connect too', lkRelay_offline: 'Cannot reach the relay server (check the internet and the address). Retrying', lkRelay_error: 'The relay server cannot be used (a required component is missing)', lkRelayNeedUrl: 'Enter the relay server address (only addresses that work over wss:// are accepted)', lkRelayQr: 'This QR includes the relay server (it also connects over mobile data)', wxTitle: 'Weather', wxPrivacy: 'Comes from Open-Meteo, a free weather service. Nothing is sent until you pick a city; after that only that city\'s latitude and longitude (rounded to about 1 km) are sent. No account, and your location is never detected automatically. Air quality is a modelled estimate, not a station reading.', wxCityTitle: 'City', wxPick: 'Choose', ddTitle: 'My D-days', ddDone2: 'Done', ddHint: 'You can also star an event in the Agenda tab to add it here.', ddDoneTag: 'Done', ddRestore: 'Restore', ddDel: 'Delete', swWarnMany: 'You turned on a lot. The small notch has four slots at most, so other pills such as the clock or timers may be pushed out.', swWarnOff: 'The small notch is off. Turn it on under “Look & Behavior > Satellite pill” to see these.', wxSearchPh: 'City name (e.g. Seoul, Tokyo)', wxSearchBtn: 'Search', wxSearching: 'Searching…', wxNoResult: 'Nothing found', wxClearCity: 'Clear', wxCityNone: 'No city chosen', wxCityNow: 'Now: {c}', wxSearchFail: 'Search failed', ddName: 'Name', ddAdd: 'Add', ddFull: 'Up to 40 D-days', ddEmpty: 'No D-days of your own yet', ddSaved: 'Saved', search: 'Search settings', searchTitle: 'Search results', noResults: 'No matching settings', ver: 'Version', reset: 'Reset to default', copied: 'Done',
         aUpdate: 'Update', updAvail: (v) => `${v} is available`, updNew: (v) => `Version ${v} is out. Opened the download page`, updLatest: 'You are up to date', updFail: 'Could not check (please check your internet connection)',
         updReady: (v) => `Version ${v} is out. Press "Update now" below`, updProgress: (p) => `Downloading ${p}%`, updInstalling: 'Installing…', updNoDirect: 'This version cannot be downloaded inside the app, so the download page was opened',
@@ -75,8 +74,7 @@ const STR = {
         pluginHelp: 'To make your own, drop a .json file into the plugin folder (run a program, open an address, copy text, send keys). See “Writing plugins” in the README.',
         lnAdd: 'Add shortcut', lnBrowse: 'Browse', lnPresets: 'Common ones', lnName: 'Name', lnTarget: 'Program, file, folder or address', lnArgs: 'Arguments (optional)', lnIcon: 'Icon', lnEmpty: 'No shortcuts yet. Pick some from “Common ones” below.', lnSaved: 'Saved', lnFull: 'You can have up to 24 shortcuts',
         exported: 'Settings saved', imported: (n) => `Imported ${n} settings`, importFail: 'Could not import: not a valid settings file', cleared: 'History cleared',
-        calOk: (n) => `Loaded ${n} events (next 7 days)`, calFail: 'Could not read the calendar. Check the address',
-        hkOk: 'Active', hkInvalid: 'Invalid combination (e.g. Ctrl+Alt+N)', hkConflict: 'Already used by another program', hkOff: 'Off' },
+        calOk: (n) => `Loaded ${n} events (next 7 days)`, calFail: 'Could not read the calendar. Check the address' },
 };
 
 // ---------------------------------------------------------------- 상태
@@ -256,7 +254,6 @@ function commit(item, value) {
   updateAll();
   if (item.group === 'anim' || ['animSpeed', 'bounce', 'animOff', 'animPreset'].includes(item.id)) schedulePreview();
   if (item.key === 'lang') rebuild();
-  if (/^hk|^hotkeysOn$/.test(item.key || '')) refreshHotkeys();
 }
 
 // ---------------------------------------------------------------- 설정 창 자신에게 적용 (언어, 애니메이션 변수)
@@ -550,7 +547,7 @@ function makeRow(item, opts) {
   const update = () => {
     const tt = tr(item.label);
     if (title.textContent !== tt) title.textContent = tt;
-    const d = item.descFn === 'monitors' ? monitorDesc() : (item.descFn === 'hotkey' ? hotkeyDesc(item) : tr(item.desc));
+    const d = item.descFn === 'monitors' ? monitorDesc() : tr(item.desc);
     if (desc.textContent !== d) desc.textContent = d;
     const disp = d ? '' : 'none';
     if (desc.style.display !== disp) desc.style.display = disp;
@@ -565,23 +562,6 @@ function makeRow(item, opts) {
     updateCtl();
   };
   return { item, el: row, update };
-}
-
-// 단축키 상태: 파이썬이 알려 주는 등록 결과를 풀어서 보여 준다
-let HOTKEYS = { status: {}, combos: {} };
-function hotkeyDesc(item) {
-  const st = (HOTKEYS.status || {})[item.key];
-  if (!st) return '';
-  return S({ ok: 'hkOk', invalid: 'hkInvalid', conflict: 'hkConflict', off: 'hkOff' }[st] || 'hkOk');
-}
-let hkTimer = null;
-function refreshHotkeys() {
-  clearTimeout(hkTimer);
-  hkTimer = setTimeout(async () => {
-    const api = getApi();
-    if (!api || !api.hotkeys_status) return;
-    try { HOTKEYS = await api.hotkeys_status(); updateAll(); } catch (e) { /* 다음에 */ }
-  }, 700);
 }
 
 // 모니터 선택지: '주 모니터' + 연결된 모니터들(식별 번호). 저장된 번호의 모니터가 지금 없으면 아무것도 강조되지 않는다.
@@ -1758,7 +1738,6 @@ function loadData(res) {
   AUTOSTART = !!(res && res.autostart);
   ABOUT = (res && res.about) || {};
   if (res && res.monitors) MONITORS = res.monitors;
-  if (res && res.hotkeys) HOTKEYS = res.hotkeys;
   if (res && res.plugins) CATALOG = res.plugins;
   if (res && res.launcher) LAUNCHER = res.launcher;
   if (res && res.presets) PRESETS = res.presets;

@@ -219,7 +219,7 @@ const DEFAULT_STORE = {
     animOff: false, animSpeed: 100, bounce: 100, entrance: true, pageAnim: 'slide',
     tabOrder: DEFAULT_TAB_ORDER, tabHidden: '', satPerfCpu: false, satPerfMem: false, satPerfNet: false, satPerfGpu: false, satPhoneBatt: false, satPhoneMissed: false, phoneNotify: true, linkOn: false, linkRelayOn: false, linkRelay: '', linkClipPush: true, linkClipPull: true, linkFileAuto: true, linkNewPhoto: true, phoneNotifyOff: '', phoneButtons: '', powerButtons: '', sysButtons: '', linkFileDir: '', phoneNotifyMode: 'all', phoneNotifyOn: '', phoneNotifyQuiet: false, phoneMedia: false, linkMirror: false, linkMirrorControl: false, linkRemote: false, phoneCallMedia: 'duck', satWeather: false, satDday: false, weatherCity: '', weatherLat: 0, weatherLon: 0, weatherUnit: 'c', weatherLocate: true, pluginsEnabled: '',
     focusDnd: true,
-    clipboardOn: false, calendarUrl: '', calendarRemindMin: 10, hotkeysOn: true, tabDock: true, tabDockDelay: 130, tabDockLeave: 260, tabDockMargin: 10, hkToggle: 'Ctrl+Alt+N', hkSettings: 'Ctrl+Alt+S', hkLyrics: 'Ctrl+Alt+L', hkCapture: 'Ctrl+Alt+P', captureSeconds: 15, captureNotch: 'auto',
+    clipboardOn: false, calendarUrl: '', calendarRemindMin: 10, tabDock: true, tabDockDelay: 130, tabDockLeave: 260, tabDockMargin: 10, hkCapture: 'Ctrl+Alt+P', captureSeconds: 15, captureNotch: 'auto',
     todoRemind: true, todoLeadMin: 0, snoozeMin: 10, weekStart: 'sun', agendaView: 'list', mediaKeys: true, upNext: true, upNextSec: 12, appFilterMode: 'off', appFilterList: ''
   },
   pomo: { focusMin: 25, breakMin: 5, doneToday: 0, doneDate: '' },
@@ -1887,16 +1887,6 @@ let editWaitSince = 0;
 window.addEventListener('keydown', () => { editWaitSince = 0; });      // 글을 쓰고 있으면 15초 기다림을 처음부터 다시 센다
 
 // Pin Toggle
-function hotkeyToggle() {          // 전역 단축키(기본 Ctrl+Alt+N): 파이썬이 부른다
-  if (isExpanded || isPinned) {
-    if (typeof closeContextMenu === 'function' && contextMenuOpen) closeContextMenu();          // 열려 있던 메뉴·입력을 정리하고 접는다
-    if (typeof todoCloseAdd === 'function') todoCloseAdd();
-    { const ae = document.activeElement; if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA') && ae.blur) ae.blur(); }
-    if (isPinned) { isPinned = false; btnPin.classList.remove('active'); setText($('menuPinText'), t('menuPin')); }          // 토스트 없이 조용히 푼다(접는 중에 알림 띠가 열려 높이가 남지 않게)
-    if (isExpanded) { if (typeof tmrPickClose === 'function') tmrPickClose(); isExpanded = false; updateView(); }          // 키보드로 접는 것이라 마우스가 노치 위에 있어도 접는다(triggerCollapse 는 호버 중이면 건너뛴다)
-  } else togglePin();          // 접힌 상태: 펼치고 고정한다(마우스를 올리지 않아도 열려 있다)
-}
-
 function togglePin() {
   isPinned = !isPinned;
   if (isPinned) {

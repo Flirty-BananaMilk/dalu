@@ -501,7 +501,7 @@ def _user_action(raw, idx):
         return action(aid, label, icon, lambda ctx, t=text: ok() if clipwatch.write_text(t) else err("clipboard busy"))
     if raw.get("keys"):
         combo = _s(raw["keys"], 40)
-        if not keys.hotkeys.parse_combo(combo):
+        if not keys.parse_combo(combo):
             return None
         return action(aid, label, icon, lambda ctx, c=combo: ok() if keys.send_combo(c) else err("failed"))
     return None

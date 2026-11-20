@@ -27,7 +27,6 @@ import weather
 import geoloc
 import servicekeys
 import lyricscache
-import hotkeys
 import clipwatch
 import calendar_ics
 import plugins
@@ -401,10 +400,6 @@ class IslandAPI:
         self._cal = calendar_ics.CalendarSource()
         self._cal_notified = set()
         threading.Thread(target=self._calendar_worker, daemon=True, name="calendar").start()
-        # 전역 단축키
-        self._hotkeys = hotkeys.HotkeyService({"hkToggle": self._hk_toggle, "hkSettings": lambda: self.open_settings(),
-                                               "hkLyrics": self._hk_lyrics}, log=log)
-        self._hotkeys.start()
         self._next_for, self._next_at = None, 0.0
         self._desk = deskcap.DeskCapture(self._get_hwnd, self._desk_rect, self._desk_push, log=log)
         self._winnotif = None
@@ -1151,8 +1146,6 @@ class IslandAPI:
                     self._mirror_send({"t": "scr_start", "control": False})
             self._clipwatch.enabled = bool(self._prefs.get("clipboardOn")) and not self._tab_hidden("clip")      # 클립보드 탭이 꺼져 있으면 기록도 하지 않는다(보이지 않는 곳에서 모으지 않게)
             self._cal.set_source(self._prefs.get("calendarUrl"))
-            self._hotkeys.set_bindings({k: self._prefs.get(k) for k in ("hkToggle", "hkSettings", "hkLyrics")},
-                                       bool(self._prefs.get("hotkeysOn")))
             if self._smtc is not None and smtc is not None:
                 self._smtc.filter_mode = self._prefs.get("appFilterMode")
                 self._smtc.filter_names = smtc.parse_filter_list(self._prefs.get("appFilterList"))
@@ -1201,7 +1194,7 @@ class IslandAPI:
     def settings_get(self):
         """설정 창이 처음 열릴 때: 저장된 값 + 시작 프로그램 등록 상태 + 정보."""
         return {"data": self.load_data(), "autostart": prefs.autostart_enabled(), "about": self.get_about(),
-                "monitors": self.get_monitors(), "hotkeys": self.hotkeys_status(), "plugins": self.plugins_catalog(),
+                "monitors": self.get_monitors(), "plugins": self.plugins_catalog(),
                 "launcher": self.launcher_get()["items"], "presets": self.launcher_presets()}
 
     def settings_patch(self, patch):
@@ -1462,9 +1455,6 @@ class IslandAPI:
         except Exception as e:
             log(f"evaluate_js failed: {e!r}")
 
-    def _hk_toggle(self):
-        self._js("hotkeyToggle()")
-
     def open_notification_center(self):
         """보조 노치의 알림 동그라미를 눌렀을 때: 윈도우 알림 센터를 연다(윈도우 11: Win+N, 10: Win+A). 이미 열려 있으면 그대로 둔다."""
         try:
@@ -1506,14 +1496,6 @@ class IslandAPI:
                 self._rec_hold = bool(self._desk.freeze(self.AUTO_RECORD_SECONDS))
             return
         self.capture_mode(seconds)
-
-    def _hk_lyrics(self):
-        self._js("toggleLyrics()")
-
-    def hotkeys_status(self):
-        """설정 창용: 단축키별 등록 결과(ok/invalid/conflict/off)와 정규화된 표기."""
-        st = self._hotkeys.status()
-        return {"status": st, "combos": {k: hotkeys.format_combo(self._prefs.get(k)) for k in ("hkToggle", "hkSettings", "hkLyrics")}}
 
     # ---- 클립보드 기록
     def _tab_hidden(self, tab):
@@ -4062,7 +4044,7 @@ class IslandAPI:
         self._monitor.stop()
         if getattr(self, "_tray", None) is not None:
             self._tray.stop()
-        for svc in (self._hotkeys, self._clipwatch):
+        for svc in (self._clipwatch,):
             try:
                 svc.stop()
             except Exception:

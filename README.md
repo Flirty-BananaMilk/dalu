@@ -42,7 +42,7 @@ Apple Music / Cider(포트 10767)와 연동되고, Cider가 아닌 앱(Spotify·
 | `appicon.py` | 앱 아이콘(밤하늘 바탕 + 노치 + 초승달)을 코드로 그린다. 트레이 아이콘과 설치 파일의 `.ico` 가 같은 그림을 쓴다. |
 | `settings.html` `settings.js` `settings_schema.js` `settings.css` | 설정 창 (항목 정의는 `settings_schema.js` 한 곳) |
 | `deskcap.py` / `glass.js` / `notchglass.js` | 노치 뒤 화면 캡처(노치 리퀴드 글래스 전체 모드) / 굴절 렌즈 라이브러리 / 노치에 적용 |
-| `plugins.py` / `keys.py` / `hotkeys.py` / `clipwatch.py` / `calendar_ics.py` | 플러그인 레지스트리(내장 + 사용자 JSON) / 키 조합 보내기 / 전역 단축키 / 클립보드 기록 / 캘린더(.ics) 읽기 |
+| `plugins.py` / `keys.py` / `clipwatch.py` / `calendar_ics.py` | 플러그인 레지스트리(내장 + 사용자 JSON) / 키 조합 보내기 / 클립보드 기록 / 캘린더(.ics) 읽기 |
 | `features2.js` / `prefs_shared.js` / `prefs.js` | 타이머·클립보드·일정·바로가기·플러그인 페이지, 볼륨 팝오버, 소스 전환 / 설정 창과 노치가 공유하는 함수 / 설정 적용 |
 | `buds.py` | 블루투스 이어버드: 배터리(좌/우/케이스, BLE GATT)와 삼성 버즈 소음 제어 모드·이퀄라이저(프리셋, 9밴드)·한쪽 착용 소음 제어 설정(RFCOMM). `winrt-*` 패키지 필요 |
 | `audiolevels.py` | 비주얼라이저용 실시간 오디오 대역 레벨(WASAPI 루프백 + Goertzel, 순수 파이썬) |

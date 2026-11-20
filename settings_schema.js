@@ -27,13 +27,6 @@ const SETTINGS_PAGES = [
         { id: 'clock24', type: 'toggle', path: 'settings', key: 'clock24', def: true, label: L('24시간제', '24-hour clock'), },
         { id: 'clockSeconds', type: 'toggle', path: 'settings', key: 'clockSeconds', def: false, label: L('초 표시', 'Show seconds') },
       ] },
-      { title: L('단축키', 'Hotkeys'), items: [
-        { id: 'hotkeysOn', type: 'toggle', path: 'settings', key: 'hotkeysOn', def: true, label: L('전역 단축키 사용', 'Enable global hotkeys'),
-          desc: L('어떤 앱이 앞에 있어도 동작합니다. 다른 프로그램이 쓰는 조합이면 등록되지 않아요.', 'Work in any app. Combinations already used elsewhere cannot be registered.') },
-        { id: 'hkToggle', type: 'text', path: 'settings', key: 'hkToggle', def: 'Ctrl+Alt+N', placeholder: L('예: Ctrl+Alt+N', 'e.g. Ctrl+Alt+N'), descFn: 'hotkey', label: L('노치 펼치기/접기', 'Expand / collapse the notch'), enabledIf: (d) => d.settings.hotkeysOn },
-        { id: 'hkSettings', type: 'text', path: 'settings', key: 'hkSettings', def: 'Ctrl+Alt+S', placeholder: L('예: Ctrl+Alt+S', 'e.g. Ctrl+Alt+S'), descFn: 'hotkey', label: L('설정 열기', 'Open settings'), enabledIf: (d) => d.settings.hotkeysOn },
-        { id: 'hkLyrics', type: 'text', path: 'settings', key: 'hkLyrics', def: 'Ctrl+Alt+L', placeholder: L('예: Ctrl+Alt+L', 'e.g. Ctrl+Alt+L'), descFn: 'hotkey', label: L('가사 켜기/끄기', 'Toggle lyrics'), enabledIf: (d) => d.settings.hotkeysOn },
-      ] },
       { title: L('앱', 'App'), items: [
         { id: 'restart', type: 'button', action: 'restart', label: L('앱 재시작', 'Restart app'), btn: L('재시작', 'Restart'),
           desc: L('설정이 이상하게 적용될 때 다시 시작해 보세요.', 'Try this if something does not look right.') },

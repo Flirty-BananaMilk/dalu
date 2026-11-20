@@ -23,10 +23,6 @@ PY_DEFAULTS = {
     "smtcOn": True,             # Cider 외 앱(윈도우 미디어 세션)의 곡을 표시/제어
     "mediaPriority": "auto",    # 둘 다 재생 중일 때: auto(보던 쪽 유지) | cider | other
     "fullscreenMode": "yield",  # 전체화면 앱이 켜졌을 때: yield(항상 위를 풀어 비켜남) | hide(완전히 숨김) | hidepeek(숨기되 미디어 키를 누르면 잠깐 표시) | show(그대로)
-    "hotkeysOn": True,          # 전역 단축키
-    "hkToggle": "Ctrl+Alt+N",   # 노치 펼침/접힘(고정)
-    "hkSettings": "Ctrl+Alt+S", # 설정 창
-    "hkLyrics": "Ctrl+Alt+L",   # 가사 켜기/끄기
     "winNotify": False,         # 윈도우 알림이 오면 보조 노치(작은 동그라미)로 알린다 (알림 내용은 읽지 않는다). 기본은 꺼짐
     "linkOn": False,            # Dalu Link(폰 앱) 연결을 쓴다: 켤 때만 이 PC 가 같은 네트워크의 폰 연결을 받는다
     "linkRelayOn": False,       # 모바일 데이터 등 같은 네트워크가 아닌 폰도 중계 서버(암호화된 길)로 연결한다
@@ -190,7 +186,7 @@ class Prefs:
                 merged["fullscreenMode"] = "show"        # 예전 설정(전체화면 양보 끔)을 새 방식으로 옮긴다
             if merged.get("fullscreenMode") not in ("yield", "hide", "hidepeek", "show"):
                 merged["fullscreenMode"] = "yield"
-            for hk in ("hkToggle", "hkSettings", "hkLyrics", "calendarUrl", "pluginsEnabled", "soundFile"):
+            for hk in ("calendarUrl", "pluginsEnabled", "soundFile"):
                 merged[hk] = str(merged.get(hk) or "")[:MAX_STRING]
             try:
                 merged["calendarRemindMin"] = max(1, min(120, int(merged.get("calendarRemindMin", 10))))
