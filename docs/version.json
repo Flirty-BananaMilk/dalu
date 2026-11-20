@@ -1,9 +1,9 @@
 {
-  "version": "1.1.0",
+  "version": "1.1.1",
   "url": "https://flirty-bananamilk.itch.io/dalu",
   "download": {
-    "url": "https://github.com/Flirty-BananaMilk/dalu/releases/download/v1.1.0/Dalu-1.1.0-Setup.exe",
-    "sha256": "a001205d9c7fa6f0446e1859736fec53f6340e9fd92ab0e4d3c20a53b4151768",
-    "size": 27826688
+    "url": "https://github.com/Flirty-BananaMilk/dalu/releases/download/v1.1.1/Dalu-1.1.1-Setup.exe",
+    "sha256": "741bc28561c732b4a4a466d3ff25ccf555d40c43931d2cf675460a3d094d8f85",
+    "size": 27825152
   }
 }
