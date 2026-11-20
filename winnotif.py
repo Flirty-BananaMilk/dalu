@@ -34,7 +34,7 @@ RETRY_SECONDS = 30.0
 
 
 # ---------------------------------------------------------------- 알림 센터
-CENTER_TITLES = ("알림 센터", "notification center", "action center")
+CENTER_TITLES = ("알림 센터", "notification center", "action center", "通知中心", "操作中心", "通知センター", "アクション センター", "アクションセンター")          # 한·영·중·일 윈도 화면 언어
 
 
 def foreground_info():
@@ -111,7 +111,7 @@ def center_rect_on(work, size):
     return right - w, top, w, h
 
 
-def move_center_to(number, timeout=1.5, log=None):
+def move_center_to(number, timeout=2.5, log=None):
     """방금 연 알림 센터를 윈도우 식별 번호 number 의 모니터로 옮긴다. 윈도우의 Win+N 은 마우스·앞 창과 상관없이 늘 주 모니터에 열어서,
     노치를 다른 모니터에 띄운 경우 거기서 누른 알림 동그라미의 알림 센터가 엉뚱한 모니터에 뜨던 것을 고친다.
     이 스레드만 모니터별 물리 좌표 모드로 바꿔 계산하고 끝나면 되돌린다(앱은 시스템 DPI 인식이라 모니터마다 배율이 다르면 좌표가 어긋난다).
@@ -127,7 +127,8 @@ def move_center_to(number, timeout=1.5, log=None):
             deadline = time.time() + timeout
             hwnd = 0
             while time.time() < deadline:                              # 알림 센터가 뜰 때까지 잠깐 기다린다
-                if center_open():
+                exe, _c, _t = foreground_info()
+                if center_open() or exe == "shellexperiencehost.exe":          # 방금 단축키로 연 것이니 제목을 몰라도(제목 목록에 없는 언어) 셸 창이 앞에 오면 그것이다
                     hwnd = u.GetForegroundWindow()
                     break
                 time.sleep(0.05)
@@ -147,12 +148,23 @@ def move_center_to(number, timeout=1.5, log=None):
             if not u.GetWindowRect(hwnd, ctypes.byref(r)):
                 return False
             work = (mi.rcWork.left, mi.rcWork.top, mi.rcWork.right, mi.rcWork.bottom)
+            u.MonitorFromWindow.restype = ctypes.c_void_p
+            u.MonitorFromWindow.argtypes = [wintypes.HWND, wintypes.DWORD]
+            u.MonitorFromPoint.restype = ctypes.c_void_p
             x, y, w, h = center_rect_on(work, (r.right - r.left, r.bottom - r.top))
-            ok = bool(u.SetWindowPos(hwnd, 0, x, y, w, h, 0x0004 | 0x0010))      # SWP_NOZORDER | SWP_NOACTIVATE
+            ok = False
+            for _try in range(4):          # 윈도우가 열리는 애니메이션 중에 자리를 다시 잡아 버리면 되돌아가므로, 옮긴 뒤 확인하고 어긋나면 다시 옮긴다
+                ok = bool(u.SetWindowPos(hwnd, 0, x, y, w, h, 0x0004 | 0x0010))      # SWP_NOZORDER | SWP_NOACTIVATE
+                time.sleep(0.2)
+                if u.MonitorFromWindow(hwnd, 2) == hm:
+                    break
+            ok = ok and u.MonitorFromWindow(hwnd, 2) == hm
             log(f"notification center moved to monitor {number}: {(x, y, w, h)} ok={ok}")
             return ok
         finally:
             u.SetThreadDpiAwarenessContext(ctypes.c_void_p(old))
+            if u.MonitorFromWindow(hwnd, 2) == hm:
+                return True          # 이미 노치가 있는 모니터에 떴다(기본 모니터여도 윈도우가 마우스·앞 창 쪽 모니터에 열 때가 있어, 늘 확인한다)
     except Exception as e:
         log(f"move_center_to failed: {e!r}")
         return False

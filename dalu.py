@@ -1464,11 +1464,10 @@ class IslandAPI:
             if self._winnotif is not None:
                 self._winnotif.acknowledge()
             opened = winnotif.open_center() if winnotif is not None else False
-            if opened:
-                # 윈도우는 알림 센터를 늘 주 모니터에 연다: 노치를 다른 모니터에 띄웠다면 그 모니터로 옮긴다
-                mon = self._target_monitor()
-                if mon and not mon.get("primary"):
-                    threading.Thread(target=winnotif.move_center_to, args=(mon["number"], 1.5, log), daemon=True, name="center-move").start()
+            # 알림 센터는 윈도우가 마우스·앞 창·주 모니터 중 어느 쪽에 열지 정하므로 노치가 있는 모니터와 다를 수 있다: 방금 열었든 이미 열려 있었든 노치가 있는 모니터로 옮긴다
+            mon = self._target_monitor() if winnotif is not None else None
+            if mon:
+                threading.Thread(target=winnotif.move_center_to, args=(mon["number"], 2.5, log), daemon=True, name="center-move").start()
             return {"status": "ok", "opened": bool(opened)}
         except Exception as e:
             log(f"open_notification_center error: {e!r}")
